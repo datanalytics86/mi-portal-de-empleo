@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-background: #FFFFFF;
+    --color-surface: #F7FAFC;
+    --color-text-primary: #1A202C;
+    --color-text-secondary: #718096;
+    --color-accent: #4299E1;
+    --color-accent-hover: #3182CE;
+    --color-error: #E53E3E;
+    --color-success: #38A169;
+    --color-border: #E2E8F0;
+  }
+
+  body {
+    @apply font-sans text-base text-text-primary bg-background;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+
+  h1 {
+    @apply text-3xl md:text-4xl;
+  }
+
+  h2 {
+    @apply text-2xl md:text-3xl;
+  }
+
+  h3 {
+    @apply text-xl md:text-2xl;
+  }
+}
+
+/* Import Google Font Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
