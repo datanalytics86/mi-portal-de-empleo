@@ -19,6 +19,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@astrojs/node": "^9.5.0",
     "@astrojs/tailwind": "^6.0.2",
     "@supabase/supabase-js": "^2.77.0",
     "astro": "^5.15.2",

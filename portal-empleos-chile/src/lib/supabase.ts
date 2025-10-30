@@ -41,14 +41,22 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
  * - SOLO para uso en el servidor (API routes, getStaticProps, etc.)
  * - NUNCA exponer al cliente
  */
-export const supabaseServer = supabaseServiceKey
-  ? createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    })
-  : null;
+if (!supabaseServiceKey) {
+  console.warn(
+    'Warning: SUPABASE_SERVICE_ROLE_KEY is not set. Server-side authentication features will be limited.'
+  );
+}
+
+export const supabaseServer = createClient(
+  supabaseUrl,
+  supabaseServiceKey || supabaseAnonKey, // Fallback to ANON_KEY if SERVICE_ROLE_KEY is not available
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  }
+);
 
 // Tipos de la base de datos (generados desde Supabase CLI o manualmente)
 // TODO: Generar con `npx supabase gen types typescript --project-id <PROJECT_ID>`

@@ -1,0 +1,155 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getSession, getEmpleadorProfile } from '../../lib/auth';
+
+export const prerender = false;
+
+// Obtener sesión y perfil
+const { user } = await getSession(Astro.cookies);
+const empleador = await getEmpleadorProfile(Astro.cookies);
+
+// Si no hay sesión, el middleware redirigirá
+if (!user || !empleador) {
+  return Astro.redirect('/empleador/login');
+}
+---
+
+<Layout title="Dashboard - Portal de Empleos">
+  <div class="min-h-screen bg-surface">
+    <!-- Header -->
+    <header class="bg-white border-b border-border">
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-semibold text-text-primary">
+              Dashboard
+            </h1>
+            <p class="text-sm text-text-secondary mt-1">
+              {empleador.nombre_empresa}
+            </p>
+          </div>
+          <button
+            id="logoutButton"
+            class="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface transition"
+          >
+            Cerrar Sesión
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="container mx-auto px-4 py-8">
+      <div class="max-w-4xl mx-auto">
+        <!-- Mensaje de Bienvenida -->
+        <div class="bg-white rounded-lg shadow-sm border border-border p-8 mb-8">
+          <div class="text-center">
+            <div class="mb-4">
+              <svg class="w-16 h-16 mx-auto text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-semibold text-text-primary mb-2">
+              ¡Autenticación Exitosa!
+            </h2>
+            <p class="text-text-secondary mb-4">
+              Has iniciado sesión correctamente como <strong>{empleador.email}</strong>
+            </p>
+            <div class="inline-block px-4 py-2 bg-blue-50 text-accent rounded-lg">
+              <p class="text-sm font-medium">
+                Dashboard completo disponible en Paso 6
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información del Sistema -->
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- Card: Información de Cuenta -->
+          <div class="bg-white rounded-lg shadow-sm border border-border p-6">
+            <h3 class="text-lg font-semibold text-text-primary mb-4">
+              Información de Cuenta
+            </h3>
+            <dl class="space-y-3">
+              <div>
+                <dt class="text-sm text-text-secondary">Empresa</dt>
+                <dd class="text-base text-text-primary font-medium">{empleador.nombre_empresa}</dd>
+              </div>
+              <div>
+                <dt class="text-sm text-text-secondary">Email</dt>
+                <dd class="text-base text-text-primary font-medium">{empleador.email}</dd>
+              </div>
+              <div>
+                <dt class="text-sm text-text-secondary">ID de Usuario</dt>
+                <dd class="text-xs text-text-secondary font-mono">{empleador.id}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <!-- Card: Próximas Funcionalidades -->
+          <div class="bg-white rounded-lg shadow-sm border border-border p-6">
+            <h3 class="text-lg font-semibold text-text-primary mb-4">
+              Próximas Funcionalidades
+            </h3>
+            <ul class="space-y-2">
+              <li class="flex items-start gap-2">
+                <span class="text-accent mt-1">•</span>
+                <span class="text-sm text-text-secondary">Publicar nuevas ofertas de empleo</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-accent mt-1">•</span>
+                <span class="text-sm text-text-secondary">Ver y gestionar ofertas activas</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-accent mt-1">•</span>
+                <span class="text-sm text-text-secondary">Revisar postulaciones recibidas</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-accent mt-1">•</span>
+                <span class="text-sm text-text-secondary">Descargar CVs de candidatos</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-accent mt-1">•</span>
+                <span class="text-sm text-text-secondary">Editar y desactivar ofertas</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Acciones Rápidas -->
+        <div class="mt-8 flex gap-4 justify-center">
+          <a
+            href="/"
+            class="px-6 py-3 text-sm font-medium text-text-secondary border border-border rounded-lg hover:bg-surface transition"
+          >
+            Ver Portal Público
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<script>
+  const logoutButton = document.getElementById('logoutButton');
+
+  if (logoutButton) {
+    logoutButton.addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/auth/logout', {
+          method: 'POST',
+        });
+
+        if (response.ok) {
+          window.location.href = '/empleador/login';
+        } else {
+          console.error('Error al cerrar sesión');
+          alert('Error al cerrar sesión. Por favor, intenta nuevamente.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error de conexión. Por favor, intenta nuevamente.');
+      }
+    });
+  }
+</script>

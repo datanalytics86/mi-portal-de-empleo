@@ -1,0 +1,301 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { isAuthenticated } from '../../lib/auth';
+
+export const prerender = false;
+
+// Si ya está autenticado, redirigir al dashboard
+const authenticated = await isAuthenticated(Astro.cookies);
+if (authenticated) {
+  return Astro.redirect('/empleador/dashboard');
+}
+---
+
+<Layout title="Registro - Empleadores">
+  <div class="min-h-screen bg-surface flex items-center justify-center px-4 py-12">
+    <div class="max-w-md w-full">
+      <!-- Encabezado -->
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-semibold text-text-primary mb-2">
+          Crear Cuenta
+        </h1>
+        <p class="text-text-secondary">
+          Publica ofertas de empleo y encuentra candidatos
+        </p>
+      </div>
+
+      <!-- Formulario -->
+      <div class="bg-white rounded-lg shadow-sm border border-border p-8">
+        <form id="registroForm" class="space-y-6">
+          <!-- Nombre de Empresa -->
+          <div>
+            <label for="nombreEmpresa" class="block text-sm font-medium text-text-primary mb-2">
+              Nombre de Empresa
+            </label>
+            <input
+              type="text"
+              id="nombreEmpresa"
+              name="nombreEmpresa"
+              required
+              autocomplete="organization"
+              class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
+              placeholder="Mi Empresa S.A."
+            />
+            <p id="nombreError" class="text-sm text-error mt-1 hidden"></p>
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label for="email" class="block text-sm font-medium text-text-primary mb-2">
+              Email Corporativo
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              autocomplete="email"
+              class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
+              placeholder="contacto@empresa.cl"
+            />
+            <p id="emailError" class="text-sm text-error mt-1 hidden"></p>
+          </div>
+
+          <!-- Contraseña -->
+          <div>
+            <label for="password" class="block text-sm font-medium text-text-primary mb-2">
+              Contraseña
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              autocomplete="new-password"
+              class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
+              placeholder="Mínimo 6 caracteres"
+            />
+            <p id="passwordError" class="text-sm text-error mt-1 hidden"></p>
+          </div>
+
+          <!-- Confirmar Contraseña -->
+          <div>
+            <label for="confirmPassword" class="block text-sm font-medium text-text-primary mb-2">
+              Confirmar Contraseña
+            </label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              required
+              autocomplete="new-password"
+              class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
+              placeholder="Repite tu contraseña"
+            />
+            <p id="confirmPasswordError" class="text-sm text-error mt-1 hidden"></p>
+          </div>
+
+          <!-- Error general -->
+          <div id="generalError" class="hidden">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p class="text-sm text-error" id="generalErrorText"></p>
+            </div>
+          </div>
+
+          <!-- Botón Submit -->
+          <button
+            type="submit"
+            id="submitButton"
+            class="w-full bg-accent hover:bg-accent-hover text-white font-medium py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span id="buttonText">Crear Cuenta</span>
+            <span id="buttonLoader" class="hidden">Creando cuenta...</span>
+          </button>
+        </form>
+
+        <!-- Link a login -->
+        <div class="mt-6 text-center">
+          <p class="text-sm text-text-secondary">
+            ¿Ya tienes cuenta?
+            <a href="/empleador/login" class="text-accent hover:text-accent-hover font-medium">
+              Inicia sesión aquí
+            </a>
+          </p>
+        </div>
+
+        <!-- Link a home -->
+        <div class="mt-4 text-center">
+          <a href="/" class="text-sm text-text-secondary hover:text-text-primary">
+            ← Volver al inicio
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const form = document.getElementById('registroForm') as HTMLFormElement;
+  const nombreInput = document.getElementById('nombreEmpresa') as HTMLInputElement;
+  const emailInput = document.getElementById('email') as HTMLInputElement;
+  const passwordInput = document.getElementById('password') as HTMLInputElement;
+  const confirmPasswordInput = document.getElementById('confirmPassword') as HTMLInputElement;
+  const nombreError = document.getElementById('nombreError') as HTMLElement;
+  const emailError = document.getElementById('emailError') as HTMLElement;
+  const passwordError = document.getElementById('passwordError') as HTMLElement;
+  const confirmPasswordError = document.getElementById('confirmPasswordError') as HTMLElement;
+  const generalError = document.getElementById('generalError') as HTMLElement;
+  const generalErrorText = document.getElementById('generalErrorText') as HTMLElement;
+  const submitButton = document.getElementById('submitButton') as HTMLButtonElement;
+  const buttonText = document.getElementById('buttonText') as HTMLElement;
+  const buttonLoader = document.getElementById('buttonLoader') as HTMLElement;
+
+  // Validación de email
+  function validateEmail(email: string): boolean {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  }
+
+  // Mostrar error de campo
+  function showFieldError(element: HTMLElement, message: string) {
+    element.textContent = message;
+    element.classList.remove('hidden');
+  }
+
+  // Ocultar error de campo
+  function hideFieldError(element: HTMLElement) {
+    element.classList.add('hidden');
+  }
+
+  // Mostrar error general
+  function showGeneralError(message: string) {
+    generalErrorText.textContent = message;
+    generalError.classList.remove('hidden');
+  }
+
+  // Ocultar error general
+  function hideGeneralError() {
+    generalError.classList.add('hidden');
+  }
+
+  // Validación en tiempo real - Nombre empresa
+  nombreInput.addEventListener('blur', () => {
+    if (nombreInput.value.trim().length < 2) {
+      showFieldError(nombreError, 'El nombre debe tener al menos 2 caracteres');
+    } else {
+      hideFieldError(nombreError);
+    }
+  });
+
+  // Validación en tiempo real - Email
+  emailInput.addEventListener('blur', () => {
+    if (emailInput.value && !validateEmail(emailInput.value)) {
+      showFieldError(emailError, 'Email inválido');
+    } else {
+      hideFieldError(emailError);
+    }
+  });
+
+  // Validación en tiempo real - Contraseña
+  passwordInput.addEventListener('input', () => {
+    if (passwordInput.value.length > 0 && passwordInput.value.length < 6) {
+      showFieldError(passwordError, 'La contraseña debe tener al menos 6 caracteres');
+    } else {
+      hideFieldError(passwordError);
+    }
+
+    // Verificar coincidencia si ya se escribió la confirmación
+    if (confirmPasswordInput.value) {
+      if (passwordInput.value !== confirmPasswordInput.value) {
+        showFieldError(confirmPasswordError, 'Las contraseñas no coinciden');
+      } else {
+        hideFieldError(confirmPasswordError);
+      }
+    }
+  });
+
+  // Validación en tiempo real - Confirmar contraseña
+  confirmPasswordInput.addEventListener('input', () => {
+    if (confirmPasswordInput.value !== passwordInput.value) {
+      showFieldError(confirmPasswordError, 'Las contraseñas no coinciden');
+    } else {
+      hideFieldError(confirmPasswordError);
+    }
+  });
+
+  // Submit del formulario
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideGeneralError();
+
+    const nombreEmpresa = nombreInput.value.trim();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
+
+    // Validaciones
+    let hasError = false;
+
+    if (nombreEmpresa.length < 2) {
+      showFieldError(nombreError, 'El nombre debe tener al menos 2 caracteres');
+      hasError = true;
+    } else {
+      hideFieldError(nombreError);
+    }
+
+    if (!validateEmail(email)) {
+      showFieldError(emailError, 'Email inválido');
+      hasError = true;
+    } else {
+      hideFieldError(emailError);
+    }
+
+    if (password.length < 6) {
+      showFieldError(passwordError, 'La contraseña debe tener al menos 6 caracteres');
+      hasError = true;
+    } else {
+      hideFieldError(passwordError);
+    }
+
+    if (password !== confirmPassword) {
+      showFieldError(confirmPasswordError, 'Las contraseñas no coinciden');
+      hasError = true;
+    } else {
+      hideFieldError(confirmPasswordError);
+    }
+
+    if (hasError) return;
+
+    // Deshabilitar botón y mostrar loader
+    submitButton.disabled = true;
+    buttonText.classList.add('hidden');
+    buttonLoader.classList.remove('hidden');
+
+    try {
+      const response = await fetch('/api/auth/registro', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, nombreEmpresa }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showGeneralError(data.error || 'Error al crear la cuenta');
+        return;
+      }
+
+      // Redireccionar al dashboard
+      window.location.href = '/empleador/dashboard';
+    } catch (error) {
+      console.error('Error:', error);
+      showGeneralError('Error de conexión. Por favor, intenta nuevamente.');
+    } finally {
+      submitButton.disabled = false;
+      buttonText.classList.remove('hidden');
+      buttonLoader.classList.add('hidden');
+    }
+  });
+</script>
