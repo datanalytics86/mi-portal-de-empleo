@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { getSession, getEmpleadorProfile } from '../../lib/auth';
+import { supabaseServer } from '../../lib/supabase';
 
 export const prerender = false;
 
@@ -12,6 +13,33 @@ const empleador = await getEmpleadorProfile(Astro.cookies);
 if (!user || !empleador) {
   return Astro.redirect('/empleador/login');
 }
+
+// Obtener ofertas del empleador con conteo de postulaciones
+const { data: ofertas, error } = await supabaseServer
+  .from('ofertas')
+  .select(`
+    *,
+    postulaciones:postulaciones(count)
+  `)
+  .eq('empleador_id', empleador.id)
+  .order('created_at', { ascending: false });
+
+if (error) {
+  console.error('Error al obtener ofertas:', error);
+}
+
+// Procesar datos para mostrar
+const ofertasConPostulaciones = ofertas?.map(oferta => {
+  const postulacionesCount = oferta.postulaciones?.[0]?.count || 0;
+  const isExpired = new Date(oferta.expires_at) < new Date();
+
+  return {
+    ...oferta,
+    postulaciones_count: postulacionesCount,
+    is_expired: isExpired,
+    status: !oferta.activa ? 'Desactivada' : isExpired ? 'Expirada' : 'Activa',
+  };
+}) || [];
 ---
 
 <Layout title="Dashboard - Portal de Empleos">
@@ -28,111 +56,219 @@ if (!user || !empleador) {
               {empleador.nombre_empresa}
             </p>
           </div>
-          <button
-            id="logoutButton"
-            class="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface transition"
-          >
-            Cerrar Sesión
-          </button>
+          <div class="flex items-center gap-3">
+            <a
+              href="/"
+              class="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface transition"
+            >
+              Ver Portal
+            </a>
+            <button
+              id="logoutButton"
+              class="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface transition"
+            >
+              Cerrar Sesión
+            </button>
+          </div>
         </div>
       </div>
     </header>
 
     <!-- Contenido Principal -->
     <main class="container mx-auto px-4 py-8">
-      <div class="max-w-4xl mx-auto">
-        <!-- Mensaje de Bienvenida -->
-        <div class="bg-white rounded-lg shadow-sm border border-border p-8 mb-8">
-          <div class="text-center">
-            <div class="mb-4">
-              <svg class="w-16 h-16 mx-auto text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <!-- Header con botón nueva oferta -->
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-semibold text-text-primary">
+            Mis Ofertas de Empleo
+          </h2>
+          <p class="text-sm text-text-secondary mt-1">
+            Gestiona tus publicaciones y revisa postulaciones
+          </p>
+        </div>
+        <a
+          href="/empleador/oferta/nueva"
+          class="px-6 py-3 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg transition inline-flex items-center gap-2"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          Nueva Oferta
+        </a>
+      </div>
+
+      <!-- Estadísticas rápidas -->
+      <div class="grid md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-sm border border-border p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-text-secondary">Total Ofertas</p>
+              <p class="text-3xl font-semibold text-text-primary mt-2">
+                {ofertasConPostulaciones.length}
+              </p>
+            </div>
+            <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-border p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-text-secondary">Ofertas Activas</p>
+              <p class="text-3xl font-semibold text-success mt-2">
+                {ofertasConPostulaciones.filter(o => o.status === 'Activa').length}
+              </p>
+            </div>
+            <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
             </div>
-            <h2 class="text-2xl font-semibold text-text-primary mb-2">
-              ¡Autenticación Exitosa!
-            </h2>
-            <p class="text-text-secondary mb-4">
-              Has iniciado sesión correctamente como <strong>{empleador.email}</strong>
-            </p>
-            <div class="inline-block px-4 py-2 bg-blue-50 text-accent rounded-lg">
-              <p class="text-sm font-medium">
-                Dashboard completo disponible en Paso 6
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-border p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-text-secondary">Total Postulaciones</p>
+              <p class="text-3xl font-semibold text-text-primary mt-2">
+                {ofertasConPostulaciones.reduce((sum, o) => sum + o.postulaciones_count, 0)}
               </p>
+            </div>
+            <div class="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+              </svg>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Información del Sistema -->
-        <div class="grid md:grid-cols-2 gap-6">
-          <!-- Card: Información de Cuenta -->
-          <div class="bg-white rounded-lg shadow-sm border border-border p-6">
-            <h3 class="text-lg font-semibold text-text-primary mb-4">
-              Información de Cuenta
+      <!-- Tabla de ofertas -->
+      <div class="bg-white rounded-lg shadow-sm border border-border overflow-hidden">
+        {ofertasConPostulaciones.length === 0 ? (
+          <div class="p-12 text-center">
+            <svg class="w-16 h-16 mx-auto text-text-secondary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <h3 class="text-lg font-semibold text-text-primary mb-2">
+              No tienes ofertas publicadas
             </h3>
-            <dl class="space-y-3">
-              <div>
-                <dt class="text-sm text-text-secondary">Empresa</dt>
-                <dd class="text-base text-text-primary font-medium">{empleador.nombre_empresa}</dd>
-              </div>
-              <div>
-                <dt class="text-sm text-text-secondary">Email</dt>
-                <dd class="text-base text-text-primary font-medium">{empleador.email}</dd>
-              </div>
-              <div>
-                <dt class="text-sm text-text-secondary">ID de Usuario</dt>
-                <dd class="text-xs text-text-secondary font-mono">{empleador.id}</dd>
-              </div>
-            </dl>
+            <p class="text-text-secondary mb-6">
+              Comienza creando tu primera oferta de empleo
+            </p>
+            <a
+              href="/empleador/oferta/nueva"
+              class="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg transition"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              Crear Primera Oferta
+            </a>
           </div>
-
-          <!-- Card: Próximas Funcionalidades -->
-          <div class="bg-white rounded-lg shadow-sm border border-border p-6">
-            <h3 class="text-lg font-semibold text-text-primary mb-4">
-              Próximas Funcionalidades
-            </h3>
-            <ul class="space-y-2">
-              <li class="flex items-start gap-2">
-                <span class="text-accent mt-1">•</span>
-                <span class="text-sm text-text-secondary">Publicar nuevas ofertas de empleo</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-accent mt-1">•</span>
-                <span class="text-sm text-text-secondary">Ver y gestionar ofertas activas</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-accent mt-1">•</span>
-                <span class="text-sm text-text-secondary">Revisar postulaciones recibidas</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-accent mt-1">•</span>
-                <span class="text-sm text-text-secondary">Descargar CVs de candidatos</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-accent mt-1">•</span>
-                <span class="text-sm text-text-secondary">Editar y desactivar ofertas</span>
-              </li>
-            </ul>
+        ) : (
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-surface border-b border-border">
+                <tr>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                    Título
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                    Comuna
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                    Fecha
+                  </th>
+                  <th class="px-6 py-4 text-center text-xs font-medium text-text-secondary uppercase tracking-wider">
+                    Postulaciones
+                  </th>
+                  <th class="px-6 py-4 text-center text-xs font-medium text-text-secondary uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th class="px-6 py-4 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                {ofertasConPostulaciones.map((oferta) => (
+                  <tr class="hover:bg-surface transition">
+                    <td class="px-6 py-4">
+                      <div>
+                        <p class="font-medium text-text-primary">{oferta.titulo}</p>
+                        <p class="text-sm text-text-secondary">{oferta.tipo_jornada}</p>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-text-secondary">
+                      {oferta.comuna}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-text-secondary">
+                      {new Date(oferta.created_at).toLocaleDateString('es-CL')}
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-700">
+                        {oferta.postulaciones_count}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      {oferta.status === 'Activa' ? (
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+                          Activa
+                        </span>
+                      ) : oferta.status === 'Expirada' ? (
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-700">
+                          Expirada
+                        </span>
+                      ) : (
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                          Desactivada
+                        </span>
+                      )}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                      <div class="flex items-center justify-end gap-2">
+                        <a
+                          href={`/empleador/oferta/${oferta.id}/postulaciones`}
+                          class="px-3 py-1.5 text-sm font-medium text-accent hover:text-accent-hover hover:bg-blue-50 rounded transition"
+                          title="Ver postulaciones"
+                        >
+                          Ver Postulaciones
+                        </a>
+                        <button
+                          class="toggle-oferta px-3 py-1.5 text-sm font-medium rounded transition"
+                          class:list={[
+                            oferta.activa
+                              ? 'text-text-secondary hover:text-error hover:bg-red-50'
+                              : 'text-success hover:bg-green-50'
+                          ]}
+                          data-oferta-id={oferta.id}
+                          data-activa={oferta.activa}
+                          title={oferta.activa ? 'Desactivar' : 'Activar'}
+                        >
+                          {oferta.activa ? 'Desactivar' : 'Activar'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-
-        <!-- Acciones Rápidas -->
-        <div class="mt-8 flex gap-4 justify-center">
-          <a
-            href="/"
-            class="px-6 py-3 text-sm font-medium text-text-secondary border border-border rounded-lg hover:bg-surface transition"
-          >
-            Ver Portal Público
-          </a>
-        </div>
+        )}
       </div>
     </main>
   </div>
 </Layout>
 
 <script>
+  // Logout
   const logoutButton = document.getElementById('logoutButton');
-
   if (logoutButton) {
     logoutButton.addEventListener('click', async () => {
       try {
@@ -143,13 +279,49 @@ if (!user || !empleador) {
         if (response.ok) {
           window.location.href = '/empleador/login';
         } else {
-          console.error('Error al cerrar sesión');
-          alert('Error al cerrar sesión. Por favor, intenta nuevamente.');
+          alert('Error al cerrar sesión');
         }
       } catch (error) {
         console.error('Error:', error);
-        alert('Error de conexión. Por favor, intenta nuevamente.');
+        alert('Error de conexión');
       }
     });
   }
+
+  // Toggle ofertas (activar/desactivar)
+  const toggleButtons = document.querySelectorAll('.toggle-oferta');
+  toggleButtons.forEach((button) => {
+    button.addEventListener('click', async (e) => {
+      const target = e.target as HTMLButtonElement;
+      const ofertaId = target.dataset.ofertaId;
+      const activa = target.dataset.activa === 'true';
+
+      const confirmMessage = activa
+        ? '¿Desactivar esta oferta? No aparecerá en búsquedas públicas.'
+        : '¿Activar esta oferta? Volverá a aparecer en búsquedas públicas.';
+
+      if (!confirm(confirmMessage)) return;
+
+      try {
+        target.disabled = true;
+        target.textContent = 'Procesando...';
+
+        const response = await fetch(`/api/ofertas/${ofertaId}/toggle`, {
+          method: 'POST',
+        });
+
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          const data = await response.json();
+          alert(data.error || 'Error al cambiar estado');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error de conexión');
+      } finally {
+        target.disabled = false;
+      }
+    });
+  });
 </script>

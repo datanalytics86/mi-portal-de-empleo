@@ -1,0 +1,390 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getSession, getEmpleadorProfile } from '../../../lib/auth';
+import { getRegiones, getComunasByRegion } from '../../../lib/comunas';
+
+export const prerender = false;
+
+// Obtener sesión y perfil
+const { user } = await getSession(Astro.cookies);
+const empleador = await getEmpleadorProfile(Astro.cookies);
+
+// Si no hay sesión, el middleware redirigirá
+if (!user || !empleador) {
+  return Astro.redirect('/empleador/login');
+}
+
+// Obtener regiones y comunas para los selectores
+const regiones = getRegiones();
+
+// Fecha mínima (hoy) y máxima (90 días) para el campo de expiración
+const hoy = new Date().toISOString().split('T')[0];
+const maxFecha = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+const defaultExpiracion = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+---
+
+<Layout title="Nueva Oferta - Portal de Empleos">
+  <div class="min-h-screen bg-surface">
+    <!-- Header -->
+    <header class="bg-white border-b border-border">
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-semibold text-text-primary">
+              Nueva Oferta de Empleo
+            </h1>
+            <p class="text-sm text-text-secondary mt-1">
+              {empleador.nombre_empresa}
+            </p>
+          </div>
+          <a
+            href="/empleador/dashboard"
+            class="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface transition"
+          >
+            ← Volver al Dashboard
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Formulario -->
+    <main class="container mx-auto px-4 py-8">
+      <div class="max-w-3xl mx-auto">
+        <div class="bg-white rounded-lg shadow-sm border border-border p-8">
+          <form id="ofertaForm" class="space-y-6">
+            <!-- Título -->
+            <div>
+              <label for="titulo" class="block text-sm font-medium text-text-primary mb-2">
+                Título de la Oferta <span class="text-error">*</span>
+              </label>
+              <input
+                type="text"
+                id="titulo"
+                name="titulo"
+                required
+                maxlength="100"
+                class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
+                placeholder="Ej: Desarrollador Full Stack"
+              />
+              <p id="tituloError" class="text-sm text-error mt-1 hidden"></p>
+            </div>
+
+            <!-- Descripción -->
+            <div>
+              <label for="descripcion" class="block text-sm font-medium text-text-primary mb-2">
+                Descripción <span class="text-error">*</span>
+              </label>
+              <textarea
+                id="descripcion"
+                name="descripcion"
+                required
+                maxlength="2000"
+                rows="8"
+                class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition resize-y"
+                placeholder="Describe las responsabilidades, requisitos y beneficios del cargo..."
+              ></textarea>
+              <div class="flex justify-between items-center mt-1">
+                <p id="descripcionError" class="text-sm text-error hidden"></p>
+                <p class="text-sm text-text-secondary">
+                  <span id="charCount">0</span>/2000 caracteres
+                </p>
+              </div>
+            </div>
+
+            <!-- Empresa -->
+            <div>
+              <label for="empresa" class="block text-sm font-medium text-text-primary mb-2">
+                Nombre de la Empresa <span class="text-error">*</span>
+              </label>
+              <input
+                type="text"
+                id="empresa"
+                name="empresa"
+                required
+                maxlength="100"
+                value={empleador.nombre_empresa}
+                class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
+              />
+              <p id="empresaError" class="text-sm text-error mt-1 hidden"></p>
+            </div>
+
+            <!-- Tipo de Jornada y Categoría (2 columnas) -->
+            <div class="grid md:grid-cols-2 gap-6">
+              <!-- Tipo de Jornada -->
+              <div>
+                <label for="tipoJornada" class="block text-sm font-medium text-text-primary mb-2">
+                  Tipo de Jornada <span class="text-error">*</span>
+                </label>
+                <select
+                  id="tipoJornada"
+                  name="tipoJornada"
+                  required
+                  class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
+                >
+                  <option value="">Seleccionar...</option>
+                  <option value="Full-time">Full-time</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Freelance">Freelance</option>
+                  <option value="Práctica">Práctica</option>
+                </select>
+                <p id="tipoJornadaError" class="text-sm text-error mt-1 hidden"></p>
+              </div>
+
+              <!-- Categoría -->
+              <div>
+                <label for="categoria" class="block text-sm font-medium text-text-primary mb-2">
+                  Categoría (Opcional)
+                </label>
+                <select
+                  id="categoria"
+                  name="categoria"
+                  class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
+                >
+                  <option value="">Sin categoría</option>
+                  <option value="Tecnología">Tecnología</option>
+                  <option value="Ventas">Ventas</option>
+                  <option value="Administración">Administración</option>
+                  <option value="Educación">Educación</option>
+                  <option value="Salud">Salud</option>
+                  <option value="Construcción">Construcción</option>
+                  <option value="Gastronomía">Gastronomía</option>
+                  <option value="Turismo">Turismo</option>
+                  <option value="Logística">Logística</option>
+                  <option value="Retail">Retail</option>
+                  <option value="Otros">Otros</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Región y Comuna (2 columnas) -->
+            <div class="grid md:grid-cols-2 gap-6">
+              <!-- Región -->
+              <div>
+                <label for="region" class="block text-sm font-medium text-text-primary mb-2">
+                  Región <span class="text-error">*</span>
+                </label>
+                <select
+                  id="region"
+                  name="region"
+                  required
+                  class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
+                >
+                  <option value="">Seleccionar región...</option>
+                  {regiones.map(region => (
+                    <option value={region}>{region}</option>
+                  ))}
+                </select>
+                <p id="regionError" class="text-sm text-error mt-1 hidden"></p>
+              </div>
+
+              <!-- Comuna -->
+              <div>
+                <label for="comuna" class="block text-sm font-medium text-text-primary mb-2">
+                  Comuna <span class="text-error">*</span>
+                </label>
+                <select
+                  id="comuna"
+                  name="comuna"
+                  required
+                  disabled
+                  class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition disabled:bg-gray-50 disabled:text-gray-500"
+                >
+                  <option value="">Primero selecciona una región</option>
+                </select>
+                <p id="comunaError" class="text-sm text-error mt-1 hidden"></p>
+              </div>
+            </div>
+
+            <!-- Fecha de Expiración -->
+            <div>
+              <label for="expiresAt" class="block text-sm font-medium text-text-primary mb-2">
+                Fecha de Expiración <span class="text-error">*</span>
+              </label>
+              <input
+                type="date"
+                id="expiresAt"
+                name="expiresAt"
+                required
+                min={hoy}
+                max={maxFecha}
+                value={defaultExpiracion}
+                class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
+              />
+              <p class="text-sm text-text-secondary mt-1">
+                La oferta estará activa hasta esta fecha (máximo 90 días)
+              </p>
+              <p id="expiresAtError" class="text-sm text-error mt-1 hidden"></p>
+            </div>
+
+            <!-- Error general -->
+            <div id="generalError" class="hidden">
+              <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p class="text-sm text-error" id="generalErrorText"></p>
+              </div>
+            </div>
+
+            <!-- Success message -->
+            <div id="successMessage" class="hidden">
+              <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p class="text-sm text-success">
+                  ✓ Oferta publicada exitosamente. Redirigiendo...
+                </p>
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex gap-4 pt-4">
+              <button
+                type="submit"
+                id="submitButton"
+                class="flex-1 bg-accent hover:bg-accent-hover text-white font-medium py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span id="buttonText">Publicar Oferta</span>
+                <span id="buttonLoader" class="hidden">Publicando...</span>
+              </button>
+              <a
+                href="/empleador/dashboard"
+                class="px-6 py-3 text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface transition font-medium"
+              >
+                Cancelar
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<script define:vars={{ regiones }} is:inline>
+  // Importar comunas desde módulo
+  import { getComunasByRegion } from '../../../lib/comunas';
+
+  const form = document.getElementById('ofertaForm');
+  const tituloInput = document.getElementById('titulo');
+  const descripcionInput = document.getElementById('descripcion');
+  const empresaInput = document.getElementById('empresa');
+  const tipoJornadaSelect = document.getElementById('tipoJornada');
+  const regionSelect = document.getElementById('region');
+  const comunaSelect = document.getElementById('comuna');
+  const expiresAtInput = document.getElementById('expiresAt');
+  const charCount = document.getElementById('charCount');
+
+  const generalError = document.getElementById('generalError');
+  const generalErrorText = document.getElementById('generalErrorText');
+  const successMessage = document.getElementById('successMessage');
+  const submitButton = document.getElementById('submitButton');
+  const buttonText = document.getElementById('buttonText');
+  const buttonLoader = document.getElementById('buttonLoader');
+
+  // Contador de caracteres para descripción
+  descripcionInput.addEventListener('input', () => {
+    charCount.textContent = descripcionInput.value.length.toString();
+  });
+
+  // Actualizar comunas cuando se selecciona una región
+  regionSelect.addEventListener('change', () => {
+    const regionSeleccionada = regionSelect.value;
+
+    if (!regionSeleccionada) {
+      comunaSelect.disabled = true;
+      comunaSelect.innerHTML = '<option value="">Primero selecciona una región</option>';
+      return;
+    }
+
+    const comunas = getComunasByRegion(regionSeleccionada);
+
+    comunaSelect.disabled = false;
+    comunaSelect.innerHTML = '<option value="">Seleccionar comuna...</option>';
+
+    comunas.forEach(comuna => {
+      const option = document.createElement('option');
+      option.value = comuna.nombre;
+      option.textContent = comuna.nombre;
+      comunaSelect.appendChild(option);
+    });
+  });
+
+  // Mostrar error general
+  function showGeneralError(message) {
+    generalErrorText.textContent = message;
+    generalError.classList.remove('hidden');
+    successMessage.classList.add('hidden');
+  }
+
+  // Ocultar error general
+  function hideGeneralError() {
+    generalError.classList.add('hidden');
+  }
+
+  // Submit del formulario
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideGeneralError();
+
+    // Obtener valores
+    const titulo = tituloInput.value.trim();
+    const descripcion = descripcionInput.value.trim();
+    const empresa = empresaInput.value.trim();
+    const tipoJornada = tipoJornadaSelect.value;
+    const categoria = document.getElementById('categoria').value || null;
+    const comuna = comunaSelect.value;
+    const expiresAt = expiresAtInput.value;
+
+    // Validaciones básicas
+    if (!titulo || !descripcion || !empresa || !tipoJornada || !comuna || !expiresAt) {
+      showGeneralError('Por favor completa todos los campos requeridos');
+      return;
+    }
+
+    if (descripcion.length < 50) {
+      showGeneralError('La descripción debe tener al menos 50 caracteres');
+      return;
+    }
+
+    // Deshabilitar botón y mostrar loader
+    submitButton.disabled = true;
+    buttonText.classList.add('hidden');
+    buttonLoader.classList.remove('hidden');
+
+    try {
+      const response = await fetch('/api/ofertas/crear', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          titulo,
+          descripcion,
+          empresa,
+          tipo_jornada: tipoJornada,
+          categoria,
+          comuna,
+          expires_at: expiresAt,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showGeneralError(data.error || 'Error al crear la oferta');
+        return;
+      }
+
+      // Mostrar mensaje de éxito
+      successMessage.classList.remove('hidden');
+
+      // Redireccionar al dashboard después de 1.5 segundos
+      setTimeout(() => {
+        window.location.href = '/empleador/dashboard';
+      }, 1500);
+    } catch (error) {
+      console.error('Error:', error);
+      showGeneralError('Error de conexión. Por favor, intenta nuevamente.');
+    } finally {
+      submitButton.disabled = false;
+      buttonText.classList.remove('hidden');
+      buttonLoader.classList.add('hidden');
+    }
+  });
+</script>
