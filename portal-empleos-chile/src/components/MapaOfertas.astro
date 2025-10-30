@@ -1,0 +1,130 @@
+---
+/**
+ * Componente MapaOfertas
+ *
+ * Mapa interactivo con Leaflet que muestra ofertas de trabajo georeferenciadas
+ * Basado en SPECIFICATIONS.md sección 12
+ */
+
+import 'leaflet/dist/leaflet.css';
+
+interface Oferta {
+  id: string;
+  titulo: string;
+  empresa: string;
+  comuna: string;
+  lat: number;
+  lng: number;
+}
+
+interface Props {
+  ofertas: Oferta[];
+  centerLat?: number;
+  centerLng?: number;
+  zoom?: number;
+}
+
+const {
+  ofertas,
+  centerLat = -33.4489,  // Santiago de Chile
+  centerLng = -70.6693,
+  zoom = 12
+} = Astro.props;
+---
+
+<div id="mapa" class="h-[400px] md:h-[500px] rounded-lg shadow-sm border border-border"></div>
+
+<script define:vars={{ ofertas, centerLat, centerLng, zoom }}>
+  // Importar Leaflet dinámicamente para evitar problemas con SSR
+  (async () => {
+    const L = await import('leaflet');
+
+    // Fix para iconos de Leaflet (problema conocido con bundlers)
+    // @ts-ignore
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    });
+
+    // Inicializar mapa
+    const mapa = L.map('mapa').setView([centerLat, centerLng], zoom);
+
+    // Agregar tiles de OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+      minZoom: 5
+    }).addTo(mapa);
+
+    // Icono personalizado para marcadores (opcional)
+    const iconoOferta = L.icon({
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+
+    // Agregar marcadores para cada oferta
+    const markers = [];
+    ofertas.forEach(oferta => {
+      const marker = L.marker([oferta.lat, oferta.lng], { icon: iconoOferta })
+        .addTo(mapa);
+
+      // Popup con información de la oferta
+      const popupContent = `
+        <div class="p-2 min-w-[200px]">
+          <h4 class="font-semibold text-base text-gray-900 mb-1">${oferta.titulo}</h4>
+          <p class="text-sm text-gray-600 mb-1">${oferta.empresa}</p>
+          <p class="text-xs text-gray-500 mb-2">📍 ${oferta.comuna}</p>
+          <a
+            href="/oferta/${oferta.id}"
+            class="inline-block text-sm text-blue-600 hover:text-blue-800 font-medium transition"
+          >
+            Ver detalles →
+          </a>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+      markers.push(marker);
+    });
+
+    // Ajustar vista para mostrar todos los marcadores
+    if (markers.length > 0 && ofertas.length > 1) {
+      const group = L.featureGroup(markers);
+      mapa.fitBounds(group.getBounds().pad(0.1));
+    }
+
+    // Invalidar tamaño del mapa después de cargar (fix para contenedores dinámicos)
+    setTimeout(() => {
+      mapa.invalidateSize();
+    }, 100);
+  })();
+</script>
+
+<style>
+  /* Estilos adicionales para el mapa */
+  #mapa {
+    z-index: 1;
+  }
+
+  /* Personalizar popup de Leaflet */
+  :global(.leaflet-popup-content-wrapper) {
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  :global(.leaflet-popup-tip) {
+    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Asegurar que el mapa sea responsive */
+  #mapa {
+    width: 100%;
+  }
+</style>

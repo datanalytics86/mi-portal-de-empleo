@@ -1,0 +1,166 @@
+---
+/**
+ * Layout base para Portal de Empleos Chile
+ *
+ * Proporciona estructura común: header, footer, meta tags, estilos
+ * Basado en SPECIFICATIONS.md secciones 6.1 y 4
+ */
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Portal de Empleos Chile - Encuentra trabajo cerca de ti',
+  description = 'Plataforma de empleos georeferenciada en Chile. Busca y postula a ofertas laborales sin registro. Mapa interactivo con ofertas de trabajo en todo Chile.'
+} = Astro.props;
+
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'http://localhost:4321';
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- SEO Meta Tags -->
+    <meta name="robots" content="index, follow" />
+    <meta name="keywords" content="empleos chile, trabajo chile, ofertas laborales, mapa empleos, postular trabajo" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={siteUrl} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:locale" content="es_CL" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+  </head>
+
+  <body class="min-h-screen flex flex-col bg-background text-text-primary">
+    <!-- Header -->
+    <header class="bg-white border-b border-border sticky top-0 z-50 shadow-sm">
+      <div class="container mx-auto px-4 md:px-8 py-4">
+        <nav class="flex items-center justify-between">
+          <!-- Logo -->
+          <a href="/" class="flex items-center gap-2 hover:opacity-80 transition">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="w-8 h-8 text-accent"
+            >
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <span class="text-xl font-semibold text-text-primary">
+              Portal de Empleos <span class="text-accent">Chile</span>
+            </span>
+          </a>
+
+          <!-- Navigation -->
+          <div class="flex items-center gap-4">
+            <a
+              href="/"
+              class="text-text-secondary hover:text-text-primary transition hidden sm:inline"
+            >
+              Buscar empleos
+            </a>
+            <a
+              href="/empleador/login"
+              class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition font-medium"
+            >
+              Empleadores
+            </a>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1">
+      <slot />
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface border-t border-border mt-12">
+      <div class="container mx-auto px-4 md:px-8 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <!-- Columna 1: Sobre el proyecto -->
+          <div>
+            <h3 class="font-semibold text-lg mb-3">Portal de Empleos Chile</h3>
+            <p class="text-text-secondary text-sm leading-relaxed">
+              Plataforma minimalista para conectar candidatos con ofertas laborales
+              en Chile mediante georeferenciación.
+            </p>
+          </div>
+
+          <!-- Columna 2: Enlaces -->
+          <div>
+            <h3 class="font-semibold text-lg mb-3">Enlaces</h3>
+            <ul class="space-y-2 text-sm">
+              <li>
+                <a href="/" class="text-text-secondary hover:text-accent transition">
+                  Buscar empleos
+                </a>
+              </li>
+              <li>
+                <a href="/empleador/registro" class="text-text-secondary hover:text-accent transition">
+                  Publicar oferta
+                </a>
+              </li>
+              <li>
+                <a href="/empleador/login" class="text-text-secondary hover:text-accent transition">
+                  Acceso empleadores
+                </a>
+              </li>
+              <li>
+                <a href="/privacidad" class="text-text-secondary hover:text-accent transition">
+                  Política de privacidad
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Columna 3: Contacto -->
+          <div>
+            <h3 class="font-semibold text-lg mb-3">Contacto</h3>
+            <p class="text-text-secondary text-sm">
+              ¿Preguntas o sugerencias?
+            </p>
+            <a
+              href="mailto:contacto@portalempleoschile.cl"
+              class="text-accent hover:text-accent-hover text-sm transition"
+            >
+              contacto@portalempleoschile.cl
+            </a>
+          </div>
+        </div>
+
+        <!-- Copyright -->
+        <div class="mt-8 pt-6 border-t border-border text-center text-sm text-text-secondary">
+          <p>
+            © {new Date().getFullYear()} Portal de Empleos Chile. Todos los derechos reservados.
+          </p>
+          <p class="mt-1">
+            Hecho en Chile 🇨🇱
+          </p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

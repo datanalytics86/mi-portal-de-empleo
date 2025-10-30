@@ -1,3 +1,6 @@
+/* Import Google Font Inter (must be first) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -36,6 +39,3 @@
     @apply text-xl md:text-2xl;
   }
 }
-
-/* Import Google Font Inter */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');

@@ -1,0 +1,109 @@
+---
+/**
+ * Componente OfertaCard
+ *
+ * Tarjeta de oferta de trabajo para listado
+ * Basado en SPECIFICATIONS.md sección 6.2
+ */
+
+interface Props {
+  id: string;
+  titulo: string;
+  empresa: string;
+  comuna: string;
+  tipo_jornada: 'Full-time' | 'Part-time' | 'Freelance' | 'Práctica';
+  created_at: string;
+  descripcion?: string;
+}
+
+const { id, titulo, empresa, comuna, tipo_jornada, created_at, descripcion } = Astro.props;
+
+// Calcular fecha relativa
+function getRelativeTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return 'Hace un momento';
+  if (diffInSeconds < 3600) return `Hace ${Math.floor(diffInSeconds / 60)} minutos`;
+  if (diffInSeconds < 86400) return `Hace ${Math.floor(diffInSeconds / 3600)} horas`;
+  if (diffInSeconds < 604800) return `Hace ${Math.floor(diffInSeconds / 86400)} días`;
+  if (diffInSeconds < 2592000) return `Hace ${Math.floor(diffInSeconds / 604800)} semanas`;
+  return `Hace ${Math.floor(diffInSeconds / 2592000)} meses`;
+}
+
+const fechaRelativa = getRelativeTime(created_at);
+
+// Colores para badges de tipo de jornada
+const tipoJornadaStyles = {
+  'Full-time': 'bg-blue-50 text-blue-700',
+  'Part-time': 'bg-green-50 text-green-700',
+  'Freelance': 'bg-purple-50 text-purple-700',
+  'Práctica': 'bg-orange-50 text-orange-700'
+};
+
+const badgeStyle = tipoJornadaStyles[tipo_jornada] || 'bg-gray-50 text-gray-700';
+---
+
+<a
+  href={`/oferta/${id}`}
+  class="block bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200"
+>
+  <article>
+    <!-- Título -->
+    <h3 class="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">
+      {titulo}
+    </h3>
+
+    <!-- Empresa -->
+    <p class="text-gray-600 mb-3 font-medium">
+      {empresa}
+    </p>
+
+    <!-- Comuna y Tipo de Jornada -->
+    <div class="flex items-center gap-4 mb-3 flex-wrap">
+      <span class="text-sm text-gray-500 flex items-center gap-1">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="w-4 h-4"
+        >
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        {comuna}
+      </span>
+
+      <span class={`px-2 py-1 ${badgeStyle} rounded text-xs font-medium`}>
+        {tipo_jornada}
+      </span>
+    </div>
+
+    <!-- Descripción (preview) -->
+    {descripcion && (
+      <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+        {descripcion}
+      </p>
+    )}
+
+    <!-- Fecha -->
+    <p class="text-sm text-gray-400">
+      {fechaRelativa}
+    </p>
+  </article>
+</a>
+
+<style>
+  /* Limitar líneas de texto con ellipsis */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>

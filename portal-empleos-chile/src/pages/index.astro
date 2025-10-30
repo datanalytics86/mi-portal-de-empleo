@@ -1,22 +1,259 @@
 ---
-// Página principal - Portal de Empleos Chile
+/**
+ * Página principal - Home
+ *
+ * Muestra mapa interactivo con ofertas de trabajo y lista filtrable
+ * Basado en SPECIFICATIONS.md sección 5.1
+ */
+
+import Layout from '../layouts/Layout.astro';
+import MapaOfertas from '../components/MapaOfertas.astro';
+import OfertaCard from '../components/OfertaCard.astro';
+import { supabase } from '../lib/supabase';
+import { findComuna } from '../lib/comunas';
+
+// Fetch ofertas activas desde Supabase
+const { data: ofertas, error } = await supabase
+  .from('ofertas')
+  .select('*')
+  .eq('activa', true)
+  .order('created_at', { ascending: false });
+
+// Transformar ofertas para el mapa (agregar coordenadas lat/lng)
+const ofertasConCoordenadas = (ofertas || []).map(oferta => {
+  const comuna = findComuna(oferta.comuna);
+  return {
+    ...oferta,
+    lat: comuna?.lat || -33.4489,  // Fallback a Santiago
+    lng: comuna?.lng || -70.6693
+  };
+}).filter(oferta => oferta.lat && oferta.lng);  // Solo ofertas con coordenadas válidas
+
+// Ofertas para el mapa (formato simplificado)
+const ofertasParaMapa = ofertasConCoordenadas.map(o => ({
+  id: o.id,
+  titulo: o.titulo,
+  empresa: o.empresa,
+  comuna: o.comuna,
+  lat: o.lat,
+  lng: o.lng
+}));
+
+const totalOfertas = ofertas?.length || 0;
 ---
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal de Empleos - Chile</title>
-</head>
-<body>
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-4xl font-bold text-center text-accent">
-      Portal de Empleos Georeferenciado
-    </h1>
-    <p class="text-center text-text-secondary mt-4">
-      Encuentra trabajo en Chile de forma rápida y sin registro
-    </p>
+<Layout>
+  <div class="container mx-auto px-4 md:px-8 py-8">
+    <!-- Hero Section -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold text-text-primary mb-3">
+        Encuentra tu próximo trabajo en Chile
+      </h1>
+      <p class="text-lg text-text-secondary max-w-2xl mx-auto">
+        Explora ofertas laborales georeferenciadas. Postula sin registro, solo sube tu CV.
+      </p>
+    </div>
+
+    <!-- Barra de búsqueda -->
+    <div class="mb-6">
+      <div class="max-w-3xl mx-auto">
+        <div class="relative">
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Buscar por título, empresa o comuna..."
+            class="w-full px-4 py-3 pl-12 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+          />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+          >
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+        </div>
+        <p class="text-sm text-text-secondary mt-2 text-center">
+          {totalOfertas} ofertas disponibles
+        </p>
+      </div>
+    </div>
+
+    <!-- Mapa -->
+    <div class="mb-12">
+      {ofertasParaMapa.length > 0 ? (
+        <MapaOfertas ofertas={ofertasParaMapa} />
+      ) : (
+        <div class="h-[400px] md:h-[500px] rounded-lg bg-surface border border-border flex items-center justify-center">
+          <p class="text-text-secondary">No hay ofertas para mostrar en el mapa</p>
+        </div>
+      )}
+    </div>
+
+    <!-- Filtros rápidos (próximamente) -->
+    <div class="mb-6 flex items-center gap-3 flex-wrap">
+      <span class="text-sm font-medium text-text-secondary">Tipo de jornada:</span>
+      <button
+        class="filter-btn px-3 py-1 rounded-full border border-border text-sm hover:bg-accent hover:text-white hover:border-accent transition"
+        data-filter="all"
+        data-active="true"
+      >
+        Todas
+      </button>
+      <button
+        class="filter-btn px-3 py-1 rounded-full border border-border text-sm hover:bg-accent hover:text-white hover:border-accent transition"
+        data-filter="Full-time"
+      >
+        Full-time
+      </button>
+      <button
+        class="filter-btn px-3 py-1 rounded-full border border-border text-sm hover:bg-accent hover:text-white hover:border-accent transition"
+        data-filter="Part-time"
+      >
+        Part-time
+      </button>
+      <button
+        class="filter-btn px-3 py-1 rounded-full border border-border text-sm hover:bg-accent hover:text-white hover:border-accent transition"
+        data-filter="Freelance"
+      >
+        Freelance
+      </button>
+      <button
+        class="filter-btn px-3 py-1 rounded-full border border-border text-sm hover:bg-accent hover:text-white hover:border-accent transition"
+        data-filter="Práctica"
+      >
+        Práctica
+      </button>
+    </div>
+
+    <!-- Grid de ofertas -->
+    {error && (
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <p class="text-red-800 text-sm">
+          Error al cargar ofertas: {error.message}
+        </p>
+      </div>
+    )}
+
+    {totalOfertas === 0 && !error && (
+      <div class="text-center py-12">
+        <p class="text-xl text-text-secondary mb-4">
+          No hay ofertas disponibles en este momento
+        </p>
+        <p class="text-text-secondary mb-6">
+          ¿Eres empleador? Publica la primera oferta
+        </p>
+        <a
+          href="/empleador/registro"
+          class="inline-block px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover transition font-medium"
+        >
+          Publicar oferta
+        </a>
+      </div>
+    )}
+
+    {totalOfertas > 0 && (
+      <div id="ofertas-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {ofertasConCoordenadas.map(oferta => (
+          <div
+            class="oferta-item"
+            data-titulo={oferta.titulo.toLowerCase()}
+            data-empresa={oferta.empresa.toLowerCase()}
+            data-comuna={oferta.comuna.toLowerCase()}
+            data-tipo={oferta.tipo_jornada}
+          >
+            <OfertaCard
+              id={oferta.id}
+              titulo={oferta.titulo}
+              empresa={oferta.empresa}
+              comuna={oferta.comuna}
+              tipo_jornada={oferta.tipo_jornada}
+              created_at={oferta.created_at}
+              descripcion={oferta.descripcion}
+            />
+          </div>
+        ))}
+      </div>
+    )}
+
+    <!-- Mensaje si no hay resultados filtrados -->
+    <div id="no-results" class="hidden text-center py-12">
+      <p class="text-xl text-text-secondary">
+        No se encontraron ofertas con esos criterios
+      </p>
+    </div>
   </div>
-</body>
-</html>
+</Layout>
+
+<script>
+  // Búsqueda en tiempo real
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const ofertasItems = document.querySelectorAll('.oferta-item');
+  const noResultsMessage = document.getElementById('no-results');
+  const filterButtons = document.querySelectorAll('.filter-btn');
+
+  let currentFilter = 'all';
+
+  function filterOfertas() {
+    const searchTerm = searchInput?.value.toLowerCase() || '';
+    let visibleCount = 0;
+
+    ofertasItems.forEach(item => {
+      const titulo = item.getAttribute('data-titulo') || '';
+      const empresa = item.getAttribute('data-empresa') || '';
+      const comuna = item.getAttribute('data-comuna') || '';
+      const tipo = item.getAttribute('data-tipo') || '';
+
+      const matchesSearch =
+        titulo.includes(searchTerm) ||
+        empresa.includes(searchTerm) ||
+        comuna.includes(searchTerm);
+
+      const matchesFilter = currentFilter === 'all' || tipo === currentFilter;
+
+      if (matchesSearch && matchesFilter) {
+        (item as HTMLElement).style.display = 'block';
+        visibleCount++;
+      } else {
+        (item as HTMLElement).style.display = 'none';
+      }
+    });
+
+    // Mostrar mensaje si no hay resultados
+    if (noResultsMessage) {
+      noResultsMessage.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+  }
+
+  // Event listener para búsqueda
+  searchInput?.addEventListener('input', filterOfertas);
+
+  // Event listeners para filtros
+  filterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      // Actualizar estado activo
+      filterButtons.forEach(btn => {
+        btn.removeAttribute('data-active');
+        btn.classList.remove('bg-accent', 'text-white', 'border-accent');
+      });
+      button.setAttribute('data-active', 'true');
+      button.classList.add('bg-accent', 'text-white', 'border-accent');
+
+      // Actualizar filtro actual
+      currentFilter = button.getAttribute('data-filter') || 'all';
+      filterOfertas();
+    });
+  });
+</script>
+
+<style>
+  /* Estilos para botones de filtro activos */
+  .filter-btn[data-active="true"] {
+    @apply bg-accent text-white border-accent;
+  }
+</style>
