@@ -16,9 +16,20 @@ mi-portal-de-empleo/
 
 ## 🚀 Deployment en Vercel
 
-### ⚠️ Si tienes error 404 en Vercel:
+### ⚠️ ERROR 404 EN VERCEL - SOLUCIÓN INMEDIATA
 
-**Lee el archivo:** [`VERCEL-404-FIX.md`](./VERCEL-404-FIX.md)
+**🔴 Si ves `404: NOT_FOUND` en Vercel:**
+
+**Lee este archivo AHORA:** [`SOLUCION-VERCEL-404.md`](./SOLUCION-VERCEL-404.md) ⭐
+
+**Causa:** Vercel está deployando desde la rama `main` que NO tiene el código.
+**Solución:** Cambiar Production Branch en Vercel (2 minutos).
+
+---
+
+### Si necesitas más troubleshooting:
+
+- [`VERCEL-404-FIX.md`](./VERCEL-404-FIX.md) - Guía detallada de troubleshooting
 
 ### Deployment rápido:
 
