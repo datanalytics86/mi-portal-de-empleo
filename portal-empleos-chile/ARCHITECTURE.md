@@ -1,170 +1,600 @@
-# Architecture Overview
-This document serves as a critical, living template designed to equip agents with a rapid and comprehensive understanding of the codebase's architecture, enabling efficient navigation and effective contribution from day one. Update this document as the codebase evolves.
+# Architecture Overview - Portal de Empleos Chile
+
+This document serves as a comprehensive guide to understanding the codebase architecture. It is designed to help developers quickly navigate the project, understand design decisions, and contribute effectively.
+
+**Project Status:** ✅ MVP Complete (Pasos 1-6 implemented)
+**Total Lines of Code:** ~6,780 lines
+**Stack:** Astro 5.x (SSR) + Supabase + Tailwind CSS + Leaflet
+
+---
 
 ## 1. Project Structure
-This section provides a high-level overview of the project's directory and file structure, categorised by architectural layer or major functional area. It is essential for quickly navigating the codebase, locating relevant files, and understanding the overall organization and separation of concerns.
 
+The project follows Astro's file-based routing convention with SSR (Server-Side Rendering) enabled.
 
-[Project Root]/
-├── backend/              # Contains all server-side code and APIs
-│   ├── src/              # Main source code for backend services
-│   │   ├── api/          # API endpoints and controllers
-│   │   ├── client/       # Business logic and service implementations
-│   │   ├── models/       # Database models/schemas
-│   │   └── utils/        # Backend utility functions
-│   ├── config/           # Backend configuration files
-│   ├── tests/            # Backend unit and integration tests
-│   └── Dockerfile        # Dockerfile for backend deployment
-├── frontend/             # Contains all client-side code for user interfaces
-│   ├── src/              # Main source code for frontend applications
-│   │   ├── components/   # Reusable UI components
-│   │   ├── pages/        # Application pages/views
-│   │   ├── assets/       # Images, fonts, and other static assets
-│   │   ├── services/     # Frontend services for API interaction
-│   │   └── store/        # State management (e.g., Redux, Vuex, Context API)
-│   ├── public/           # Publicly accessible assets (e.g., index.html)
-│   ├── tests/            # Frontend unit and E2E tests
-│   └── package.json      # Frontend dependencies and scripts
-├── common/               # Shared code, types, and utilities used by both frontend and backend
-│   ├── types/            # Shared TypeScript/interface definitions
-│   └── utils/            # General utility functions
-├── docs/                 # Project documentation (e.g., API docs, setup guides)
-├── scripts/              # Automation scripts (e.g., deployment, data seeding)
-├── .github/              # GitHub Actions or other CI/CD configurations
-├── .gitignore            # Specifies intentionally untracked files to ignore
-├── README.md             # Project overview and quick start guide
-└── ARCHITECTURE.md       # This document
+```
+portal-empleos-chile/
+├── public/                          # Static assets (favicon, etc.)
+├── src/
+│   ├── components/                  # Reusable Astro components
+│   │   ├── FormularioPostulacion.astro  # CV upload form (484 lines)
+│   │   ├── MapaOfertas.astro            # Leaflet map component (130 lines)
+│   │   └── OfertaCard.astro             # Job card component (109 lines)
+│   │
+│   ├── layouts/
+│   │   └── Layout.astro             # Base layout with header/footer (166 lines)
+│   │
+│   ├── pages/                       # File-based routing
+│   │   ├── index.astro              # Home page with map + job list (259 lines)
+│   │   ├── privacidad.astro         # Privacy policy (309 lines)
+│   │   │
+│   │   ├── oferta/
+│   │   │   └── [id].astro           # Job detail + application form (301 lines)
+│   │   │
+│   │   ├── empleador/               # Employer-only pages (protected)
+│   │   │   ├── login.astro          # Login page (219 lines)
+│   │   │   ├── registro.astro       # Registration page (301 lines)
+│   │   │   ├── dashboard.astro      # Dashboard with job table (327 lines)
+│   │   │   └── oferta/
+│   │   │       ├── nueva.astro      # Create job form (390 lines)
+│   │   │       └── [id]/postulaciones.astro # View applications (304 lines)
+│   │   │
+│   │   └── api/                     # API endpoints (SSR)
+│   │       ├── postular.ts          # Submit application (282 lines)
+│   │       ├── auth/
+│   │       │   ├── login.ts         # Login endpoint (96 lines)
+│   │       │   ├── registro.ts      # Registration endpoint (121 lines)
+│   │       │   └── logout.ts        # Logout endpoint (40 lines)
+│   │       └── ofertas/
+│   │           ├── crear.ts         # Create job endpoint (127 lines)
+│   │           └── [id]/
+│   │               ├── toggle.ts    # Toggle job active status (78 lines)
+│   │               └── cv-download.ts # Generate signed CV URL (98 lines)
+│   │
+│   ├── lib/                         # Utility libraries and configurations
+│   │   ├── supabase.ts              # Supabase client config (159 lines)
+│   │   ├── auth.ts                  # Auth helpers and session management (122 lines)
+│   │   ├── comunas.ts               # 150+ Chilean communes with coordinates (214 lines)
+│   │   └── validations.ts           # Zod schemas and validation functions (253 lines)
+│   │
+│   ├── styles/
+│   │   └── global.css               # Global styles + Tailwind imports
+│   │
+│   └── middleware.ts                # Route protection middleware (29 lines)
+│
+├── astro.config.mjs                 # Astro configuration (SSR + Node adapter)
+├── tailwind.config.mjs              # Tailwind custom config
+├── tsconfig.json                    # TypeScript strict mode
+├── package.json                     # Dependencies and scripts
+├── supabase-schema.sql              # Database setup script (340 lines)
+├── SUPABASE_SETUP.md                # Supabase configuration guide (290 lines)
+├── SPECIFICATIONS.md                # Complete project specifications (18,720 bytes)
+├── README.md                        # Setup and deployment guide
+├── vercel.json                      # Vercel deployment config
+└── .env.example                     # Environment variables template
+```
 
+---
 
+## 2. High-Level System Architecture
 
-## 2. High-Level System Diagram
-Provide a simple block diagram (e.g., a C4 Model Level 1: System Context diagram, or a basic component diagram) or a clear text-based description of the major components and their interactions. Focus on how data flows, services communicate, and key architectural boundaries.
+### System Context Diagram
 
-[User] <--> [Frontend Application] <--> [Backend Service 1] <--> [Database 1]
-                                    |
-                                    +--> [Backend Service 2] <--> [External API]
+```
+┌─────────────┐
+│  Candidato  │ (No registration required)
+└──────┬──────┘
+       │
+       │ Browse jobs, view map, submit CV
+       ↓
+┌─────────────────────────────────────────┐
+│  Portal de Empleos (Astro SSR)          │
+│  ┌────────────┐  ┌──────────────────┐   │
+│  │  Public    │  │  Employer        │   │
+│  │  Pages     │  │  Dashboard       │   │
+│  │  (Static)  │  │  (Protected)     │   │
+│  └────────────┘  └──────────────────┘   │
+│         │                 │              │
+│         └────────┬────────┘              │
+│                  ↓                       │
+│      ┌──────────────────────┐           │
+│      │  API Endpoints (SSR)  │          │
+│      └──────────────────────┘           │
+└───────────────┬─────────────────────────┘
+                │
+                ↓
+┌───────────────────────────────────────────┐
+│  Supabase Backend                         │
+│  ┌────────────┐  ┌──────────┐  ┌───────┐ │
+│  │ PostgreSQL │  │ Storage  │  │ Auth  │ │
+│  │ + PostGIS  │  │ (CVs)    │  │       │ │
+│  └────────────┘  └──────────┘  └───────┘ │
+└───────────────────────────────────────────┘
+       ↑
+       │
+┌──────┴───────┐
+│  Empleador   │ (Requires authentication)
+└──────────────┘
+```
+
+### Data Flow
+
+**Candidate Application Flow:**
+1. User browses jobs on home page (SSR pre-rendered)
+2. Map fetches job coordinates from Supabase
+3. User clicks job → navigates to detail page
+4. User uploads CV → validates client-side (Zod)
+5. CV uploads to Supabase Storage (`cvs` bucket)
+6. Application record created in `postulaciones` table
+7. Rate limiting enforced (3 per hour per IP)
+
+**Employer Job Management Flow:**
+1. Employer registers/logs in → Supabase Auth
+2. Session stored in HTTP-only cookies
+3. Middleware protects `/empleador/*` routes
+4. Dashboard fetches jobs with aggregated application counts
+5. Create job → validates → converts comuna to PostGIS POINT
+6. View applications → generates signed URLs for CV download
+
+---
 
 ## 3. Core Components
-(List and briefly describe the main components of the system. For each, include its primary responsibility and key technologies used.)
 
-### 3.1. Frontend
+### 3.1. Frontend (Astro Components)
 
-Name: [e.g., Web App, Mobile App]
+**Technology:** Astro 5.x with TypeScript strict mode
 
-Description: Briefly describe its primary purpose, key functionalities, and how users or other systems interact with it. E.g., 'The main user interface for interacting with the system, allowing users to manage their profiles, view data dashboards, and initiate workflows.'
+**Key Components:**
 
-Technologies: [e.g., React, Next.js, Vue.js, Swift/Kotlin, HTML/CSS/JS]
+- **`Layout.astro`**: Base layout with responsive header, navigation, and 3-column footer. Includes Leaflet CSS import.
 
-Deployment: [e.g., Vercel, Netlify, S3/CloudFront]
+- **`MapaOfertas.astro`**: Interactive map using Leaflet. Renders markers for each job offer with popup details. Handles icon path fixes for production.
 
-### 3.2. Backend Services
+- **`OfertaCard.astro`**: Job listing card with title, company, location, job type badge, and relative date.
 
-(Repeat for each significant backend service. Add more as needed.)
+- **`FormularioPostulacion.astro`**: Complete application form with:
+  - Drag & drop CV upload
+  - Real-time validation (file type, size)
+  - Privacy policy checkbox
+  - Four states: default, loading, success, error
 
-#### 3.2.1. [Service Name 1]
+### 3.2. Backend (API Endpoints)
 
-Name: [e.g., User Management Service, Data Processing API]
+**Technology:** Astro API routes with SSR (Node.js adapter)
 
-Description: [Briefly describe its purpose, e.g., "Handles user authentication and profile management."]
+**Authentication:**
+- **`/api/auth/login.ts`**: Validates credentials, creates session cookies
+- **`/api/auth/registro.ts`**: Creates user in Auth + empleadores table (transactional)
+- **`/api/auth/logout.ts`**: Clears session cookies
 
-Technologies: [e.g., Node.js (Express), Python (Django/Flask), Java (Spring Boot), Go]
+**Job Management:**
+- **`/api/ofertas/crear.ts`**: Creates job with PostGIS point, validates all fields
+- **`/api/ofertas/[id]/toggle.ts`**: Activates/deactivates job
+- **`/api/ofertas/[id]/cv-download.ts`**: Generates signed URL (1-hour expiry) for CV download
 
-Deployment: [e.g., AWS EC2, Kubernetes, Serverless (Lambda/Cloud Functions)]
+**Applications:**
+- **`/api/postular.ts`**: Handles CV upload to Storage, creates application record, enforces rate limiting
 
-#### 3.2.2. [Service Name 2]
+### 3.3. Database (Supabase/PostgreSQL)
 
-Name: [e.g., Analytics Service, Notification Service]
+**Technology:** PostgreSQL 15+ with PostGIS extension
 
-Description: [Briefly describe its purpose.]
+**Schema:**
 
-Technologies: [e.g., Python, Kafka, Redis]
+```sql
+-- Employers
+empleadores (
+  id UUID PK,
+  email TEXT UNIQUE,
+  nombre_empresa TEXT,
+  created_at TIMESTAMP
+)
 
-Deployment: [e.g., AWS ECS, Google Cloud Run]
+-- Job Offers
+ofertas (
+  id UUID PK,
+  empleador_id UUID FK → empleadores(id),
+  titulo TEXT,
+  descripcion TEXT,
+  empresa TEXT,
+  tipo_jornada TEXT, -- ENUM: Full-time, Part-time, Freelance, Práctica
+  categoria TEXT,
+  comuna TEXT,
+  ubicacion GEOGRAPHY(POINT, 4326), -- PostGIS
+  activa BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP,
+  expires_at TIMESTAMP DEFAULT NOW() + INTERVAL '30 days'
+)
 
-## 4. Data Stores
+-- Applications
+postulaciones (
+  id UUID PK,
+  oferta_id UUID FK → ofertas(id),
+  nombre_candidato TEXT NULL,
+  email_candidato TEXT NULL,
+  cv_url TEXT, -- Path in Supabase Storage
+  ip_address TEXT, -- For rate limiting
+  created_at TIMESTAMP
+)
+```
 
-(List and describe the databases and other persistent storage solutions used.)
+**Indexes:**
+- `idx_ofertas_ubicacion` (GIST index on `ubicacion`) for spatial queries
+- `idx_ofertas_activa` (B-tree on `activa`) for filtering
+- `idx_postulaciones_oferta_id` (B-tree on `oferta_id`) for joins
 
-### 4.1. [Data Store Type 1]
+**Row Level Security (RLS):**
+- Ofertas: Public read (activa = TRUE), owner-only write
+- Postulaciones: Owner-only read (via oferta_id → empleador_id)
+- Storage CVs: Owner-only download (verified via postulaciones chain)
 
-Name: [e.g., Primary User Database, Analytics Data Warehouse]
+### 3.4. Storage (Supabase Storage)
 
-Type: [e.g., PostgreSQL, MongoDB, Redis, S3, Firestore]
+**Bucket:** `cvs` (private)
 
-Purpose: [Briefly describe what data it stores and why.]
+**Structure:** `{oferta_id}/{timestamp}_{uuid}_{filename}.ext`
 
-Key Schemas/Collections: [List important tables/collections, e.g., users, products, orders (no need for full schema, just names)]
+**Security:**
+- No public access
+- Download requires signed URL generated by employer-only endpoint
+- Triple verification: employer → job → application → CV
 
-### 4.2. [Data Store Type 2]
+### 3.5. Authentication & Authorization
 
-Name: [e.g., Cache, Message Queue]
+**Technology:** Supabase Auth + custom session management
 
-Type: [e.g., Redis, Kafka, RabbitMQ]
+**Implementation:**
+- Sessions stored in HTTP-only cookies (`sb-access-token`, `sb-refresh-token`)
+- Middleware (`src/middleware.ts`) protects `/empleador/*` routes
+- Helper functions in `src/lib/auth.ts`:
+  - `getSession()`: Restores session from cookies
+  - `isAuthenticated()`: Checks authentication status
+  - `getEmpleadorProfile()`: Fetches employer data
 
-Purpose: [Briefly describe its purpose, e.g., "Used for caching frequently accessed data" or "Inter-service communication."]
+### 3.6. Utilities & Libraries
 
-## 5. External Integrations / APIs
+**`src/lib/comunas.ts`:**
+- 150+ Chilean communes with lat/lng coordinates
+- Helper functions: `findComuna()`, `getComunasByRegion()`, `getRegiones()`
+- Used for geocoding and form dropdowns
 
-(List any third-party services or external APIs the system interacts with.)
+**`src/lib/validations.ts`:**
+- Zod schemas for type-safe validation
+- Constants: `MAX_CV_SIZE`, `ALLOWED_CV_TYPES`, `MAX_POSTULATIONS_PER_HOUR`
+- Validation functions: `validateCVFile()`, `isValidEmail()`, `isValidPassword()`
 
-Service Name 1: [e.g., Stripe, SendGrid, Google Maps API]
+---
 
-Purpose: [Briefly describe its function, e.g., "Payment processing."]
+## 4. Key Design Decisions
 
-Integration Method: [e.g., REST API, SDK]
+### 4.1. SSR vs. Static
 
-## 6. Deployment & Infrastructure
+**Decision:** Use SSR (Server-Side Rendering) mode with `output: 'server'`
 
-Cloud Provider: [e.g., AWS, GCP, Azure, On-premise]
+**Rationale:**
+- Authentication requires server-side session management
+- Dynamic routes (`/empleador/dashboard`, `/oferta/[id]`) fetch user-specific data
+- Middleware can protect routes at request time
+- Public pages (`/`, `/privacidad`) are pre-rendered with `export const prerender = true`
 
-Key Services Used: [e.g., EC2, Lambda, S3, RDS, Kubernetes, Cloud Functions, App Engine]
+**Trade-offs:**
+- Requires Node.js server (not pure static hosting)
+- Slightly higher hosting complexity vs. static sites
+- Better security and flexibility for authenticated features
 
-CI/CD Pipeline: [e.g., GitHub Actions, GitLab CI, Jenkins, CircleCI]
+### 4.2. No Separate Backend
 
-Monitoring & Logging: [e.g., Prometheus, Grafana, CloudWatch, Stackdriver, ELK Stack]
+**Decision:** Use Astro API routes instead of separate backend server
 
-## 7. Security Considerations
+**Rationale:**
+- Simpler architecture (single codebase)
+- Easier deployment (one service)
+- Astro API routes support full SSR capabilities
+- Supabase handles complex backend logic (auth, storage, RLS)
 
-(Highlight any critical security aspects, authentication mechanisms, or data encryption practices.)
+**Trade-offs:**
+- Not ideal for highly complex backend logic
+- Good fit for CRUD operations and simple workflows
 
-Authentication: [e.g., OAuth2, JWT, API Keys]
+### 4.3. PostGIS for Geolocation
 
-Authorization: [e.g., RBAC, ACLs]
+**Decision:** Use PostgreSQL PostGIS extension for geographic queries
 
-Data Encryption: [e.g., TLS in transit, AES-256 at rest]
+**Rationale:**
+- Native support for spatial queries (distance, bounding box)
+- GEOGRAPHY type handles lat/lng correctly
+- GIST indexes for efficient spatial searches
+- Future-proof for features like "jobs within X km"
 
-Key Security Tools/Practices: [e.g., WAF, regular security audits]
+**Implementation:**
+```sql
+ubicacion GEOGRAPHY(POINT, 4326) -- WGS 84
+```
 
-## 8. Development & Testing Environment
+Queries:
+```sql
+-- Find jobs within 10km of a point
+SELECT * FROM ofertas
+WHERE ST_DWithin(ubicacion, ST_GeogFromText('POINT(-70.6693 -33.4489)'), 10000);
+```
 
-Local Setup Instructions: [Link to CONTRIBUTING.md or brief steps]
+### 4.4. Rate Limiting
 
-Testing Frameworks: [e.g., Jest, Pytest, JUnit]
+**Decision:** IP-based rate limiting (3 applications/hour)
 
-Code Quality Tools: [e.g., ESLint, Black, SonarQube]
+**Implementation:** Query `postulaciones` table for recent applications from same IP
 
-## 9. Future Considerations / Roadmap
+**Rationale:**
+- Prevents spam without requiring user authentication
+- Simple implementation (no external service)
+- Effective for MVP
 
-(Briefly note any known architectural debts, planned major changes, or significant future features that might impact the architecture.)
+**Limitations:**
+- Shared IPs (NAT) may affect legitimate users
+- Can be bypassed with VPN/proxy (acceptable for MVP)
 
-[e.g., "Migrate from monolith to microservices."]
+### 4.5. CV Storage Strategy
 
-[e.g., "Implement event-driven architecture for real-time updates."]
+**Decision:** Store CVs in Supabase Storage with signed URLs
 
-## 10. Project Identification
+**Rationale:**
+- Secure: No public access, requires signed URL
+- Scalable: Supabase handles storage infrastructure
+- Cost-effective: Free tier includes 1GB storage
+- Automatic cleanup possible (90-day retention policy)
 
-Project Name: [Insert Project Name]
+**Alternative Considered:** Store CVs as base64 in database
+**Rejected:** Large blobs in DB affect performance, harder to manage
 
-Repository URL: [Insert Repository URL]
+### 4.6. No CV Preview/Rendering
 
-Primary Contact/Team: [Insert Lead Developer/Team Name]
+**Decision:** Employers download CVs to view (no in-app preview)
 
-Date of Last Update: [YYYY-MM-DD]
+**Rationale:**
+- Simpler implementation (no PDF.js or similar)
+- Better UX for reviewing multiple CVs (use local PDF reader)
+- Reduces browser memory usage
+- MVP scope (can add preview in Phase 2)
 
-## 11. Glossary / Acronyms
+---
 
-Define any project-specific terms or acronyms.)
+## 5. Security Considerations
 
-[Acronym]: [Full Definition]
+### 5.1. Authentication
 
-[Term]: [Explanation]
+- ✅ HTTP-only cookies (prevent XSS)
+- ✅ Secure flag in production (HTTPS only)
+- ✅ SameSite: Lax (CSRF protection)
+- ✅ Session validation on every protected route
+
+### 5.2. Authorization
+
+- ✅ Middleware protects `/empleador/*` routes
+- ✅ API endpoints verify session + ownership
+- ✅ Triple verification for CV download:
+  1. Employer authenticated
+  2. Job belongs to employer
+  3. Application belongs to job
+  4. CV belongs to application
+
+### 5.3. Input Validation
+
+- ✅ Client-side validation (Zod)
+- ✅ Server-side validation (all API endpoints)
+- ✅ File type validation (PDF, DOC, DOCX)
+- ✅ File size limit (5MB)
+- ✅ SQL injection prevented (Supabase client uses parameterized queries)
+
+### 5.4. Rate Limiting
+
+- ✅ 3 applications per hour per IP
+- ⚠️ Can be bypassed (acceptable for MVP)
+- 🔄 Future: Use Redis/Upstash for distributed rate limiting
+
+### 5.5. Data Privacy
+
+- ✅ Row Level Security (RLS) on all tables
+- ✅ Privacy policy page (`/privacidad`)
+- ✅ Optional candidate data (name, email)
+- ✅ 90-day retention policy stated
+- ⚠️ No automated cleanup implemented (manual or cron job needed)
+
+---
+
+## 6. Performance Optimizations
+
+### 6.1. Implemented
+
+- ✅ SSR pre-renders public pages
+- ✅ Tailwind CSS purging (production builds)
+- ✅ Leaflet CDN (no bundle bloat)
+- ✅ PostGIS spatial indexes (GIST)
+- ✅ Database indexes on frequently queried columns
+
+### 6.2. Future Optimizations
+
+- [ ] Image optimization (if images added)
+- [ ] CDN for static assets
+- [ ] Database query caching (Redis)
+- [ ] Lazy loading for map markers (pagination)
+- [ ] Service worker for offline support
+
+---
+
+## 7. Deployment Architecture
+
+### 7.1. Recommended Stack
+
+**Option 1: Vercel + Supabase (Easiest)**
+- Frontend + API: Vercel (auto-detects Astro)
+- Database + Storage + Auth: Supabase Cloud
+- Total cost: $0 (free tiers)
+
+**Option 2: Railway + Supabase**
+- Frontend + API: Railway
+- Database + Storage + Auth: Supabase Cloud
+- Total cost: $0 (free tiers)
+
+**Option 3: VPS (Most Control)**
+- Everything on VPS (Node.js + PostgreSQL + Storage)
+- Example: DigitalOcean Droplet ($6/month)
+- Requires: PM2, Nginx, Let's Encrypt
+
+### 7.2. Environment Variables
+
+Required in production:
+```
+PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+PUBLIC_SITE_URL=https://yourdomain.com
+```
+
+### 7.3. Build Command
+
+```bash
+npm run build
+# Output: dist/server/entry.mjs + dist/client/*
+```
+
+---
+
+## 8. Testing Strategy
+
+### 8.1. Current State
+
+**Manual Testing:**
+- ✅ TypeScript compilation (0 errors)
+- ✅ Build succeeds
+- ✅ All routes tested manually
+
+### 8.2. Recommended Testing (Phase 2)
+
+**Unit Tests (Vitest):**
+- Validation functions (`lib/validations.ts`)
+- Auth helpers (`lib/auth.ts`)
+- Utility functions (`lib/comunas.ts`)
+
+**Integration Tests (Playwright):**
+- Candidate flow: Browse → View job → Submit application
+- Employer flow: Register → Login → Create job → View applications
+
+**E2E Tests:**
+- Critical user paths
+- Cross-browser testing (Chrome, Safari, Firefox)
+
+---
+
+## 9. Monitoring & Observability
+
+### 9.1. Current State
+
+**Logging:**
+- Console logs in API endpoints
+- Supabase built-in logging
+
+### 9.2. Recommended (Phase 2)
+
+**Application Monitoring:**
+- Sentry (error tracking)
+- LogRocket (session replay)
+- Vercel Analytics (if using Vercel)
+
+**Database Monitoring:**
+- Supabase Dashboard (built-in metrics)
+- Slow query logs
+- Connection pool monitoring
+
+**Alerts:**
+- Error rate spikes
+- Storage quota warnings
+- Database connection failures
+
+---
+
+## 10. Known Limitations & Future Work
+
+### 10.1. Current Limitations
+
+1. **No CV Preview** - Employers must download to view
+2. **No Job Editing** - Can only activate/deactivate
+3. **No Email Notifications** - No confirmation emails
+4. **Manual CV Cleanup** - No automated 90-day deletion
+5. **Basic Search** - No full-text search or fuzzy matching
+6. **No Admin Panel** - No moderation tools
+
+### 10.2. Roadmap (Post-MVP)
+
+**Phase 2 (High Priority):**
+- [ ] Job editing functionality
+- [ ] Email notifications (SendGrid/Resend)
+- [ ] Automated CV cleanup (cron job)
+- [ ] Full-text search (Meilisearch)
+- [ ] GPS-based "jobs near me" feature
+
+**Phase 3 (Nice to Have):**
+- [ ] Admin panel for moderation
+- [ ] Analytics dashboard for employers
+- [ ] Bulk CV export (ZIP)
+- [ ] LinkedIn integration
+- [ ] Mobile app (React Native)
+
+---
+
+## 11. Contributing Guidelines
+
+### 11.1. Code Style
+
+- TypeScript strict mode
+- ESLint + Prettier (configure if needed)
+- Astro component naming: PascalCase
+- API route naming: kebab-case
+
+### 11.2. Commit Messages
+
+Follow conventional commits:
+```
+feat: Add job editing functionality
+fix: Correct CV download permissions
+docs: Update README deployment section
+```
+
+### 11.3. Pull Request Process
+
+1. Create feature branch from `main`
+2. Implement feature with tests
+3. Ensure `npm run build` passes
+4. Update ARCHITECTURE.md if needed
+5. Submit PR with description
+
+---
+
+## 12. Glossary
+
+- **Candidato**: Job seeker (no registration)
+- **Empleador**: Employer (requires registration)
+- **Oferta**: Job posting/offer
+- **Postulación**: Job application
+- **Comuna**: Chilean administrative division (similar to municipality)
+- **RLS**: Row Level Security (Supabase feature)
+- **PostGIS**: PostgreSQL extension for geographic data
+- **SSR**: Server-Side Rendering
+
+---
+
+## 13. Contact & Support
+
+**Documentation:**
+- SPECIFICATIONS.md - Complete requirements
+- README.md - Setup & deployment guide
+- SUPABASE_SETUP.md - Database configuration
+
+**Architecture Decisions:**
+- All major decisions documented in this file
+- For questions, refer to SPECIFICATIONS.md first
+
+---
+
+**Last Updated:** 2025-10-31
+**Architecture Version:** 1.0 (MVP Complete)
+**Total Implementation:** 6,780 lines across 6 implementation phases
