@@ -35,13 +35,15 @@ const mapId = `mapa-${Math.random().toString(36).substring(2, 9)}`;
 
 <!-- Cargar Leaflet JS desde CDN -->
 <script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Cargar Leaflet MarkerCluster JS desde CDN -->
+<script is:inline src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
 <div id={mapId} class="h-[400px] md:h-[500px] rounded-lg shadow-sm border border-border"></div>
 
 <script define:vars={{ ofertas, centerLat, centerLng, zoom, mapId }} is:inline>
-  // Esperar a que Leaflet esté cargado
+  // Esperar a que Leaflet y MarkerCluster estén cargados
   function initMap() {
-    if (typeof L === 'undefined') {
+    if (typeof L === 'undefined' || typeof L.markerClusterGroup === 'undefined') {
       setTimeout(initMap, 100);
       return;
     }
@@ -57,10 +59,19 @@ const mapId = `mapa-${Math.random().toString(36).substring(2, 9)}`;
         minZoom: 5
       }).addTo(mapa);
 
-      // Agregar marcadores para cada oferta
+      // Crear grupo de clustering
+      const markersCluster = L.markerClusterGroup({
+        maxClusterRadius: 80,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        disableClusteringAtZoom: 15
+      });
+
+      // Agregar marcadores al cluster
       const markers = [];
       ofertas.forEach(function(oferta) {
-        const marker = L.marker([oferta.lat, oferta.lng]).addTo(mapa);
+        const marker = L.marker([oferta.lat, oferta.lng]);
 
         // Popup con información de la oferta
         const popupContent =
@@ -75,12 +86,19 @@ const mapId = `mapa-${Math.random().toString(36).substring(2, 9)}`;
 
         marker.bindPopup(popupContent);
         markers.push(marker);
+        markersCluster.addLayer(marker);
       });
+
+      // Agregar el cluster al mapa
+      mapa.addLayer(markersCluster);
 
       // Ajustar vista para mostrar todos los marcadores
       if (markers.length > 0 && ofertas.length > 1) {
-        const group = L.featureGroup(markers);
-        mapa.fitBounds(group.getBounds().pad(0.1));
+        // Usar los bounds del cluster
+        const bounds = markersCluster.getBounds();
+        if (bounds.isValid()) {
+          mapa.fitBounds(bounds.pad(0.1));
+        }
       }
 
       // Invalidar tamaño del mapa después de cargar
@@ -125,5 +143,45 @@ const mapId = `mapa-${Math.random().toString(36).substring(2, 9)}`;
   :global(.leaflet-bar a) {
     background-color: #fff;
     color: #000;
+  }
+
+  /* Personalizar clusters */
+  :global(.marker-cluster-small) {
+    background-color: rgba(66, 153, 225, 0.6);
+  }
+
+  :global(.marker-cluster-small div) {
+    background-color: rgba(66, 153, 225, 0.9);
+    color: white;
+    font-weight: 600;
+  }
+
+  :global(.marker-cluster-medium) {
+    background-color: rgba(237, 137, 54, 0.6);
+  }
+
+  :global(.marker-cluster-medium div) {
+    background-color: rgba(237, 137, 54, 0.9);
+    color: white;
+    font-weight: 600;
+  }
+
+  :global(.marker-cluster-large) {
+    background-color: rgba(220, 38, 38, 0.6);
+  }
+
+  :global(.marker-cluster-large div) {
+    background-color: rgba(220, 38, 38, 0.9);
+    color: white;
+    font-weight: 600;
+  }
+
+  /* Animación suave en clusters */
+  :global(.marker-cluster) {
+    transition: transform 0.2s ease;
+  }
+
+  :global(.marker-cluster:hover) {
+    transform: scale(1.1);
   }
 </style>
