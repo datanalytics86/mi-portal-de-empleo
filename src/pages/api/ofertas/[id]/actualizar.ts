@@ -1,12 +1,12 @@
 import type { APIRoute } from 'astro';
-import { getMockSession } from '../../../lib/mock-auth';
-import { findComuna } from '../../../lib/comunas';
-import { mockOfertas } from '../../../data/mock-ofertas';
-import { empleadorOfertasMap } from '../../../data/mock-empleador-ofertas';
+import { getMockSession } from '../../../../lib/mock-auth';
+import { findComuna } from '../../../../lib/comunas';
+import { mockOfertas, findOfertaById } from '../../../../data/mock-ofertas';
+import { empleadorOwnsOferta } from '../../../../data/mock-empleador-ofertas';
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const PUT: APIRoute = async ({ params, request, cookies }) => {
   try {
     // Verificar autenticación
     const empleador = getMockSession(cookies);
@@ -15,6 +15,33 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return new Response(
         JSON.stringify({ error: 'No autorizado' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { id } = params;
+
+    if (!id) {
+      return new Response(
+        JSON.stringify({ error: 'ID de oferta no proporcionado' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verificar que la oferta existe
+    const oferta = findOfertaById(id);
+
+    if (!oferta) {
+      return new Response(
+        JSON.stringify({ error: 'Oferta no encontrada' }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verificar que la oferta pertenece al empleador
+    if (!empleadorOwnsOferta(empleador.id, id)) {
+      return new Response(
+        JSON.stringify({ error: 'No tienes permiso para editar esta oferta' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
@@ -81,47 +108,34 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    // Generar nuevo ID (usar el número siguiente al último)
-    const maxId = Math.max(...mockOfertas.map(o => parseInt(o.id)), 0);
-    const newId = (maxId + 1).toString();
-
-    // Crear nueva oferta
-    const nuevaOferta: typeof mockOfertas[0] = {
-      id: newId,
-      titulo: titulo.trim(),
-      descripcion: descripcion.trim(),
-      empresa: empresa.trim(),
-      tipo_jornada,
-      categoria: categoria || null,
-      comuna: comunaData.nombre,
-      region: comunaData.region,
-      activa: true,
-      expires_at: expires_at + 'T23:59:59Z',
-      created_at: new Date().toISOString(),
-      postulaciones_count: 0
-    };
-
-    // Agregar a mock ofertas (en memoria)
-    mockOfertas.push(nuevaOferta);
-
-    // Actualizar empleadorOfertasMap
-    if (!empleadorOfertasMap[empleador.id]) {
-      empleadorOfertasMap[empleador.id] = [];
+    // Actualizar oferta en el array de mockOfertas
+    const ofertaIndex = mockOfertas.findIndex(o => o.id === id);
+    if (ofertaIndex !== -1) {
+      mockOfertas[ofertaIndex] = {
+        ...mockOfertas[ofertaIndex],
+        titulo: titulo.trim(),
+        descripcion: descripcion.trim(),
+        empresa: empresa.trim(),
+        tipo_jornada,
+        categoria: categoria || null,
+        comuna: comunaData.nombre,
+        region: comunaData.region,
+        expires_at: expires_at + 'T23:59:59Z',
+      };
     }
-    empleadorOfertasMap[empleador.id].push(newId);
 
-    console.log(`[MOCK] Nueva oferta creada: ${newId} - ${titulo}`);
+    console.log(`[MOCK] Oferta actualizada: ${id} - ${titulo}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        oferta: nuevaOferta,
-        message: 'Oferta creada exitosamente'
+        oferta: mockOfertas[ofertaIndex],
+        message: 'Oferta actualizada exitosamente'
       }),
-      { status: 201, headers: { 'Content-Type': 'application/json' } }
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error inesperado al crear oferta:', error);
+    console.error('Error inesperado al actualizar oferta:', error);
     return new Response(
       JSON.stringify({ error: 'Error interno del servidor' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
