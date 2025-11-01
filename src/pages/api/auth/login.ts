@@ -1,6 +1,11 @@
+/**
+ * API Route: Login de Empleador (MOCK VERSION)
+ *
+ * Autentica empleadores usando sistema mock
+ */
+
 import type { APIRoute } from 'astro';
-import { supabaseServer } from '../../../lib/supabase';
-import { setSessionCookies, isValidEmail } from '../../../lib/auth';
+import { mockLogin, setMockSession, isValidEmail } from '../../../lib/mock-auth';
 
 export const prerender = false;
 
@@ -23,71 +28,35 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    // Intentar login con Supabase Auth
-    const { data, error } = await supabaseServer.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // Intentar login con sistema mock
+    const user = mockLogin(email, password);
 
-    if (error) {
-      console.error('Error en login:', error.message);
-
-      // Mensajes de error específicos
-      if (error.message.includes('Invalid login credentials')) {
-        return new Response(
-          JSON.stringify({ error: 'Email o contraseña incorrectos' }),
-          { status: 401, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
+    if (!user) {
+      console.warn('[Login Mock] Intento fallido:', email);
       return new Response(
-        JSON.stringify({ error: 'Error al iniciar sesión' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Email o contraseña incorrectos' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    if (!data.session || !data.user) {
-      return new Response(
-        JSON.stringify({ error: 'Error al crear sesión' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+    // Establecer sesión
+    setMockSession(cookies, user.id);
 
-    // Verificar que el usuario existe en la tabla empleadores
-    const { data: empleador, error: empleadorError } = await supabaseServer
-      .from('empleadores')
-      .select('id')
-      .eq('id', data.user.id)
-      .single();
-
-    if (empleadorError || !empleador) {
-      console.error('Usuario no encontrado en tabla empleadores:', empleadorError);
-      return new Response(
-        JSON.stringify({ error: 'Usuario no autorizado' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Establecer cookies de sesión
-    setSessionCookies(
-      cookies,
-      data.session.access_token,
-      data.session.refresh_token,
-      data.session.expires_in || 3600
-    );
+    console.log('[Login Mock] Sesión iniciada:', user.email);
 
     return new Response(
       JSON.stringify({
         success: true,
         user: {
-          id: data.user.id,
-          email: data.user.email,
+          id: user.id,
+          email: user.email,
+          nombre_empresa: user.nombre_empresa
         },
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error inesperado en login:', error);
+    console.error('[Login Mock] Error inesperado:', error);
     return new Response(
       JSON.stringify({ error: 'Error interno del servidor' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

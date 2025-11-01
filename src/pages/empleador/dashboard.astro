@@ -1,45 +1,40 @@
 ---
+/**
+ * Dashboard del Empleador (MOCK VERSION)
+ *
+ * Vista principal con estadísticas y lista de ofertas del empleador
+ */
+
 import Layout from '../../layouts/Layout.astro';
-import { getSession, getEmpleadorProfile } from '../../lib/auth';
-import { supabaseServer } from '../../lib/supabase';
+import { getMockSession } from '../../lib/mock-auth';
+import { getOfertasByEmpleador, getEmpleadorStats } from '../../data/mock-empleador-ofertas';
 
 export const prerender = false;
 
-// Obtener sesión y perfil
-const { user } = await getSession(Astro.cookies);
-const empleador = await getEmpleadorProfile(Astro.cookies);
+// Obtener sesión
+const empleador = getMockSession(Astro.cookies);
 
-// Si no hay sesión, el middleware redirigirá
-if (!user || !empleador) {
+// Si no hay sesión, redirigir a login
+if (!empleador) {
   return Astro.redirect('/empleador/login');
 }
 
-// Obtener ofertas del empleador con conteo de postulaciones
-const { data: ofertas, error } = await supabaseServer
-  .from('ofertas')
-  .select(`
-    *,
-    postulaciones:postulaciones(count)
-  `)
-  .eq('empleador_id', empleador.id)
-  .order('created_at', { ascending: false });
-
-if (error) {
-  console.error('Error al obtener ofertas:', error);
-}
+// Obtener ofertas del empleador
+const ofertas = getOfertasByEmpleador(empleador.id);
 
 // Procesar datos para mostrar
-const ofertasConPostulaciones = ofertas?.map(oferta => {
-  const postulacionesCount = oferta.postulaciones?.[0]?.count || 0;
+const ofertasConPostulaciones = ofertas.map(oferta => {
   const isExpired = new Date(oferta.expires_at) < new Date();
 
   return {
     ...oferta,
-    postulaciones_count: postulacionesCount,
     is_expired: isExpired,
     status: !oferta.activa ? 'Desactivada' : isExpired ? 'Expirada' : 'Activa',
   };
-}) || [];
+}).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+// Estadísticas
+const stats = getEmpleadorStats(empleador.id);
 ---
 
 <Layout title="Dashboard - Portal de Empleos">
@@ -104,7 +99,7 @@ const ofertasConPostulaciones = ofertas?.map(oferta => {
             <div>
               <p class="text-sm text-text-secondary">Total Ofertas</p>
               <p class="text-3xl font-semibold text-text-primary mt-2">
-                {ofertasConPostulaciones.length}
+                {stats.totalOfertas}
               </p>
             </div>
             <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
@@ -120,7 +115,7 @@ const ofertasConPostulaciones = ofertas?.map(oferta => {
             <div>
               <p class="text-sm text-text-secondary">Ofertas Activas</p>
               <p class="text-3xl font-semibold text-success mt-2">
-                {ofertasConPostulaciones.filter(o => o.status === 'Activa').length}
+                {stats.ofertasActivas}
               </p>
             </div>
             <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
@@ -136,7 +131,7 @@ const ofertasConPostulaciones = ofertas?.map(oferta => {
             <div>
               <p class="text-sm text-text-secondary">Total Postulaciones</p>
               <p class="text-3xl font-semibold text-text-primary mt-2">
-                {ofertasConPostulaciones.reduce((sum, o) => sum + o.postulaciones_count, 0)}
+                {stats.totalPostulaciones}
               </p>
             </div>
             <div class="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
@@ -240,19 +235,14 @@ const ofertasConPostulaciones = ofertas?.map(oferta => {
                         >
                           Ver Postulaciones
                         </a>
-                        <button
-                          class="toggle-oferta px-3 py-1.5 text-sm font-medium rounded transition"
-                          class:list={[
-                            oferta.activa
-                              ? 'text-text-secondary hover:text-error hover:bg-red-50'
-                              : 'text-success hover:bg-green-50'
-                          ]}
-                          data-oferta-id={oferta.id}
-                          data-activa={oferta.activa}
-                          title={oferta.activa ? 'Desactivar' : 'Activar'}
+                        <a
+                          href={`/oferta/${oferta.id}`}
+                          class="px-3 py-1.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-gray-50 rounded transition"
+                          title="Ver en portal"
+                          target="_blank"
                         >
-                          {oferta.activa ? 'Desactivar' : 'Activar'}
-                        </button>
+                          Ver
+                        </a>
                       </div>
                     </td>
                   </tr>
@@ -287,41 +277,4 @@ const ofertasConPostulaciones = ofertas?.map(oferta => {
       }
     });
   }
-
-  // Toggle ofertas (activar/desactivar)
-  const toggleButtons = document.querySelectorAll('.toggle-oferta');
-  toggleButtons.forEach((button) => {
-    button.addEventListener('click', async (e) => {
-      const target = e.target as HTMLButtonElement;
-      const ofertaId = target.dataset.ofertaId;
-      const activa = target.dataset.activa === 'true';
-
-      const confirmMessage = activa
-        ? '¿Desactivar esta oferta? No aparecerá en búsquedas públicas.'
-        : '¿Activar esta oferta? Volverá a aparecer en búsquedas públicas.';
-
-      if (!confirm(confirmMessage)) return;
-
-      try {
-        target.disabled = true;
-        target.textContent = 'Procesando...';
-
-        const response = await fetch(`/api/ofertas/${ofertaId}/toggle`, {
-          method: 'POST',
-        });
-
-        if (response.ok) {
-          window.location.reload();
-        } else {
-          const data = await response.json();
-          alert(data.error || 'Error al cambiar estado');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Error de conexión');
-      } finally {
-        target.disabled = false;
-      }
-    });
-  });
 </script>

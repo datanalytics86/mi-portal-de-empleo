@@ -1,6 +1,11 @@
+/**
+ * API Route: Registro de Empleador (MOCK VERSION)
+ *
+ * Registra nuevos empleadores usando sistema mock
+ */
+
 import type { APIRoute } from 'astro';
-import { supabaseServer } from '../../../lib/supabase';
-import { setSessionCookies, isValidEmail, isValidPassword } from '../../../lib/auth';
+import { mockRegister, setMockSession, isValidEmail, isValidPassword } from '../../../lib/mock-auth';
 
 export const prerender = false;
 
@@ -38,81 +43,37 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    // Crear usuario en Supabase Auth
-    const { data: authData, error: authError } = await supabaseServer.auth.signUp({
-      email,
-      password,
-    });
+    // Intentar registrar usuario
+    try {
+      const newUser = mockRegister(email, password, nombreEmpresa.trim());
 
-    if (authError) {
-      console.error('Error al crear usuario:', authError.message);
+      // Establecer sesión automáticamente
+      setMockSession(cookies, newUser.id);
 
-      // Mensajes de error específicos
-      if (authError.message.includes('already registered')) {
+      console.log('[Registro Mock] Nuevo usuario:', newUser.email);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          user: {
+            id: newUser.id,
+            email: newUser.email,
+            nombre_empresa: newUser.nombre_empresa
+          },
+        }),
+        { status: 201, headers: { 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      if (error instanceof Error && error.message === 'El email ya está registrado') {
         return new Response(
-          JSON.stringify({ error: 'Este email ya está registrado' }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
+          JSON.stringify({ error: 'El email ya está registrado' }),
+          { status: 409, headers: { 'Content-Type': 'application/json' } }
         );
       }
-
-      return new Response(
-        JSON.stringify({ error: 'Error al crear la cuenta' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
+      throw error;
     }
-
-    if (!authData.user || !authData.session) {
-      return new Response(
-        JSON.stringify({ error: 'Error al crear la cuenta' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Crear registro en tabla empleadores
-    const { error: empleadorError } = await supabaseServer
-      .from('empleadores')
-      .insert({
-        id: authData.user.id,
-        email: email,
-        nombre_empresa: nombreEmpresa.trim(),
-      });
-
-    if (empleadorError) {
-      console.error('Error al crear empleador:', empleadorError.message);
-
-      // Intentar eliminar el usuario de Auth si falla la creación del empleador
-      try {
-        await supabaseServer.auth.admin.deleteUser(authData.user.id);
-      } catch (deleteError) {
-        console.error('Error al eliminar usuario tras fallo:', deleteError);
-      }
-
-      return new Response(
-        JSON.stringify({ error: 'Error al crear el perfil de empleador' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Establecer cookies de sesión
-    setSessionCookies(
-      cookies,
-      authData.session.access_token,
-      authData.session.refresh_token,
-      authData.session.expires_in || 3600
-    );
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        user: {
-          id: authData.user.id,
-          email: authData.user.email,
-        },
-      }),
-      { status: 201, headers: { 'Content-Type': 'application/json' } }
-    );
   } catch (error) {
-    console.error('Error inesperado en registro:', error);
+    console.error('[Registro Mock] Error inesperado:', error);
     return new Response(
       JSON.stringify({ error: 'Error interno del servidor' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
