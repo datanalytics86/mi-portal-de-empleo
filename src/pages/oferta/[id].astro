@@ -9,29 +9,23 @@
 import Layout from '../../layouts/Layout.astro';
 import MapaOfertas from '../../components/MapaOfertas.astro';
 import FormularioPostulacion from '../../components/FormularioPostulacion.astro';
-import { supabase } from '../../lib/supabase';
+import { findOfertaById } from '../../data/mock-ofertas';
 import { findComuna } from '../../lib/comunas';
 
 // Obtener ID de la oferta desde params
 const { id } = Astro.params;
 
-// Validar que ID es un UUID válido
-const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-if (!id || !uuidRegex.test(id)) {
+// Validar que ID existe
+if (!id) {
   return Astro.redirect('/404');
 }
 
-// Fetch oferta desde Supabase
-const { data: oferta, error } = await supabase
-  .from('ofertas')
-  .select('*')
-  .eq('id', id)
-  .eq('activa', true) // Solo ofertas activas
-  .single();
+// Buscar oferta en mock data
+const oferta = findOfertaById(id);
 
-// Si no existe o error, redirigir a 404
-if (error || !oferta) {
-  console.error('[Oferta] No encontrada o inactiva:', id, error);
+// Si no existe o está inactiva, redirigir a 404
+if (!oferta || !oferta.activa) {
+  console.error('[Oferta] No encontrada o inactiva:', id);
   return Astro.redirect('/404');
 }
 
