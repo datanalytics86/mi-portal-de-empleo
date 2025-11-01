@@ -1,12 +1,15 @@
 /**
- * API Route: Postular a Oferta
+ * API Route: Postular a Oferta (MOCK VERSION)
  *
- * Maneja la postulación a ofertas: upload de CV, validaciones y rate limiting
+ * Maneja la postulación a ofertas: validaciones y simulación
  * Basado en SPECIFICATIONS.md secciones 8.1, 8.2, 9
+ *
+ * NOTA: Esta es una versión mock que simula el comportamiento
+ * sin guardar datos reales. Para producción, integrar con Supabase.
  */
 
 import type { APIRoute } from 'astro';
-import { supabase } from '../../lib/supabase';
+import { findOfertaById } from '../../data/mock-ofertas';
 import {
   validateCVFileServer,
   generateUniqueCVFileName,
@@ -14,6 +17,18 @@ import {
   ALLOWED_CV_TYPES,
   MAX_CV_SIZE,
 } from '../../lib/validations';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MOCK DATA STORAGE (in-memory, resets on server restart)
+// ═══════════════════════════════════════════════════════════════════════════
+
+interface MockPostulacion {
+  ip: string;
+  timestamp: number;
+  oferta_id: string;
+}
+
+const postulaciones: MockPostulacion[] = [];
 
 // ═══════════════════════════════════════════════════════════════════════════
 // API ENDPOINT: POST /api/postular
@@ -30,27 +45,22 @@ export const POST: APIRoute = async ({ request }) => {
       request.headers.get('x-real-ip') ||
       '0.0.0.0';
 
-    console.log('[API /postular] Nueva postulación desde IP:', clientIP);
+    console.log('[API /postular MOCK] Nueva postulación desde IP:', clientIP);
 
     // ─────────────────────────────────────────────────────────────────────
-    // 2. RATE LIMITING - Máximo 3 postulaciones por hora
+    // 2. RATE LIMITING - Máximo 3 postulaciones por hora (MOCK)
     // Basado en SPECS 8.2
     // ─────────────────────────────────────────────────────────────────────
 
-    const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+    const oneHourAgo = Date.now() - 3600000;
 
-    const { data: recentPostulations, error: rateLimitError } = await supabase
-      .from('postulaciones')
-      .select('id')
-      .eq('ip_address', clientIP)
-      .gte('created_at', oneHourAgo);
+    // Limpiar postulaciones antiguas (más de 1 hora)
+    const recentPostulations = postulaciones.filter(
+      p => p.timestamp > oneHourAgo && p.ip === clientIP
+    );
 
-    if (rateLimitError) {
-      console.error('[Rate Limit] Error verificando:', rateLimitError);
-    }
-
-    if (recentPostulations && recentPostulations.length >= MAX_POSTULATIONS_PER_HOUR) {
-      console.warn(`[Rate Limit] IP ${clientIP} excedió límite (${recentPostulations.length} postulaciones en 1h)`);
+    if (recentPostulations.length >= MAX_POSTULATIONS_PER_HOUR) {
+      console.warn(`[Rate Limit MOCK] IP ${clientIP} excedió límite (${recentPostulations.length} postulaciones en 1h)`);
       return new Response(
         JSON.stringify({
           error: 'Has alcanzado el límite de postulaciones por hora. Intenta más tarde.',
@@ -99,17 +109,13 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     // ─────────────────────────────────────────────────────────────────────
-    // 4. VALIDAR OFERTA EXISTE Y ESTÁ ACTIVA
+    // 4. VALIDAR OFERTA EXISTE Y ESTÁ ACTIVA (MOCK)
     // ─────────────────────────────────────────────────────────────────────
 
-    const { data: oferta, error: ofertaError } = await supabase
-      .from('ofertas')
-      .select('id, titulo, activa, expires_at')
-      .eq('id', oferta_id)
-      .single();
+    const oferta = findOfertaById(oferta_id);
 
-    if (ofertaError || !oferta) {
-      console.error('[Validación] Oferta no encontrada:', oferta_id);
+    if (!oferta) {
+      console.error('[Validación MOCK] Oferta no encontrada:', oferta_id);
       return new Response(
         JSON.stringify({ error: 'Oferta no encontrada' }),
         { status: 404, headers: { 'Content-Type': 'application/json' } }
@@ -117,7 +123,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     if (!oferta.activa) {
-      console.warn('[Validación] Oferta inactiva:', oferta_id);
+      console.warn('[Validación MOCK] Oferta inactiva:', oferta_id);
       return new Response(
         JSON.stringify({ error: 'Esta oferta ya no está activa' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -126,7 +132,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Verificar si expiró
     if (new Date(oferta.expires_at) < new Date()) {
-      console.warn('[Validación] Oferta expirada:', oferta_id);
+      console.warn('[Validación MOCK] Oferta expirada:', oferta_id);
       return new Response(
         JSON.stringify({ error: 'Esta oferta ha expirado' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -166,7 +172,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // 6. UPLOAD CV A SUPABASE STORAGE
+    // 6. SIMULAR UPLOAD CV (MOCK)
     // Basado en SPECS 9
     // ─────────────────────────────────────────────────────────────────────
 
@@ -174,66 +180,28 @@ export const POST: APIRoute = async ({ request }) => {
     const uniqueFileName = generateUniqueCVFileName(cvFile.name);
     const filePath = `${oferta_id}/${uniqueFileName}`;
 
-    console.log('[Storage] Subiendo CV:', filePath);
-
-    // Convertir File a ArrayBuffer
-    const arrayBuffer = await cvFile.arrayBuffer();
-    const fileBuffer = new Uint8Array(arrayBuffer);
-
-    // Upload a bucket 'cvs'
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('cvs')
-      .upload(filePath, fileBuffer, {
-        contentType: cvFile.type,
-        cacheControl: '3600',
-        upsert: false, // No sobrescribir
-      });
-
-    if (uploadError) {
-      console.error('[Storage] Error al subir CV:', uploadError);
-      return new Response(
-        JSON.stringify({
-          error: 'Error al subir el archivo. Intenta nuevamente.',
-          details: uploadError.message,
-        }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('[Storage] CV subido exitosamente:', uploadData.path);
+    console.log('[Storage MOCK] Simulando upload de CV:', filePath);
+    console.log('[Storage MOCK] Archivo:', {
+      nombre: cvFile.name,
+      tamaño: `${(cvFile.size / 1024).toFixed(2)} KB`,
+      tipo: cvFile.type
+    });
 
     // ─────────────────────────────────────────────────────────────────────
-    // 7. CREAR REGISTRO DE POSTULACIÓN EN BD
+    // 7. CREAR REGISTRO DE POSTULACIÓN (MOCK - en memoria)
     // ─────────────────────────────────────────────────────────────────────
 
-    const { data: postulacion, error: postulacionError } = await supabase
-      .from('postulaciones')
-      .insert({
-        oferta_id,
-        nombre_candidato: nombre_candidato && nombre_candidato.trim() !== '' ? nombre_candidato.trim() : null,
-        email_candidato: email_candidato && email_candidato.trim() !== '' ? email_candidato.trim() : null,
-        cv_url: uploadData.path,
-        ip_address: clientIP,
-      })
-      .select()
-      .single();
+    const mockPostulacion: MockPostulacion = {
+      ip: clientIP,
+      timestamp: Date.now(),
+      oferta_id
+    };
 
-    if (postulacionError) {
-      console.error('[BD] Error al crear postulación:', postulacionError);
+    // Guardar en memoria
+    postulaciones.push(mockPostulacion);
 
-      // Intentar eliminar el CV subido si falló el insert
-      await supabase.storage.from('cvs').remove([filePath]);
-
-      return new Response(
-        JSON.stringify({
-          error: 'Error al registrar la postulación. Intenta nuevamente.',
-          details: postulacionError.message,
-        }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('[Éxito] Postulación creada:', postulacion.id);
+    console.log('[Éxito MOCK] Postulación registrada en memoria');
+    console.log('[MOCK] Total postulaciones: ', postulaciones.length);
 
     // ─────────────────────────────────────────────────────────────────────
     // 8. RESPUESTA EXITOSA
@@ -244,8 +212,8 @@ export const POST: APIRoute = async ({ request }) => {
         success: true,
         message: 'Postulación enviada exitosamente',
         postulacion: {
-          id: postulacion.id,
-          created_at: postulacion.created_at,
+          id: `mock-${Date.now()}`,
+          created_at: new Date().toISOString(),
         },
       }),
       {
