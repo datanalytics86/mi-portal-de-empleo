@@ -51,6 +51,11 @@
       const toast = document.createElement('div');
       toast.className = `toast toast-${type} pointer-events-auto transform translate-x-full opacity-0 transition-all duration-300`;
 
+      // ARIA attributes para accesibilidad
+      toast.setAttribute('role', type === 'error' || type === 'warning' ? 'alert' : 'status');
+      toast.setAttribute('aria-live', type === 'error' || type === 'warning' ? 'assertive' : 'polite');
+      toast.setAttribute('aria-atomic', 'true');
+
       // Configuración por tipo
       const configs = {
         success: {

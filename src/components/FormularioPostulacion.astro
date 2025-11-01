@@ -50,10 +50,12 @@ const { ofertaId, titulo, empresa } = Astro.props;
         id="email"
         name="email"
         placeholder="tu@email.com"
+        aria-describedby="email-error"
+        aria-invalid="false"
         class="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
         maxlength="255"
       />
-      <p id="email-error" class="text-sm text-error mt-1 hidden">
+      <p id="email-error" class="text-sm text-error mt-1 hidden" role="alert">
         Email inválido
       </p>
     </div>
@@ -74,6 +76,8 @@ const { ofertaId, titulo, empresa } = Astro.props;
           id="cv"
           name="cv"
           accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          aria-required="true"
+          aria-describedby="cv-error"
           class="hidden"
           required
         />

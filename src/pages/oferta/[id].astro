@@ -80,9 +80,50 @@ const badgeStyle = tipoJornadaStyles[oferta.tipo_jornada] || 'bg-gray-50 text-gr
 // Título para SEO
 const pageTitle = `${oferta.titulo} - ${oferta.empresa} | Portal de Empleos Chile`;
 const pageDescription = `${oferta.descripcion.substring(0, 155)}...`;
+
+// Datos estructurados JSON-LD para SEO
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "JobPosting",
+  "title": oferta.titulo,
+  "description": oferta.descripcion,
+  "datePosted": oferta.created_at,
+  "validThrough": oferta.expires_at,
+  "employmentType": oferta.tipo_jornada === 'Full-time' ? 'FULL_TIME' :
+                    oferta.tipo_jornada === 'Part-time' ? 'PART_TIME' :
+                    oferta.tipo_jornada === 'Freelance' ? 'CONTRACTOR' : 'INTERN',
+  "hiringOrganization": {
+    "@type": "Organization",
+    "name": oferta.empresa,
+    "sameAs": Astro.site?.toString() || "https://portalempleoschile.cl"
+  },
+  "jobLocation": {
+    "@type": "Place",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": oferta.comuna,
+      "addressRegion": oferta.region,
+      "addressCountry": "CL"
+    }
+  },
+  "applicantLocationRequirements": {
+    "@type": "Country",
+    "name": "Chile"
+  },
+  "jobLocationType": "TELECOMMUTE",
+  "industry": oferta.categoria || "General"
+};
 ---
 
-<Layout title={pageTitle} description={pageDescription}>
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  ogType="article"
+  canonicalUrl={`${Astro.site || 'https://portalempleoschile.cl'}/oferta/${oferta.id}`}
+>
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} slot="head" />
+
   <div class="container mx-auto px-4 md:px-8 py-8">
     <!-- Breadcrumb -->
     <nav class="mb-6 text-sm">

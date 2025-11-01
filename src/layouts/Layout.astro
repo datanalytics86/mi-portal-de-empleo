@@ -11,14 +11,22 @@ import Toast from '../components/Toast.astro';
 interface Props {
   title?: string;
   description?: string;
+  ogType?: string;
+  ogImage?: string;
+  canonicalUrl?: string;
 }
 
 const {
   title = 'Portal de Empleos Chile - Encuentra trabajo cerca de ti',
-  description = 'Plataforma de empleos georeferenciada en Chile. Busca y postula a ofertas laborales sin registro. Mapa interactivo con ofertas de trabajo en todo Chile.'
+  description = 'Plataforma de empleos georeferenciada en Chile. Busca y postula a ofertas laborales sin registro. Mapa interactivo con ofertas de trabajo en todo Chile.',
+  ogType = 'website',
+  ogImage,
+  canonicalUrl
 } = Astro.props;
 
 const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'http://localhost:4321';
+const currentUrl = canonicalUrl || new URL(Astro.url.pathname, siteUrl).toString();
+const imageUrl = ogImage || `${siteUrl}/og-default.png`;
 ---
 
 <!DOCTYPE html>
@@ -32,20 +40,31 @@ const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'http://localhost:4321';
     <!-- SEO Meta Tags -->
     <meta name="robots" content="index, follow" />
     <meta name="keywords" content="empleos chile, trabajo chile, ofertas laborales, mapa empleos, postular trabajo" />
+    <link rel="canonical" href={currentUrl} />
 
     <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content={siteUrl} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={currentUrl} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
+    <meta property="og:image" content={imageUrl} />
     <meta property="og:locale" content="es_CL" />
+    <meta property="og:site_name" content="Portal de Empleos Chile" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={imageUrl} />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Preload critical resources for performance -->
+    <link
+      rel="preconnect"
+      href="https://unpkg.com"
+      crossorigin
+    />
 
     <!-- Leaflet CSS para mapas -->
     <link
@@ -68,6 +87,9 @@ const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'http://localhost:4321';
     />
 
     <title>{title}</title>
+
+    <!-- Slot for additional head content (JSON-LD, extra meta tags, etc.) -->
+    <slot name="head" />
   </head>
 
   <body class="min-h-screen flex flex-col bg-background text-text-primary">
@@ -76,7 +98,7 @@ const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'http://localhost:4321';
       <div class="container mx-auto px-4 md:px-8 py-4">
         <nav class="flex items-center justify-between">
           <!-- Logo -->
-          <a href="/" class="flex items-center gap-2 hover:opacity-80 transition">
+          <a href="/" class="flex items-center gap-2 hover:opacity-80 transition" aria-label="Portal de Empleos Chile - Ir a página principal">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -86,6 +108,7 @@ const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'http://localhost:4321';
               stroke-linecap="round"
               stroke-linejoin="round"
               class="w-8 h-8 text-accent"
+              aria-hidden="true"
             >
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
               <circle cx="12" cy="10" r="3"/>
