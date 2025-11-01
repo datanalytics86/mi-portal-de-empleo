@@ -15,11 +15,27 @@ import { supabase } from '../lib/supabase';
 import { findComuna } from '../lib/comunas';
 
 // Fetch ofertas activas desde Supabase
-const { data: ofertas, error } = await supabase
-  .from('ofertas')
-  .select('*')
-  .eq('activa', true)
-  .order('created_at', { ascending: false });
+// Si Supabase no está configurado, usar array vacío
+let ofertas = [];
+let error = null;
+
+try {
+  const response = await supabase
+    .from('ofertas')
+    .select('*')
+    .eq('activa', true)
+    .order('created_at', { ascending: false });
+
+  ofertas = response.data || [];
+  error = response.error;
+
+  if (error) {
+    console.warn('⚠️ Error fetching ofertas from Supabase:', error.message);
+  }
+} catch (e) {
+  console.warn('⚠️ Supabase not configured or connection failed. Showing empty results.');
+  ofertas = [];
+}
 
 // Transformar ofertas para el mapa (agregar coordenadas lat/lng)
 const ofertasConCoordenadas = (ofertas || []).map(oferta => {
