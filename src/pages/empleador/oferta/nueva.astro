@@ -1,20 +1,19 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-import { getSession, getEmpleadorProfile } from '../../../lib/auth';
-import { getRegiones, getComunasByRegion } from '../../../lib/comunas';
+import { getMockSession } from '../../../lib/mock-auth';
+import { getRegiones } from '../../../lib/comunas';
 
 export const prerender = false;
 
-// Obtener sesión y perfil
-const { user } = await getSession(Astro.cookies);
-const empleador = await getEmpleadorProfile(Astro.cookies);
+// Obtener sesión mock
+const empleador = getMockSession(Astro.cookies);
 
-// Si no hay sesión, el middleware redirigirá
-if (!user || !empleador) {
+// Si no hay sesión, redirigir a login
+if (!empleador) {
   return Astro.redirect('/empleador/login');
 }
 
-// Obtener regiones y comunas para los selectores
+// Obtener regiones para el selector
 const regiones = getRegiones();
 
 // Fecha mínima (hoy) y máxima (90 días) para el campo de expiración
@@ -216,22 +215,6 @@ const defaultExpiracion = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOS
               <p id="expiresAtError" class="text-sm text-error mt-1 hidden"></p>
             </div>
 
-            <!-- Error general -->
-            <div id="generalError" class="hidden">
-              <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p class="text-sm text-error" id="generalErrorText"></p>
-              </div>
-            </div>
-
-            <!-- Success message -->
-            <div id="successMessage" class="hidden">
-              <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                <p class="text-sm text-success">
-                  ✓ Oferta publicada exitosamente. Redirigiendo...
-                </p>
-              </div>
-            </div>
-
             <!-- Botones -->
             <div class="flex gap-4 pt-4">
               <button
@@ -269,10 +252,6 @@ const defaultExpiracion = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOS
   const comunaSelect = document.getElementById('comuna');
   const expiresAtInput = document.getElementById('expiresAt');
   const charCount = document.getElementById('charCount');
-
-  const generalError = document.getElementById('generalError');
-  const generalErrorText = document.getElementById('generalErrorText');
-  const successMessage = document.getElementById('successMessage');
   const submitButton = document.getElementById('submitButton');
   const buttonText = document.getElementById('buttonText');
   const buttonLoader = document.getElementById('buttonLoader');
@@ -305,22 +284,9 @@ const defaultExpiracion = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOS
     });
   });
 
-  // Mostrar error general
-  function showGeneralError(message) {
-    generalErrorText.textContent = message;
-    generalError.classList.remove('hidden');
-    successMessage.classList.add('hidden');
-  }
-
-  // Ocultar error general
-  function hideGeneralError() {
-    generalError.classList.add('hidden');
-  }
-
   // Submit del formulario
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    hideGeneralError();
 
     // Obtener valores
     const titulo = tituloInput.value.trim();
@@ -333,12 +299,12 @@ const defaultExpiracion = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOS
 
     // Validaciones básicas
     if (!titulo || !descripcion || !empresa || !tipoJornada || !comuna || !expiresAt) {
-      showGeneralError('Por favor completa todos los campos requeridos');
+      window.toast.warning('Por favor completa todos los campos requeridos');
       return;
     }
 
     if (descripcion.length < 50) {
-      showGeneralError('La descripción debe tener al menos 50 caracteres');
+      window.toast.warning('La descripción debe tener al menos 50 caracteres');
       return;
     }
 
@@ -367,12 +333,12 @@ const defaultExpiracion = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOS
       const data = await response.json();
 
       if (!response.ok) {
-        showGeneralError(data.error || 'Error al crear la oferta');
+        window.toast.error(data.error || 'Error al crear la oferta');
         return;
       }
 
       // Mostrar mensaje de éxito
-      successMessage.classList.remove('hidden');
+      window.toast.success('¡Oferta publicada exitosamente!');
 
       // Redireccionar al dashboard después de 1.5 segundos
       setTimeout(() => {
@@ -380,7 +346,7 @@ const defaultExpiracion = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOS
       }, 1500);
     } catch (error) {
       console.error('Error:', error);
-      showGeneralError('Error de conexión. Por favor, intenta nuevamente.');
+      window.toast.error('Error de conexión. Por favor, intenta nuevamente.');
     } finally {
       submitButton.disabled = false;
       buttonText.classList.remove('hidden');

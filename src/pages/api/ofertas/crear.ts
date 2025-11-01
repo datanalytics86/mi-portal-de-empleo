@@ -1,17 +1,17 @@
 import type { APIRoute } from 'astro';
-import { supabaseServer } from '../../../lib/supabase';
-import { getSession, getEmpleadorProfile } from '../../../lib/auth';
+import { getMockSession } from '../../../lib/mock-auth';
 import { findComuna } from '../../../lib/comunas';
+import { mockOfertas } from '../../../data/mock-ofertas';
+import { empleadorOfertasMap } from '../../../data/mock-empleador-ofertas';
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     // Verificar autenticación
-    const { user } = await getSession(cookies);
-    const empleador = await getEmpleadorProfile(cookies);
+    const empleador = getMockSession(cookies);
 
-    if (!user || !empleador) {
+    if (!empleador) {
       return new Response(
         JSON.stringify({ error: 'No autorizado' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
@@ -81,39 +81,44 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    // Crear punto geográfico en formato WKT para PostGIS
-    const ubicacionWKT = `POINT(${comunaData.lng} ${comunaData.lat})`;
+    // Generar nuevo ID (usar el número siguiente al último)
+    const maxId = Math.max(...mockOfertas.map(o => parseInt(o.id)), 0);
+    const newId = (maxId + 1).toString();
 
-    // Insertar oferta en la base de datos
-    const { data, error } = await supabaseServer
-      .from('ofertas')
-      .insert({
-        empleador_id: empleador.id,
-        titulo: titulo.trim(),
-        descripcion: descripcion.trim(),
-        empresa: empresa.trim(),
-        tipo_jornada,
-        categoria: categoria || null,
-        comuna: comuna,
-        ubicacion: ubicacionWKT,
-        activa: true,
-        expires_at: expires_at,
-      })
-      .select()
-      .single();
+    // Crear nueva oferta
+    const nuevaOferta = {
+      id: newId,
+      titulo: titulo.trim(),
+      descripcion: descripcion.trim(),
+      empresa: empresa.trim(),
+      tipo_jornada,
+      categoria: categoria || null,
+      comuna: comunaData.nombre,
+      region: comunaData.region,
+      lat: comunaData.lat,
+      lng: comunaData.lng,
+      activa: true,
+      expires_at: expires_at + 'T23:59:59Z',
+      created_at: new Date().toISOString(),
+      postulaciones_count: 0
+    };
 
-    if (error) {
-      console.error('Error al crear oferta:', error);
-      return new Response(
-        JSON.stringify({ error: 'Error al crear la oferta' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
+    // Agregar a mock ofertas (en memoria)
+    mockOfertas.push(nuevaOferta);
+
+    // Actualizar empleadorOfertasMap
+    if (!empleadorOfertasMap[empleador.id]) {
+      empleadorOfertasMap[empleador.id] = [];
     }
+    empleadorOfertasMap[empleador.id].push(newId);
+
+    console.log(`[MOCK] Nueva oferta creada: ${newId} - ${titulo}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        oferta: data,
+        oferta: nuevaOferta,
+        message: 'Oferta creada exitosamente'
       }),
       { status: 201, headers: { 'Content-Type': 'application/json' } }
     );

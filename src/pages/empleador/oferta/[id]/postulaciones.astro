@@ -265,15 +265,15 @@ const stats = getPostulacionesStats(id);
 <script>
   // Simulación de descarga de CVs
   const downloadButtons = document.querySelectorAll('.download-cv-btn');
-  
+
   downloadButtons.forEach(button => {
     button.addEventListener('click', () => {
       const cvUrl = button.getAttribute('data-cv-url');
       const nombre = button.getAttribute('data-nombre');
-      
-      // En modo demo, solo mostrar alerta
-      alert(`📄 Descargando CV de ${nombre}\n\nRuta: ${cvUrl}\n\nEn producción, esto descargaría el archivo real desde el storage.`);
-      
+
+      // En modo demo, mostrar notificación
+      window.toast.info(`📄 Simulando descarga del CV de ${nombre}. En producción, esto descargaría el archivo real.`, 6000);
+
       console.log('[DEMO] Simulando descarga de CV:', {
         nombre,
         url: cvUrl

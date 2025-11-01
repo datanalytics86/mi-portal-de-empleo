@@ -6,6 +6,8 @@
  * Basado en SPECIFICATIONS.md secciones 6.1 y 4
  */
 
+import Toast from '../components/Toast.astro';
+
 interface Props {
   title?: string;
   description?: string;
@@ -183,5 +185,8 @@ const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'http://localhost:4321';
         </div>
       </div>
     </footer>
+
+    <!-- Toast Notifications -->
+    <Toast />
   </body>
 </html>

@@ -269,11 +269,11 @@ const stats = getEmpleadorStats(empleador.id);
         if (response.ok) {
           window.location.href = '/empleador/login';
         } else {
-          alert('Error al cerrar sesión');
+          window.toast.error('Error al cerrar sesión');
         }
       } catch (error) {
         console.error('Error:', error);
-        alert('Error de conexión');
+        window.toast.error('Error de conexión. Por favor, intenta nuevamente.');
       }
     });
   }
