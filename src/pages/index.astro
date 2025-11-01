@@ -130,15 +130,7 @@ const totalOfertas = ofertas?.length || 0;
     </div>
 
     <!-- Grid de ofertas -->
-    {error && (
-      <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-        <p class="text-red-800 text-sm">
-          Error al cargar ofertas: {error.message}
-        </p>
-      </div>
-    )}
-
-    {totalOfertas === 0 && !error && (
+    {totalOfertas === 0 && (
       <div class="text-center py-12">
         <p class="text-xl text-text-secondary mb-4">
           No hay ofertas disponibles en este momento
