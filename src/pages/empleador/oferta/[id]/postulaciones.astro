@@ -1,52 +1,50 @@
 ---
+/**
+ * Vista de Postulaciones (MOCK VERSION)
+ *
+ * Lista todas las postulaciones recibidas para una oferta específica
+ */
+
 import Layout from '../../../../layouts/Layout.astro';
-import { getSession, getEmpleadorProfile } from '../../../../lib/auth';
-import { supabaseServer } from '../../../../lib/supabase';
+import { getMockSession } from '../../../../lib/mock-auth';
+import { findOfertaById } from '../../../../data/mock-ofertas';
+import { getPostulacionesByOferta, getPostulacionesStats } from '../../../../data/mock-postulaciones';
+import { empleadorOwnsOferta } from '../../../../data/mock-empleador-ofertas';
 
 export const prerender = false;
 
-// Obtener sesión y perfil
-const { user } = await getSession(Astro.cookies);
-const empleador = await getEmpleadorProfile(Astro.cookies);
+// Obtener sesión
+const empleador = getMockSession(Astro.cookies);
 
-// Si no hay sesión, el middleware redirigirá
-if (!user || !empleador) {
+// Si no hay sesión, redirigir
+if (!empleador) {
   return Astro.redirect('/empleador/login');
 }
 
 // Obtener ID de la oferta desde URL
 const { id } = Astro.params;
 
-// Validar formato UUID
-const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-if (!id || !uuidRegex.test(id)) {
+if (!id) {
   return Astro.redirect('/empleador/dashboard');
 }
 
-// Verificar que la oferta existe y pertenece al empleador
-const { data: oferta, error: ofertaError } = await supabaseServer
-  .from('ofertas')
-  .select('*')
-  .eq('id', id)
-  .eq('empleador_id', empleador.id)
-  .single();
+// Verificar que la oferta existe
+const oferta = findOfertaById(id);
 
-if (ofertaError || !oferta) {
+if (!oferta) {
   return Astro.redirect('/empleador/dashboard');
 }
 
-// Obtener postulaciones de la oferta
-const { data: postulaciones, error: postulacionesError } = await supabaseServer
-  .from('postulaciones')
-  .select('*')
-  .eq('oferta_id', id)
-  .order('created_at', { ascending: false });
+// Verificar que la oferta pertenece al empleador
+const ownsOferta = empleadorOwnsOferta(empleador.id, id);
 
-if (postulacionesError) {
-  console.error('Error al obtener postulaciones:', postulacionesError);
+if (!ownsOferta) {
+  return Astro.redirect('/empleador/dashboard');
 }
 
-const postulacionesList = postulaciones || [];
+// Obtener postulaciones
+const postulacionesList = getPostulacionesByOferta(id);
+const stats = getPostulacionesStats(id);
 ---
 
 <Layout title={`Postulaciones - ${oferta.titulo}`}>
@@ -76,7 +74,7 @@ const postulacionesList = postulaciones || [];
           </div>
           <div>
             <span class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-50 text-accent font-medium">
-              {postulacionesList.length} {postulacionesList.length === 1 ? 'postulación' : 'postulaciones'}
+              {stats.total} {stats.total === 1 ? 'postulación' : 'postulaciones'}
             </span>
           </div>
         </div>
@@ -88,7 +86,7 @@ const postulacionesList = postulaciones || [];
       <div class="max-w-5xl mx-auto">
         <!-- Información de la oferta -->
         <div class="bg-white rounded-lg shadow-sm border border-border p-6 mb-6">
-          <div class="grid md:grid-cols-2 gap-6">
+          <div class="grid md:grid-cols-3 gap-6">
             <div>
               <h3 class="text-sm font-medium text-text-secondary mb-2">Detalles de la Oferta</h3>
               <dl class="space-y-2">
@@ -106,67 +104,58 @@ const postulacionesList = postulaciones || [];
                 </div>
               </dl>
             </div>
+
             <div>
-              <h3 class="text-sm font-medium text-text-secondary mb-2">Estado</h3>
+              <h3 class="text-sm font-medium text-text-secondary mb-2">Estadísticas</h3>
               <dl class="space-y-2">
                 <div>
-                  <dt class="text-xs text-text-secondary">Publicada</dt>
-                  <dd class="text-sm text-text-primary font-medium">
-                    {new Date(oferta.created_at).toLocaleDateString('es-CL', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </dd>
+                  <dt class="text-xs text-text-secondary">Total de postulaciones</dt>
+                  <dd class="text-sm text-text-primary font-medium">{stats.total}</dd>
                 </div>
                 <div>
-                  <dt class="text-xs text-text-secondary">Expira</dt>
-                  <dd class="text-sm text-text-primary font-medium">
-                    {new Date(oferta.expires_at).toLocaleDateString('es-CL', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </dd>
+                  <dt class="text-xs text-text-secondary">Con datos de contacto</dt>
+                  <dd class="text-sm text-text-primary font-medium">{stats.conContacto}</dd>
                 </div>
                 <div>
-                  <dt class="text-xs text-text-secondary">Estado</dt>
-                  <dd>
-                    {oferta.activa && new Date(oferta.expires_at) > new Date() ? (
-                      <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700">
-                        Activa
-                      </span>
-                    ) : !oferta.activa ? (
-                      <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                        Desactivada
-                      </span>
-                    ) : (
-                      <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700">
-                        Expirada
-                      </span>
-                    )}
-                  </dd>
+                  <dt class="text-xs text-text-secondary">Última semana</dt>
+                  <dd class="text-sm text-text-primary font-medium">{stats.ultimaSemana}</dd>
                 </div>
               </dl>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-medium text-text-secondary mb-2">Acciones</h3>
+              <div class="space-y-2">
+                <a
+                  href={`/oferta/${oferta.id}`}
+                  target="_blank"
+                  class="block text-sm text-accent hover:text-accent-hover transition"
+                >
+                  Ver oferta pública →
+                </a>
+                <p class="text-xs text-text-secondary">
+                  Publicado: {new Date(oferta.created_at).toLocaleDateString('es-CL')}
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Tabla de Postulaciones -->
-        <div class="bg-white rounded-lg shadow-sm border border-border overflow-hidden">
-          {postulacionesList.length === 0 ? (
-            <div class="p-12 text-center">
-              <svg class="w-16 h-16 mx-auto text-text-secondary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-              </svg>
-              <h3 class="text-lg font-semibold text-text-primary mb-2">
-                Sin postulaciones aún
-              </h3>
-              <p class="text-text-secondary">
-                Todavía no has recibido postulaciones para esta oferta
-              </p>
-            </div>
-          ) : (
+        <!-- Lista de postulaciones -->
+        {postulacionesList.length === 0 ? (
+          <div class="bg-white rounded-lg shadow-sm border border-border p-12 text-center">
+            <svg class="w-16 h-16 mx-auto text-text-secondary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <h3 class="text-lg font-semibold text-text-primary mb-2">
+              Aún no hay postulaciones
+            </h3>
+            <p class="text-text-secondary">
+              Cuando recibas candidatos, aparecerán aquí
+            </p>
+          </div>
+        ) : (
+          <div class="bg-white rounded-lg shadow-sm border border-border overflow-hidden">
             <div class="overflow-x-auto">
               <table class="w-full">
                 <thead class="bg-surface border-b border-border">
@@ -180,7 +169,7 @@ const postulacionesList = postulaciones || [];
                     <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                       Fecha
                     </th>
-                    <th class="px-6 py-4 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
+                    <th class="px-6 py-4 text-center text-xs font-medium text-text-secondary uppercase tracking-wider">
                       CV
                     </th>
                   </tr>
@@ -189,40 +178,59 @@ const postulacionesList = postulaciones || [];
                   {postulacionesList.map((postulacion) => (
                     <tr class="hover:bg-surface transition">
                       <td class="px-6 py-4">
-                        <p class="text-sm font-medium text-text-primary">
-                          {postulacion.nombre_candidato || 'Anónimo'}
-                        </p>
+                        <div class="flex items-center gap-3">
+                          <div class="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-medium">
+                            {postulacion.nombre_candidato 
+                              ? postulacion.nombre_candidato.charAt(0).toUpperCase()
+                              : '?'}
+                          </div>
+                          <div>
+                            <p class="text-sm font-medium text-text-primary">
+                              {postulacion.nombre_candidato || 'Candidato anónimo'}
+                            </p>
+                            <p class="text-xs text-text-secondary">
+                              ID: {postulacion.id}
+                            </p>
+                          </div>
+                        </div>
                       </td>
                       <td class="px-6 py-4">
-                        <p class="text-sm text-text-secondary">
-                          {postulacion.email_candidato || 'No proporcionado'}
-                        </p>
+                        {postulacion.email_candidato ? (
+                          <a
+                            href={`mailto:${postulacion.email_candidato}`}
+                            class="text-sm text-accent hover:text-accent-hover transition"
+                          >
+                            {postulacion.email_candidato}
+                          </a>
+                        ) : (
+                          <span class="text-sm text-text-secondary italic">
+                            No proporcionado
+                          </span>
+                        )}
                       </td>
                       <td class="px-6 py-4">
-                        <p class="text-sm text-text-secondary">
-                          {new Date(postulacion.created_at).toLocaleDateString('es-CL', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </p>
-                        <p class="text-xs text-text-secondary">
-                          {new Date(postulacion.created_at).toLocaleTimeString('es-CL', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
+                        <div class="text-sm text-text-secondary">
+                          <div>
+                            {new Date(postulacion.created_at).toLocaleDateString('es-CL')}
+                          </div>
+                          <div class="text-xs">
+                            {new Date(postulacion.created_at).toLocaleTimeString('es-CL', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </div>
+                        </div>
                       </td>
-                      <td class="px-6 py-4 text-right">
+                      <td class="px-6 py-4 text-center">
                         <button
-                          class="download-cv inline-flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition"
+                          class="download-cv-btn inline-flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition"
                           data-cv-url={postulacion.cv_url}
-                          data-nombre={postulacion.nombre_candidato || 'CV'}
+                          data-nombre={postulacion.nombre_candidato || 'candidato'}
                         >
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                           </svg>
-                          Descargar
+                          Descargar CV
                         </button>
                       </td>
                     </tr>
@@ -230,75 +238,46 @@ const postulacionesList = postulaciones || [];
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        <!-- Botón volver -->
-        <div class="mt-6 text-center">
-          <a
-            href="/empleador/dashboard"
-            class="inline-flex items-center gap-2 px-6 py-3 text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-white transition"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        <!-- Nota informativa -->
+        <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            Volver al Dashboard
-          </a>
+            <div>
+              <p class="text-sm text-accent font-medium mb-1">
+                Modo Demo - Datos Simulados
+              </p>
+              <p class="text-sm text-text-secondary">
+                Los CVs y datos de contacto son simulados. En producción, podrás descargar archivos reales y contactar candidatos.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </main>
   </div>
 </Layout>
 
-<script define:vars={{ ofertaId: id }} is:inline>
-  // Descargar CV
-  const downloadButtons = document.querySelectorAll('.download-cv');
-
-  downloadButtons.forEach((button) => {
-    button.addEventListener('click', async (e) => {
-      const target = e.currentTarget;
-      const cvUrl = target.dataset.cvUrl;
-      const nombre = target.dataset.nombre || 'CV';
-
-      if (!cvUrl) {
-        alert('Error: No se encontró la URL del CV');
-        return;
-      }
-
-      try {
-        target.disabled = true;
-        target.innerHTML = '<span>Descargando...</span>';
-
-        const response = await fetch(`/api/ofertas/${ofertaId}/cv-download`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ cv_url: cvUrl }),
-        });
-
-        if (!response.ok) {
-          const data = await response.json();
-          alert(data.error || 'Error al descargar el CV');
-          return;
-        }
-
-        const data = await response.json();
-
-        // Abrir el CV en una nueva pestaña
-        window.open(data.url, '_blank');
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Error de conexión al descargar el CV');
-      } finally {
-        target.disabled = false;
-        target.innerHTML = `
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-          </svg>
-          Descargar
-        `;
-      }
+<script>
+  // Simulación de descarga de CVs
+  const downloadButtons = document.querySelectorAll('.download-cv-btn');
+  
+  downloadButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const cvUrl = button.getAttribute('data-cv-url');
+      const nombre = button.getAttribute('data-nombre');
+      
+      // En modo demo, solo mostrar alerta
+      alert(`📄 Descargando CV de ${nombre}\n\nRuta: ${cvUrl}\n\nEn producción, esto descargaría el archivo real desde el storage.`);
+      
+      console.log('[DEMO] Simulando descarga de CV:', {
+        nombre,
+        url: cvUrl
+      });
     });
   });
 </script>
