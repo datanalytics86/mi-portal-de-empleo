@@ -127,6 +127,17 @@ const imageUrl = ogImage || `${siteUrl}/og-default.png`;
               Buscar empleos
             </a>
             <a
+              href="/#favoritos"
+              id="favorites-link"
+              class="text-text-secondary hover:text-text-primary transition flex items-center gap-2 relative"
+              aria-label="Ver favoritos"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+              </svg>
+              <span id="favorites-count" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">0</span>
+            </a>
+            <a
               href="/empleador/login"
               class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition font-medium"
             >
@@ -211,5 +222,29 @@ const imageUrl = ogImage || `${siteUrl}/og-default.png`;
 
     <!-- Toast Notifications -->
     <Toast />
+
+    <!-- Favorites counter script -->
+    <script is:inline>
+      // Actualizar contador de favoritos
+      function updateFavoritesCount() {
+        const favorites = JSON.parse(localStorage.getItem('job-favorites') || '[]');
+        const countElement = document.getElementById('favorites-count');
+
+        if (countElement) {
+          if (favorites.length > 0) {
+            countElement.textContent = favorites.length.toString();
+            countElement.classList.remove('hidden');
+          } else {
+            countElement.classList.add('hidden');
+          }
+        }
+      }
+
+      // Actualizar al cargar la página
+      document.addEventListener('DOMContentLoaded', updateFavoritesCount);
+
+      // Actualizar cuando cambien los favoritos
+      window.addEventListener('favorites-updated', updateFavoritesCount);
+    </script>
   </body>
 </html>

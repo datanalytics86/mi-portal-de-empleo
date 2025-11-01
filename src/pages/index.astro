@@ -52,15 +52,15 @@ const totalOfertas = ofertas?.length || 0;
       </p>
     </div>
 
-    <!-- Barra de búsqueda -->
+    <!-- Barra de búsqueda mejorada -->
     <div class="mb-6">
       <div class="max-w-3xl mx-auto">
         <div class="relative">
           <input
             type="text"
             id="search-input"
-            placeholder="Buscar por título, empresa o comuna..."
-            class="w-full px-4 py-3 pl-12 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+            placeholder="Buscar por título, empresa, comuna o descripción..."
+            class="w-full px-4 py-3 pl-12 pr-24 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
           />
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -71,14 +71,93 @@ const totalOfertas = ofertas?.length || 0;
             stroke-linecap="round"
             stroke-linejoin="round"
             class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+            aria-hidden="true"
           >
             <circle cx="11" cy="11" r="8"/>
             <path d="m21 21-4.35-4.35"/>
           </svg>
+          <!-- Botón limpiar búsqueda -->
+          <button
+            id="clear-search"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition hidden"
+            aria-label="Limpiar búsqueda"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
         </div>
-        <p class="text-sm text-text-secondary mt-2 text-center">
-          {totalOfertas} ofertas disponibles
-        </p>
+        <div class="flex items-center justify-between mt-2">
+          <p class="text-sm text-text-secondary">
+            <span id="results-count">{totalOfertas}</span> ofertas disponibles
+          </p>
+          <button
+            id="toggle-filters"
+            class="text-sm text-accent hover:text-accent-hover font-medium flex items-center gap-1 transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+            </svg>
+            <span>Filtros avanzados</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel de filtros avanzados (oculto por defecto) -->
+    <div id="advanced-filters" class="mb-6 hidden">
+      <div class="max-w-3xl mx-auto bg-surface border border-border rounded-lg p-6">
+        <div class="grid md:grid-cols-2 gap-4">
+          <!-- Filtro por categoría -->
+          <div>
+            <label for="filter-categoria" class="block text-sm font-medium text-text-primary mb-2">
+              Categoría
+            </label>
+            <select
+              id="filter-categoria"
+              class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition"
+            >
+              <option value="all">Todas las categorías</option>
+              <option value="Tecnología">Tecnología</option>
+              <option value="Ventas">Ventas</option>
+              <option value="Administración">Administración</option>
+              <option value="Educación">Educación</option>
+              <option value="Salud">Salud</option>
+              <option value="Construcción">Construcción</option>
+              <option value="Gastronomía">Gastronomía</option>
+              <option value="Turismo">Turismo</option>
+              <option value="Logística">Logística</option>
+              <option value="Retail">Retail</option>
+              <option value="Otros">Otros</option>
+            </select>
+          </div>
+
+          <!-- Filtro por ordenamiento -->
+          <div>
+            <label for="sort-by" class="block text-sm font-medium text-text-primary mb-2">
+              Ordenar por
+            </label>
+            <select
+              id="sort-by"
+              class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition"
+            >
+              <option value="newest">Más recientes</option>
+              <option value="oldest">Más antiguas</option>
+              <option value="expiring">Próximas a expirar</option>
+              <option value="most-applications">Más postulaciones</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Botón limpiar filtros -->
+        <div class="mt-4 flex justify-end">
+          <button
+            id="clear-filters"
+            class="text-sm text-text-secondary hover:text-text-primary transition"
+          >
+            Limpiar todos los filtros
+          </button>
+        </div>
       </div>
     </div>
 
@@ -93,7 +172,29 @@ const totalOfertas = ofertas?.length || 0;
       )}
     </div>
 
-    <!-- Filtros rápidos (próximamente) -->
+    <!-- Sección de Favoritos (se muestra dinámicamente si hay favoritos) -->
+    <div id="favorites-section" class="mb-12 hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="favoritos" class="text-2xl font-bold text-text-primary flex items-center gap-2">
+          <svg class="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"></path>
+          </svg>
+          Tus Ofertas Favoritas
+        </h2>
+        <button
+          id="clear-all-favorites"
+          class="text-sm text-text-secondary hover:text-error transition"
+        >
+          Limpiar todos los favoritos
+        </button>
+      </div>
+      <div id="favorites-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"></div>
+      <div class="border-t border-border pt-8">
+        <h2 class="text-2xl font-bold text-text-primary mb-4">Todas las Ofertas</h2>
+      </div>
+    </div>
+
+    <!-- Filtros rápidos -->
     <div class="mb-6 flex items-center gap-3 flex-wrap">
       <span class="text-sm font-medium text-text-secondary">Tipo de jornada:</span>
       <button
@@ -152,10 +253,16 @@ const totalOfertas = ofertas?.length || 0;
         {ofertasConCoordenadas.map(oferta => (
           <div
             class="oferta-item"
+            data-id={oferta.id}
             data-titulo={oferta.titulo.toLowerCase()}
             data-empresa={oferta.empresa.toLowerCase()}
             data-comuna={oferta.comuna.toLowerCase()}
+            data-descripcion={oferta.descripcion.toLowerCase()}
             data-tipo={oferta.tipo_jornada}
+            data-categoria={oferta.categoria || ''}
+            data-created={oferta.created_at}
+            data-expires={oferta.expires_at}
+            data-postulaciones={oferta.postulaciones_count}
           >
             <OfertaCard
               id={oferta.id}
@@ -210,6 +317,15 @@ const totalOfertas = ofertas?.length || 0;
   // ELEMENTOS DOM
   // ═══════════════════════════════════════════════════════════════
   const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const clearSearchBtn = document.getElementById('clear-search') as HTMLButtonElement;
+  const toggleFiltersBtn = document.getElementById('toggle-filters') as HTMLButtonElement;
+  const advancedFiltersPanel = document.getElementById('advanced-filters') as HTMLElement;
+  const clearFiltersBtn = document.getElementById('clear-filters') as HTMLButtonElement;
+  const resultsCountEl = document.getElementById('results-count') as HTMLElement;
+
+  const filterCategoriaSelect = document.getElementById('filter-categoria') as HTMLSelectElement;
+  const sortBySelect = document.getElementById('sort-by') as HTMLSelectElement;
+
   const ofertasItems = document.querySelectorAll('.oferta-item');
   const noResultsMessage = document.getElementById('no-results');
   const filterButtons = document.querySelectorAll('.filter-btn');
@@ -226,36 +342,83 @@ const totalOfertas = ofertas?.length || 0;
   // VARIABLES DE ESTADO
   // ═══════════════════════════════════════════════════════════════
   let currentFilter = 'all';
+  let currentCategoria = 'all';
+  let currentSort = 'newest';
   let currentPage = 1;
   const ITEMS_PER_PAGE = 9;
+
+  // ═══════════════════════════════════════════════════════════════
+  // FUNCIÓN DE ORDENAMIENTO
+  // ═══════════════════════════════════════════════════════════════
+  function sortItems(items: HTMLElement[]): HTMLElement[] {
+    return items.sort((a, b) => {
+      switch (currentSort) {
+        case 'newest':
+          return new Date(b.getAttribute('data-created') || '').getTime() -
+                 new Date(a.getAttribute('data-created') || '').getTime();
+
+        case 'oldest':
+          return new Date(a.getAttribute('data-created') || '').getTime() -
+                 new Date(b.getAttribute('data-created') || '').getTime();
+
+        case 'expiring':
+          return new Date(a.getAttribute('data-expires') || '').getTime() -
+                 new Date(b.getAttribute('data-expires') || '').getTime();
+
+        case 'most-applications':
+          return parseInt(b.getAttribute('data-postulaciones') || '0') -
+                 parseInt(a.getAttribute('data-postulaciones') || '0');
+
+        default:
+          return 0;
+      }
+    });
+  }
 
   // ═══════════════════════════════════════════════════════════════
   // FUNCIÓN PRINCIPAL DE FILTRADO Y PAGINACIÓN
   // ═══════════════════════════════════════════════════════════════
   function filterAndPaginateOfertas() {
     const searchTerm = searchInput?.value.toLowerCase() || '';
-    const filteredItems: HTMLElement[] = [];
+    let filteredItems: HTMLElement[] = [];
+
+    // Mostrar/ocultar botón de limpiar búsqueda
+    if (clearSearchBtn) {
+      clearSearchBtn.style.display = searchTerm ? 'block' : 'none';
+    }
 
     // Primero filtrar
     ofertasItems.forEach(item => {
       const titulo = item.getAttribute('data-titulo') || '';
       const empresa = item.getAttribute('data-empresa') || '';
       const comuna = item.getAttribute('data-comuna') || '';
+      const descripcion = item.getAttribute('data-descripcion') || '';
       const tipo = item.getAttribute('data-tipo') || '';
+      const categoria = item.getAttribute('data-categoria') || '';
 
       const matchesSearch =
         titulo.includes(searchTerm) ||
         empresa.includes(searchTerm) ||
-        comuna.includes(searchTerm);
+        comuna.includes(searchTerm) ||
+        descripcion.includes(searchTerm);
 
       const matchesFilter = currentFilter === 'all' || tipo === currentFilter;
+      const matchesCategoria = currentCategoria === 'all' || categoria === currentCategoria;
 
-      if (matchesSearch && matchesFilter) {
+      if (matchesSearch && matchesFilter && matchesCategoria) {
         filteredItems.push(item as HTMLElement);
       } else {
         (item as HTMLElement).style.display = 'none';
       }
     });
+
+    // Ordenar items filtrados
+    filteredItems = sortItems(filteredItems);
+
+    // Actualizar contador de resultados
+    if (resultsCountEl) {
+      resultsCountEl.textContent = filteredItems.length.toString();
+    }
 
     // Calcular paginación
     const totalFiltered = filteredItems.length;
@@ -342,11 +505,79 @@ const totalOfertas = ofertas?.length || 0;
 
   // Búsqueda
   searchInput?.addEventListener('input', () => {
-    currentPage = 1; // Reset a primera página
+    currentPage = 1;
     filterAndPaginateOfertas();
   });
 
-  // Filtros
+  // Limpiar búsqueda
+  clearSearchBtn?.addEventListener('click', () => {
+    if (searchInput) {
+      searchInput.value = '';
+      currentPage = 1;
+      filterAndPaginateOfertas();
+    }
+  });
+
+  // Toggle filtros avanzados
+  toggleFiltersBtn?.addEventListener('click', () => {
+    if (advancedFiltersPanel) {
+      const isHidden = advancedFiltersPanel.classList.contains('hidden');
+      if (isHidden) {
+        advancedFiltersPanel.classList.remove('hidden');
+        advancedFiltersPanel.style.opacity = '0';
+        setTimeout(() => {
+          advancedFiltersPanel.style.transition = 'opacity 0.3s';
+          advancedFiltersPanel.style.opacity = '1';
+        }, 10);
+      } else {
+        advancedFiltersPanel.style.opacity = '0';
+        setTimeout(() => {
+          advancedFiltersPanel.classList.add('hidden');
+        }, 300);
+      }
+    }
+  });
+
+  // Filtro por categoría
+  filterCategoriaSelect?.addEventListener('change', () => {
+    currentCategoria = filterCategoriaSelect.value;
+    currentPage = 1;
+    filterAndPaginateOfertas();
+  });
+
+  // Ordenamiento
+  sortBySelect?.addEventListener('change', () => {
+    currentSort = sortBySelect.value;
+    currentPage = 1;
+    filterAndPaginateOfertas();
+  });
+
+  // Limpiar todos los filtros
+  clearFiltersBtn?.addEventListener('click', () => {
+    if (searchInput) searchInput.value = '';
+    if (filterCategoriaSelect) filterCategoriaSelect.value = 'all';
+    if (sortBySelect) sortBySelect.value = 'newest';
+
+    currentCategoria = 'all';
+    currentSort = 'newest';
+    currentFilter = 'all';
+    currentPage = 1;
+
+    // Resetear filtros de tipo de jornada
+    filterButtons.forEach(btn => {
+      btn.removeAttribute('data-active');
+      btn.classList.remove('bg-accent', 'text-white', 'border-accent');
+      if (btn.getAttribute('data-filter') === 'all') {
+        btn.setAttribute('data-active', 'true');
+        btn.classList.add('bg-accent', 'text-white', 'border-accent');
+      }
+    });
+
+    filterAndPaginateOfertas();
+    window.toast.success('Filtros limpiados');
+  });
+
+  // Filtros de tipo de jornada
   filterButtons.forEach(button => {
     button.addEventListener('click', () => {
       // Actualizar estado activo
@@ -359,7 +590,7 @@ const totalOfertas = ofertas?.length || 0;
 
       // Actualizar filtro actual
       currentFilter = button.getAttribute('data-filter') || 'all';
-      currentPage = 1; // Reset a primera página
+      currentPage = 1;
       filterAndPaginateOfertas();
     });
   });
@@ -379,7 +610,56 @@ const totalOfertas = ofertas?.length || 0;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
+  // ═══════════════════════════════════════════════════════════════
+  // FAVORITOS
+  // ═══════════════════════════════════════════════════════════════
+  function renderFavorites() {
+    const favoritesSection = document.getElementById('favorites-section');
+    const favoritesGrid = document.getElementById('favorites-grid');
+
+    if (!favoritesSection || !favoritesGrid) return;
+
+    const favorites = JSON.parse(localStorage.getItem('job-favorites') || '[]');
+
+    if (favorites.length === 0) {
+      favoritesSection.classList.add('hidden');
+      return;
+    }
+
+    favoritesSection.classList.remove('hidden');
+    favoritesGrid.innerHTML = '';
+
+    // Renderizar cada oferta favorita
+    favorites.forEach((favoriteId: string) => {
+      const ofertaItem = document.querySelector(`.oferta-item[data-id="${favoriteId}"]`) as HTMLElement;
+      if (ofertaItem) {
+        const clonedItem = ofertaItem.cloneNode(true) as HTMLElement;
+        favoritesGrid.appendChild(clonedItem);
+      }
+    });
+  }
+
+  // Limpiar todos los favoritos
+  const clearAllFavoritesBtn = document.getElementById('clear-all-favorites');
+  clearAllFavoritesBtn?.addEventListener('click', () => {
+    if (confirm('¿Estás seguro de que deseas eliminar todos los favoritos?')) {
+      localStorage.setItem('job-favorites', '[]');
+      renderFavorites();
+      window.dispatchEvent(new CustomEvent('favorites-updated', { detail: { count: 0 } }));
+      window.toast.success('Todos los favoritos han sido eliminados');
+
+      // Re-inicializar los iconos de favoritos en las cards
+      document.dispatchEvent(new Event('DOMContentLoaded'));
+    }
+  });
+
+  // Actualizar favoritos cuando cambien
+  window.addEventListener('favorites-updated', () => {
+    renderFavorites();
+  });
+
   // Inicializar
+  renderFavorites();
   filterAndPaginateOfertas();
 </script>
 
