@@ -177,22 +177,66 @@ const totalOfertas = ofertas?.length || 0;
         No se encontraron ofertas con esos criterios
       </p>
     </div>
+
+    <!-- Controles de Paginación -->
+    {totalOfertas > 9 && (
+      <div id="pagination-container" class="flex items-center justify-between mt-8 pt-6 border-t border-border">
+        <div class="text-sm text-text-secondary">
+          Mostrando <span id="showing-start">1</span> - <span id="showing-end">9</span> de <span id="total-visible">15</span> ofertas
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            id="prev-page"
+            class="px-4 py-2 border border-border rounded-lg text-sm font-medium text-text-secondary hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition"
+            disabled
+          >
+            Anterior
+          </button>
+          <div id="page-numbers" class="flex items-center gap-1"></div>
+          <button
+            id="next-page"
+            class="px-4 py-2 border border-border rounded-lg text-sm font-medium text-text-secondary hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            Siguiente
+          </button>
+        </div>
+      </div>
+    )}
   </div>
 </Layout>
 
 <script>
-  // Búsqueda en tiempo real
+  // ═══════════════════════════════════════════════════════════════
+  // ELEMENTOS DOM
+  // ═══════════════════════════════════════════════════════════════
   const searchInput = document.getElementById('search-input') as HTMLInputElement;
   const ofertasItems = document.querySelectorAll('.oferta-item');
   const noResultsMessage = document.getElementById('no-results');
   const filterButtons = document.querySelectorAll('.filter-btn');
 
+  const paginationContainer = document.getElementById('pagination-container');
+  const prevButton = document.getElementById('prev-page') as HTMLButtonElement;
+  const nextButton = document.getElementById('next-page') as HTMLButtonElement;
+  const pageNumbersContainer = document.getElementById('page-numbers');
+  const showingStart = document.getElementById('showing-start');
+  const showingEnd = document.getElementById('showing-end');
+  const totalVisible = document.getElementById('total-visible');
+
+  // ═══════════════════════════════════════════════════════════════
+  // VARIABLES DE ESTADO
+  // ═══════════════════════════════════════════════════════════════
   let currentFilter = 'all';
+  let currentPage = 1;
+  const ITEMS_PER_PAGE = 9;
 
-  function filterOfertas() {
+  // ═══════════════════════════════════════════════════════════════
+  // FUNCIÓN PRINCIPAL DE FILTRADO Y PAGINACIÓN
+  // ═══════════════════════════════════════════════════════════════
+  function filterAndPaginateOfertas() {
     const searchTerm = searchInput?.value.toLowerCase() || '';
-    let visibleCount = 0;
+    const filteredItems: HTMLElement[] = [];
 
+    // Primero filtrar
     ofertasItems.forEach(item => {
       const titulo = item.getAttribute('data-titulo') || '';
       const empresa = item.getAttribute('data-empresa') || '';
@@ -207,23 +251,102 @@ const totalOfertas = ofertas?.length || 0;
       const matchesFilter = currentFilter === 'all' || tipo === currentFilter;
 
       if (matchesSearch && matchesFilter) {
-        (item as HTMLElement).style.display = 'block';
-        visibleCount++;
+        filteredItems.push(item as HTMLElement);
       } else {
         (item as HTMLElement).style.display = 'none';
       }
     });
 
+    // Calcular paginación
+    const totalFiltered = filteredItems.length;
+    const totalPages = Math.ceil(totalFiltered / ITEMS_PER_PAGE);
+
+    // Ajustar página actual si es necesario
+    if (currentPage > totalPages) {
+      currentPage = Math.max(1, totalPages);
+    }
+
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+
+    // Mostrar solo items de la página actual
+    filteredItems.forEach((item, index) => {
+      if (index >= startIndex && index < endIndex) {
+        item.style.display = 'block';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    // Actualizar UI de paginación
+    updatePaginationUI(totalFiltered, totalPages, startIndex, endIndex);
+
     // Mostrar mensaje si no hay resultados
     if (noResultsMessage) {
-      noResultsMessage.style.display = visibleCount === 0 ? 'block' : 'none';
+      noResultsMessage.style.display = totalFiltered === 0 ? 'block' : 'none';
     }
   }
 
-  // Event listener para búsqueda
-  searchInput?.addEventListener('input', filterOfertas);
+  // ═══════════════════════════════════════════════════════════════
+  // ACTUALIZAR UI DE PAGINACIÓN
+  // ═══════════════════════════════════════════════════════════════
+  function updatePaginationUI(total: number, totalPages: number, start: number, end: number) {
+    if (!paginationContainer) return;
 
-  // Event listeners para filtros
+    // Mostrar/ocultar controles de paginación
+    if (total <= ITEMS_PER_PAGE) {
+      paginationContainer.style.display = 'none';
+      return;
+    } else {
+      paginationContainer.style.display = 'flex';
+    }
+
+    // Actualizar texto de contadores
+    if (showingStart) showingStart.textContent = (start + 1).toString();
+    if (showingEnd) showingEnd.textContent = Math.min(end, total).toString();
+    if (totalVisible) totalVisible.textContent = total.toString();
+
+    // Actualizar botones prev/next
+    if (prevButton) {
+      prevButton.disabled = currentPage === 1;
+    }
+    if (nextButton) {
+      nextButton.disabled = currentPage === totalPages;
+    }
+
+    // Generar números de página
+    if (pageNumbersContainer) {
+      pageNumbersContainer.innerHTML = '';
+
+      for (let i = 1; i <= totalPages; i++) {
+        const pageButton = document.createElement('button');
+        pageButton.textContent = i.toString();
+        pageButton.className = `px-3 py-1.5 text-sm font-medium rounded transition ${
+          i === currentPage
+            ? 'bg-accent text-white'
+            : 'text-text-secondary hover:bg-surface border border-border'
+        }`;
+        pageButton.addEventListener('click', () => {
+          currentPage = i;
+          filterAndPaginateOfertas();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        pageNumbersContainer.appendChild(pageButton);
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // EVENT LISTENERS
+  // ═══════════════════════════════════════════════════════════════
+
+  // Búsqueda
+  searchInput?.addEventListener('input', () => {
+    currentPage = 1; // Reset a primera página
+    filterAndPaginateOfertas();
+  });
+
+  // Filtros
   filterButtons.forEach(button => {
     button.addEventListener('click', () => {
       // Actualizar estado activo
@@ -236,9 +359,28 @@ const totalOfertas = ofertas?.length || 0;
 
       // Actualizar filtro actual
       currentFilter = button.getAttribute('data-filter') || 'all';
-      filterOfertas();
+      currentPage = 1; // Reset a primera página
+      filterAndPaginateOfertas();
     });
   });
+
+  // Botones de paginación
+  prevButton?.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      filterAndPaginateOfertas();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+
+  nextButton?.addEventListener('click', () => {
+    currentPage++;
+    filterAndPaginateOfertas();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Inicializar
+  filterAndPaginateOfertas();
 </script>
 
 <style>
