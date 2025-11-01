@@ -92,9 +92,9 @@ const imageUrl = ogImage || `${siteUrl}/og-default.png`;
     <slot name="head" />
   </head>
 
-  <body class="min-h-screen flex flex-col bg-background text-text-primary">
+  <body class="min-h-screen flex flex-col bg-background dark:bg-dark-bg text-text-primary dark:text-dark-text-primary transition-colors duration-200">
     <!-- Header -->
-    <header class="bg-white border-b border-border sticky top-0 z-50 shadow-sm">
+    <header class="bg-white dark:bg-dark-surface border-b border-border dark:border-dark-border sticky top-0 z-50 shadow-sm">
       <div class="container mx-auto px-4 md:px-8 py-4">
         <nav class="flex items-center justify-between">
           <!-- Logo -->
@@ -119,17 +119,33 @@ const imageUrl = ogImage || `${siteUrl}/og-default.png`;
           </a>
 
           <!-- Navigation -->
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-3">
             <a
               href="/"
-              class="text-text-secondary hover:text-text-primary transition hidden sm:inline"
+              class="text-text-secondary hover:text-text-primary dark:text-dark-text-secondary dark:hover:text-dark-text-primary transition hidden sm:inline"
             >
               Buscar empleos
             </a>
+
+            <!-- Dark Mode Toggle -->
+            <button
+              id="theme-toggle"
+              class="p-2 rounded-lg hover:bg-surface dark:hover:bg-dark-surface transition-colors"
+              aria-label="Cambiar tema"
+              title="Cambiar tema"
+            >
+              <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path>
+              </svg>
+              <svg id="theme-toggle-dark-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+              </svg>
+            </button>
+
             <a
               href="/#favoritos"
               id="favorites-link"
-              class="text-text-secondary hover:text-text-primary transition flex items-center gap-2 relative"
+              class="text-text-secondary hover:text-text-primary dark:text-dark-text-secondary dark:hover:text-dark-text-primary transition flex items-center gap-2 relative"
               aria-label="Ver favoritos"
             >
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,13 +170,13 @@ const imageUrl = ogImage || `${siteUrl}/og-default.png`;
     </main>
 
     <!-- Footer -->
-    <footer class="bg-surface border-t border-border mt-12">
+    <footer class="bg-surface dark:bg-dark-surface border-t border-border dark:border-dark-border mt-12">
       <div class="container mx-auto px-4 md:px-8 py-8">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <!-- Columna 1: Sobre el proyecto -->
           <div>
             <h3 class="font-semibold text-lg mb-3">Portal de Empleos Chile</h3>
-            <p class="text-text-secondary text-sm leading-relaxed">
+            <p class="text-text-secondary dark:text-dark-text-secondary text-sm leading-relaxed">
               Plataforma minimalista para conectar candidatos con ofertas laborales
               en Chile mediante georeferenciación.
             </p>
@@ -171,22 +187,22 @@ const imageUrl = ogImage || `${siteUrl}/og-default.png`;
             <h3 class="font-semibold text-lg mb-3">Enlaces</h3>
             <ul class="space-y-2 text-sm">
               <li>
-                <a href="/" class="text-text-secondary hover:text-accent transition">
+                <a href="/" class="text-text-secondary dark:text-dark-text-secondary hover:text-accent transition">
                   Buscar empleos
                 </a>
               </li>
               <li>
-                <a href="/empleador/registro" class="text-text-secondary hover:text-accent transition">
+                <a href="/empleador/registro" class="text-text-secondary dark:text-dark-text-secondary hover:text-accent transition">
                   Publicar oferta
                 </a>
               </li>
               <li>
-                <a href="/empleador/login" class="text-text-secondary hover:text-accent transition">
+                <a href="/empleador/login" class="text-text-secondary dark:text-dark-text-secondary hover:text-accent transition">
                   Acceso empleadores
                 </a>
               </li>
               <li>
-                <a href="/privacidad" class="text-text-secondary hover:text-accent transition">
+                <a href="/privacidad" class="text-text-secondary dark:text-dark-text-secondary hover:text-accent transition">
                   Política de privacidad
                 </a>
               </li>
@@ -196,7 +212,7 @@ const imageUrl = ogImage || `${siteUrl}/og-default.png`;
           <!-- Columna 3: Contacto -->
           <div>
             <h3 class="font-semibold text-lg mb-3">Contacto</h3>
-            <p class="text-text-secondary text-sm">
+            <p class="text-text-secondary dark:text-dark-text-secondary text-sm">
               ¿Preguntas o sugerencias?
             </p>
             <a
@@ -209,7 +225,7 @@ const imageUrl = ogImage || `${siteUrl}/og-default.png`;
         </div>
 
         <!-- Copyright -->
-        <div class="mt-8 pt-6 border-t border-border text-center text-sm text-text-secondary">
+        <div class="mt-8 pt-6 border-t border-border dark:border-dark-border text-center text-sm text-text-secondary dark:text-dark-text-secondary">
           <p>
             © {new Date().getFullYear()} Portal de Empleos Chile. Todos los derechos reservados.
           </p>
@@ -245,6 +261,61 @@ const imageUrl = ogImage || `${siteUrl}/og-default.png`;
 
       // Actualizar cuando cambien los favoritos
       window.addEventListener('favorites-updated', updateFavoritesCount);
+    </script>
+
+    <!-- Dark Mode Toggle Script -->
+    <script is:inline>
+      // Initialize theme on page load (before DOMContentLoaded to prevent flash)
+      (function() {
+        const theme = localStorage.getItem('theme') || 'light';
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+
+      // Theme toggle functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        const themeToggle = document.getElementById('theme-toggle');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+
+        function updateIcons(theme) {
+          if (theme === 'dark') {
+            lightIcon.classList.remove('hidden');
+            darkIcon.classList.add('hidden');
+          } else {
+            lightIcon.classList.add('hidden');
+            darkIcon.classList.remove('hidden');
+          }
+        }
+
+        // Set initial icon state
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        updateIcons(currentTheme);
+
+        // Toggle theme on button click
+        themeToggle.addEventListener('click', function() {
+          const html = document.documentElement;
+          const currentTheme = localStorage.getItem('theme') || 'light';
+          const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+          if (newTheme === 'dark') {
+            html.classList.add('dark');
+          } else {
+            html.classList.remove('dark');
+          }
+
+          localStorage.setItem('theme', newTheme);
+          updateIcons(newTheme);
+
+          // Show toast notification if available
+          if (window.toast) {
+            window.toast.success(`Modo ${newTheme === 'dark' ? 'oscuro' : 'claro'} activado`);
+          }
+        });
+      });
     </script>
   </body>
 </html>

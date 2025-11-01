@@ -45,15 +45,15 @@ const tipoJornadaStyles = {
 const badgeStyle = tipoJornadaStyles[tipo_jornada] || 'bg-gray-50 text-gray-700';
 ---
 
-<div class="relative bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+<div class="relative bg-white dark:bg-dark-card rounded-lg shadow-sm border border-gray-200 dark:border-dark-border p-6 hover:shadow-md transition-shadow duration-200">
   <!-- Botón de favoritos -->
   <button
-    class="favorite-btn absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10"
+    class="favorite-btn absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-dark-surface transition-colors z-10"
     data-offer-id={id}
     aria-label="Guardar en favoritos"
     title="Guardar en favoritos"
   >
-    <svg class="w-6 h-6 text-gray-400 favorite-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg class="w-6 h-6 text-gray-400 dark:text-dark-text-secondary favorite-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
     </svg>
     <svg class="w-6 h-6 text-red-500 favorite-icon-filled hidden" fill="currentColor" viewBox="0 0 24 24">
@@ -65,18 +65,18 @@ const badgeStyle = tipoJornadaStyles[tipo_jornada] || 'bg-gray-50 text-gray-700'
   <a href={`/oferta/${id}`} class="block">
     <article>
       <!-- Título -->
-      <h3 class="text-xl font-semibold text-gray-900 mb-2 line-clamp-2 pr-10">
+      <h3 class="text-xl font-semibold text-gray-900 dark:text-dark-text-primary mb-2 line-clamp-2 pr-10">
         {titulo}
       </h3>
 
       <!-- Empresa -->
-      <p class="text-gray-600 mb-3 font-medium">
+      <p class="text-gray-600 dark:text-dark-text-secondary mb-3 font-medium">
         {empresa}
       </p>
 
       <!-- Comuna y Tipo de Jornada -->
       <div class="flex items-center gap-4 mb-3 flex-wrap">
-        <span class="text-sm text-gray-500 flex items-center gap-1">
+        <span class="text-sm text-gray-500 dark:text-dark-text-secondary flex items-center gap-1">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -94,20 +94,20 @@ const badgeStyle = tipoJornadaStyles[tipo_jornada] || 'bg-gray-50 text-gray-700'
           {comuna}
         </span>
 
-        <span class={`px-2 py-1 ${badgeStyle} rounded text-xs font-medium`}>
+        <span class={`px-2 py-1 ${badgeStyle} dark:opacity-90 rounded text-xs font-medium`}>
           {tipo_jornada}
         </span>
       </div>
 
       <!-- Descripción (preview) -->
       {descripcion && (
-        <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+        <p class="text-sm text-gray-600 dark:text-dark-text-secondary mb-3 line-clamp-2">
           {descripcion}
         </p>
       )}
 
       <!-- Fecha -->
-      <p class="text-sm text-gray-400">
+      <p class="text-sm text-gray-400 dark:text-dark-text-secondary">
         {fechaRelativa}
       </p>
     </article>
