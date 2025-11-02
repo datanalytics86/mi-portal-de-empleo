@@ -38,30 +38,44 @@ const stats = getEmpleadorStats(empleador.id);
 ---
 
 <Layout title="Dashboard - Portal de Empleos">
-  <div class="min-h-screen bg-surface">
+  <div class="min-h-screen bg-surface dark:bg-dark-bg">
     <!-- Header -->
-    <header class="bg-white border-b border-border">
+    <header class="bg-white dark:bg-dark-card border-b border-border dark:border-dark-border shadow-sm">
       <div class="container mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-semibold text-text-primary">
-              Dashboard
-            </h1>
-            <p class="text-sm text-text-secondary mt-1">
-              {empleador.nombre_empresa}
-            </p>
+          <div class="flex items-center gap-4">
+            <!-- Logo icon -->
+            <div class="w-12 h-12 bg-gradient-to-br from-accent to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold text-text-primary dark:text-dark-text-primary">
+                Dashboard
+              </h1>
+              <p class="text-sm text-text-secondary dark:text-dark-text-secondary mt-0.5">
+                {empleador.nombre_empresa}
+              </p>
+            </div>
           </div>
           <div class="flex items-center gap-3">
             <a
               href="/"
-              class="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface transition"
+              class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-text-secondary dark:text-dark-text-secondary hover:text-accent dark:hover:text-accent border border-border dark:border-dark-border rounded-lg hover:bg-surface dark:hover:bg-dark-surface transition"
             >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+              </svg>
               Ver Portal
             </a>
             <button
               id="logoutButton"
-              class="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface transition"
+              class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
             >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+              </svg>
               Cerrar Sesión
             </button>
           </div>
@@ -72,18 +86,18 @@ const stats = getEmpleadorStats(empleador.id);
     <!-- Contenido Principal -->
     <main class="container mx-auto px-4 py-8">
       <!-- Header con botón nueva oferta -->
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 animate-fade-in-down">
         <div>
-          <h2 class="text-xl font-semibold text-text-primary">
+          <h2 class="text-2xl font-bold text-text-primary dark:text-dark-text-primary">
             Mis Ofertas de Empleo
           </h2>
-          <p class="text-sm text-text-secondary mt-1">
+          <p class="text-sm text-text-secondary dark:text-dark-text-secondary mt-1">
             Gestiona tus publicaciones y revisa postulaciones
           </p>
         </div>
         <a
           href="/empleador/oferta/nueva"
-          class="px-6 py-3 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg transition inline-flex items-center gap-2"
+          class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-accent to-blue-600 hover:from-accent-hover hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -93,49 +107,61 @@ const stats = getEmpleadorStats(empleador.id);
       </div>
 
       <!-- Estadísticas rápidas -->
-      <div class="grid md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow-sm border border-border p-6">
-          <div class="flex items-center justify-between">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-fade-in-up">
+        <!-- Stat 1: Total Ofertas -->
+        <div class="group relative bg-white dark:bg-dark-card rounded-xl shadow-sm border border-border dark:border-dark-border p-6 hover:shadow-lg transition-all duration-300 overflow-hidden">
+          <!-- Decorative gradient -->
+          <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent dark:from-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
+          <div class="relative flex items-center justify-between">
             <div>
-              <p class="text-sm text-text-secondary">Total Ofertas</p>
-              <p class="text-3xl font-semibold text-text-primary mt-2">
+              <p class="text-sm font-medium text-text-secondary dark:text-dark-text-secondary">Total Ofertas</p>
+              <p class="text-4xl font-bold text-text-primary dark:text-dark-text-primary mt-2">
                 {stats.totalOfertas}
               </p>
             </div>
-            <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
               </svg>
             </div>
           </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-border p-6">
-          <div class="flex items-center justify-between">
+        <!-- Stat 2: Ofertas Activas -->
+        <div class="group relative bg-white dark:bg-dark-card rounded-xl shadow-sm border border-border dark:border-dark-border p-6 hover:shadow-lg transition-all duration-300 overflow-hidden">
+          <!-- Decorative gradient -->
+          <div class="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent dark:from-green-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
+          <div class="relative flex items-center justify-between">
             <div>
-              <p class="text-sm text-text-secondary">Ofertas Activas</p>
-              <p class="text-3xl font-semibold text-success mt-2">
+              <p class="text-sm font-medium text-text-secondary dark:text-dark-text-secondary">Ofertas Activas</p>
+              <p class="text-4xl font-bold text-green-600 dark:text-green-400 mt-2">
                 {stats.ofertasActivas}
               </p>
             </div>
-            <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
             </div>
           </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-border p-6">
-          <div class="flex items-center justify-between">
+        <!-- Stat 3: Total Postulaciones -->
+        <div class="group relative bg-white dark:bg-dark-card rounded-xl shadow-sm border border-border dark:border-dark-border p-6 hover:shadow-lg transition-all duration-300 overflow-hidden">
+          <!-- Decorative gradient -->
+          <div class="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent dark:from-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
+          <div class="relative flex items-center justify-between">
             <div>
-              <p class="text-sm text-text-secondary">Total Postulaciones</p>
-              <p class="text-3xl font-semibold text-text-primary mt-2">
+              <p class="text-sm font-medium text-text-secondary dark:text-dark-text-secondary">Total Postulaciones</p>
+              <p class="text-4xl font-bold text-text-primary dark:text-dark-text-primary mt-2">
                 {stats.totalPostulaciones}
               </p>
             </div>
-            <div class="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
               </svg>
             </div>
@@ -144,21 +170,23 @@ const stats = getEmpleadorStats(empleador.id);
       </div>
 
       <!-- Tabla de ofertas -->
-      <div class="bg-white rounded-lg shadow-sm border border-border overflow-hidden">
+      <div class="bg-white dark:bg-dark-card rounded-xl shadow-sm border border-border dark:border-dark-border overflow-hidden animate-fade-in">
         {ofertasConPostulaciones.length === 0 ? (
           <div class="p-12 text-center">
-            <svg class="w-16 h-16 mx-auto text-text-secondary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            <h3 class="text-lg font-semibold text-text-primary mb-2">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full mb-4">
+              <svg class="w-10 h-10 text-text-secondary dark:text-dark-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-text-primary dark:text-dark-text-primary mb-2">
               No tienes ofertas publicadas
             </h3>
-            <p class="text-text-secondary mb-6">
-              Comienza creando tu primera oferta de empleo
+            <p class="text-text-secondary dark:text-dark-text-secondary mb-6 max-w-sm mx-auto">
+              Comienza creando tu primera oferta de empleo y encuentra al candidato ideal
             </p>
             <a
               href="/empleador/oferta/nueva"
-              class="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg transition"
+              class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-accent to-blue-600 hover:from-accent-hover hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -169,59 +197,65 @@ const stats = getEmpleadorStats(empleador.id);
         ) : (
           <div class="overflow-x-auto">
             <table class="w-full">
-              <thead class="bg-surface border-b border-border">
+              <thead class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-dark-surface dark:to-dark-bg border-b border-border dark:border-dark-border">
                 <tr>
-                  <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                  <th class="px-6 py-4 text-left text-xs font-semibold text-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
                     Título
                   </th>
-                  <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                  <th class="px-6 py-4 text-left text-xs font-semibold text-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
                     Comuna
                   </th>
-                  <th class="px-6 py-4 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                  <th class="px-6 py-4 text-left text-xs font-semibold text-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
                     Fecha
                   </th>
-                  <th class="px-6 py-4 text-center text-xs font-medium text-text-secondary uppercase tracking-wider">
+                  <th class="px-6 py-4 text-center text-xs font-semibold text-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
                     Postulaciones
                   </th>
-                  <th class="px-6 py-4 text-center text-xs font-medium text-text-secondary uppercase tracking-wider">
+                  <th class="px-6 py-4 text-center text-xs font-semibold text-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
                     Estado
                   </th>
-                  <th class="px-6 py-4 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
+                  <th class="px-6 py-4 text-right text-xs font-semibold text-text-secondary dark:text-dark-text-secondary uppercase tracking-wider">
                     Acciones
                   </th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-border">
+              <tbody class="divide-y divide-border dark:divide-dark-border">
                 {ofertasConPostulaciones.map((oferta) => (
-                  <tr class="hover:bg-surface transition">
+                  <tr class="hover:bg-surface dark:hover:bg-dark-surface transition-colors">
                     <td class="px-6 py-4">
                       <div>
-                        <p class="font-medium text-text-primary">{oferta.titulo}</p>
-                        <p class="text-sm text-text-secondary">{oferta.tipo_jornada}</p>
+                        <p class="font-semibold text-text-primary dark:text-dark-text-primary">{oferta.titulo}</p>
+                        <p class="text-sm text-text-secondary dark:text-dark-text-secondary mt-0.5">{oferta.tipo_jornada}</p>
                       </div>
                     </td>
-                    <td class="px-6 py-4 text-sm text-text-secondary">
+                    <td class="px-6 py-4 text-sm text-text-secondary dark:text-dark-text-secondary">
                       {oferta.comuna}
                     </td>
-                    <td class="px-6 py-4 text-sm text-text-secondary">
+                    <td class="px-6 py-4 text-sm text-text-secondary dark:text-dark-text-secondary">
                       {new Date(oferta.created_at).toLocaleDateString('es-CL')}
                     </td>
                     <td class="px-6 py-4 text-center">
-                      <span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-700">
+                      <span class="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
                         {oferta.postulaciones_count}
                       </span>
                     </td>
                     <td class="px-6 py-4 text-center">
                       {oferta.status === 'Activa' ? (
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+                        <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+                          <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                           Activa
                         </span>
                       ) : oferta.status === 'Expirada' ? (
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-700">
+                        <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800">
+                          <span class="w-2 h-2 bg-yellow-500 rounded-full"></span>
                           Expirada
                         </span>
                       ) : (
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                        <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                          <span class="w-2 h-2 bg-gray-500 rounded-full"></span>
                           Desactivada
                         </span>
                       )}
@@ -230,24 +264,34 @@ const stats = getEmpleadorStats(empleador.id);
                       <div class="flex items-center justify-end gap-2">
                         <a
                           href={`/empleador/oferta/${oferta.id}/postulaciones`}
-                          class="px-3 py-1.5 text-sm font-medium text-accent hover:text-accent-hover hover:bg-blue-50 rounded transition"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-accent dark:text-accent hover:text-accent-hover dark:hover:text-accent-hover hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
                           title="Ver postulaciones"
                         >
-                          Ver Postulaciones
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                          </svg>
+                          Postulaciones
                         </a>
                         <a
                           href={`/empleador/oferta/${oferta.id}/editar`}
-                          class="px-3 py-1.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-gray-50 rounded transition"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-text-secondary dark:text-dark-text-secondary hover:text-text-primary dark:hover:text-dark-text-primary hover:bg-gray-50 dark:hover:bg-dark-surface rounded-lg transition-all"
                           title="Editar oferta"
                         >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                          </svg>
                           Editar
                         </a>
                         <a
                           href={`/oferta/${oferta.id}`}
-                          class="px-3 py-1.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-gray-50 rounded transition"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-text-secondary dark:text-dark-text-secondary hover:text-text-primary dark:hover:text-dark-text-primary hover:bg-gray-50 dark:hover:bg-dark-surface rounded-lg transition-all"
                           title="Ver en portal"
                           target="_blank"
                         >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                          </svg>
                           Ver
                         </a>
                       </div>

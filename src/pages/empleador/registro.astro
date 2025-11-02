@@ -12,93 +12,139 @@ if (authenticated) {
 ---
 
 <Layout title="Registro - Empleadores">
-  <div class="min-h-screen bg-surface flex items-center justify-center px-4 py-12">
-    <div class="max-w-md w-full">
+  <div class="min-h-screen bg-surface dark:bg-dark-bg flex items-center justify-center px-4 py-12 relative overflow-hidden">
+    <!-- Decorative gradient background -->
+    <div class="absolute inset-0 -z-10">
+      <div class="absolute top-0 right-1/4 w-96 h-96 bg-purple-400/20 dark:bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+      <div class="absolute bottom-0 left-1/4 w-96 h-96 bg-blue-400/20 dark:bg-blue-500/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 1.5s;"></div>
+    </div>
+
+    <div class="max-w-md w-full animate-fade-in-up">
       <!-- Encabezado -->
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-semibold text-text-primary mb-2">
+        <!-- Logo/Icon -->
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl mb-4 shadow-lg">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+          </svg>
+        </div>
+
+        <h1 class="text-3xl font-bold text-text-primary dark:text-dark-text-primary mb-2">
           Crear Cuenta
         </h1>
-        <p class="text-text-secondary">
+        <p class="text-text-secondary dark:text-dark-text-secondary">
           Publica ofertas de empleo y encuentra candidatos
         </p>
       </div>
 
       <!-- Formulario -->
-      <div class="bg-white rounded-lg shadow-sm border border-border p-8">
+      <div class="bg-white dark:bg-dark-card rounded-xl shadow-lg border border-border dark:border-dark-border p-8 backdrop-blur-sm">
         <form id="registroForm" class="space-y-6">
           <!-- Nombre de Empresa -->
           <div>
-            <label for="nombreEmpresa" class="block text-sm font-medium text-text-primary mb-2">
+            <label for="nombreEmpresa" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
               Nombre de Empresa
             </label>
-            <input
-              type="text"
-              id="nombreEmpresa"
-              name="nombreEmpresa"
-              required
-              autocomplete="organization"
-              class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
-              placeholder="Mi Empresa S.A."
-            />
-            <p id="nombreError" class="text-sm text-error mt-1 hidden"></p>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+              </div>
+              <input
+                type="text"
+                id="nombreEmpresa"
+                name="nombreEmpresa"
+                required
+                autocomplete="organization"
+                class="w-full pl-10 pr-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-bg rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition text-text-primary dark:text-dark-text-primary placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                placeholder="Mi Empresa S.A."
+              />
+            </div>
+            <p id="nombreError" class="text-sm text-red-600 dark:text-red-400 mt-1 hidden"></p>
           </div>
 
           <!-- Email -->
           <div>
-            <label for="email" class="block text-sm font-medium text-text-primary mb-2">
+            <label for="email" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
               Email Corporativo
             </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              required
-              autocomplete="email"
-              class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
-              placeholder="contacto@empresa.cl"
-            />
-            <p id="emailError" class="text-sm text-error mt-1 hidden"></p>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
+                </svg>
+              </div>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                autocomplete="email"
+                class="w-full pl-10 pr-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-bg rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition text-text-primary dark:text-dark-text-primary placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                placeholder="contacto@empresa.cl"
+              />
+            </div>
+            <p id="emailError" class="text-sm text-red-600 dark:text-red-400 mt-1 hidden"></p>
           </div>
 
           <!-- Contraseña -->
           <div>
-            <label for="password" class="block text-sm font-medium text-text-primary mb-2">
+            <label for="password" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
               Contraseña
             </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              required
-              autocomplete="new-password"
-              class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
-              placeholder="Mínimo 6 caracteres"
-            />
-            <p id="passwordError" class="text-sm text-error mt-1 hidden"></p>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+              </div>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                required
+                autocomplete="new-password"
+                class="w-full pl-10 pr-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-bg rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition text-text-primary dark:text-dark-text-primary placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+            <p id="passwordError" class="text-sm text-red-600 dark:text-red-400 mt-1 hidden"></p>
           </div>
 
           <!-- Confirmar Contraseña -->
           <div>
-            <label for="confirmPassword" class="block text-sm font-medium text-text-primary mb-2">
+            <label for="confirmPassword" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
               Confirmar Contraseña
             </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              required
-              autocomplete="new-password"
-              class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
-              placeholder="Repite tu contraseña"
-            />
-            <p id="confirmPasswordError" class="text-sm text-error mt-1 hidden"></p>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                required
+                autocomplete="new-password"
+                class="w-full pl-10 pr-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-bg rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition text-text-primary dark:text-dark-text-primary placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                placeholder="Repite tu contraseña"
+              />
+            </div>
+            <p id="confirmPasswordError" class="text-sm text-red-600 dark:text-red-400 mt-1 hidden"></p>
           </div>
 
           <!-- Error general -->
           <div id="generalError" class="hidden">
-            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p class="text-sm text-error" id="generalErrorText"></p>
+            <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-sm text-red-600 dark:text-red-400" id="generalErrorText"></p>
+              </div>
             </div>
           </div>
 
@@ -106,27 +152,55 @@ if (authenticated) {
           <button
             type="submit"
             id="submitButton"
-            class="w-full bg-accent hover:bg-accent-hover text-white font-medium py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
           >
-            <span id="buttonText">Crear Cuenta</span>
-            <span id="buttonLoader" class="hidden">Creando cuenta...</span>
+            <span id="buttonText" class="flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+              </svg>
+              Crear Cuenta
+            </span>
+            <span id="buttonLoader" class="hidden flex items-center justify-center gap-2">
+              <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              Creando cuenta...
+            </span>
           </button>
         </form>
 
+        <!-- Divider -->
+        <div class="relative my-6">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-border dark:border-dark-border"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-white dark:bg-dark-card text-text-secondary dark:text-dark-text-secondary">
+              ¿Ya tienes cuenta?
+            </span>
+          </div>
+        </div>
+
         <!-- Link a login -->
-        <div class="mt-6 text-center">
-          <p class="text-sm text-text-secondary">
-            ¿Ya tienes cuenta?
-            <a href="/empleador/login" class="text-accent hover:text-accent-hover font-medium">
-              Inicia sesión aquí
-            </a>
-          </p>
+        <div class="text-center">
+          <a
+            href="/empleador/login"
+            class="inline-flex items-center justify-center gap-2 w-full px-4 py-3 border border-border dark:border-dark-border rounded-lg text-text-primary dark:text-dark-text-primary hover:bg-surface dark:hover:bg-dark-surface transition-all duration-200 font-medium"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+            </svg>
+            Iniciar Sesión
+          </a>
         </div>
 
         <!-- Link a home -->
-        <div class="mt-4 text-center">
-          <a href="/" class="text-sm text-text-secondary hover:text-text-primary">
-            ← Volver al inicio
+        <div class="mt-6 text-center">
+          <a href="/" class="inline-flex items-center gap-2 text-sm text-text-secondary dark:text-dark-text-secondary hover:text-accent dark:hover:text-accent transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Volver al inicio
           </a>
         </div>
       </div>
