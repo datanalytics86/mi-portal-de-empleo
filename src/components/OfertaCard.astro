@@ -34,84 +34,116 @@ function getRelativeTime(dateString: string): string {
 
 const fechaRelativa = getRelativeTime(created_at);
 
-// Colores para badges de tipo de jornada
+// Colores mejorados para badges de tipo de jornada con gradientes
 const tipoJornadaStyles = {
-  'Full-time': 'bg-blue-50 text-blue-700',
-  'Part-time': 'bg-green-50 text-green-700',
-  'Freelance': 'bg-purple-50 text-purple-700',
-  'Práctica': 'bg-orange-50 text-orange-700'
+  'Full-time': {
+    badge: 'bg-gradient-to-r from-blue-500 to-blue-600 text-white',
+    border: 'border-l-4 border-blue-500',
+    icon: 'text-blue-500'
+  },
+  'Part-time': {
+    badge: 'bg-gradient-to-r from-green-500 to-green-600 text-white',
+    border: 'border-l-4 border-green-500',
+    icon: 'text-green-500'
+  },
+  'Freelance': {
+    badge: 'bg-gradient-to-r from-purple-500 to-purple-600 text-white',
+    border: 'border-l-4 border-purple-500',
+    icon: 'text-purple-500'
+  },
+  'Práctica': {
+    badge: 'bg-gradient-to-r from-orange-500 to-orange-600 text-white',
+    border: 'border-l-4 border-orange-500',
+    icon: 'text-orange-500'
+  }
 };
 
-const badgeStyle = tipoJornadaStyles[tipo_jornada] || 'bg-gray-50 text-gray-700';
+const styles = tipoJornadaStyles[tipo_jornada] || {
+  badge: 'bg-gradient-to-r from-gray-500 to-gray-600 text-white',
+  border: 'border-l-4 border-gray-500',
+  icon: 'text-gray-500'
+};
 ---
 
-<div class="relative bg-white dark:bg-dark-card rounded-lg shadow-sm border border-gray-200 dark:border-dark-border p-6 hover-lift">
-  <!-- Botón de favoritos -->
-  <button
-    class="favorite-btn absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-dark-surface transition-colors z-10"
-    data-offer-id={id}
-    aria-label="Guardar en favoritos"
-    title="Guardar en favoritos"
-  >
-    <svg class="w-6 h-6 text-gray-400 dark:text-dark-text-secondary favorite-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-    </svg>
-    <svg class="w-6 h-6 text-red-500 favorite-icon-filled hidden" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"></path>
-    </svg>
-  </button>
+<div class={`group relative bg-white dark:bg-dark-card rounded-xl shadow-sm border border-gray-200 dark:border-dark-border ${styles.border} overflow-hidden hover-lift`}>
+  <!-- Decorative gradient overlay -->
+  <div class="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-gray-50/30 dark:to-dark-surface/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
 
-  <!-- Link a detalle (no afecta el botón de favoritos) -->
-  <a href={`/oferta/${id}`} class="block">
-    <article>
-      <!-- Título -->
-      <h3 class="text-xl font-semibold text-gray-900 dark:text-dark-text-primary mb-2 line-clamp-2 pr-10">
-        {titulo}
-      </h3>
+  <!-- Content wrapper -->
+  <div class="relative p-6">
+    <!-- Badge y Favorito en la parte superior -->
+    <div class="flex items-start justify-between mb-4">
+      <span class={`inline-flex items-center gap-1.5 px-3 py-1.5 ${styles.badge} rounded-full text-xs font-semibold shadow-sm`}>
+        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+        </svg>
+        {tipo_jornada}
+      </span>
 
-      <!-- Empresa -->
-      <p class="text-gray-600 dark:text-dark-text-secondary mb-3 font-medium">
-        {empresa}
-      </p>
+      <!-- Botón de favoritos -->
+      <button
+        class="favorite-btn p-2 rounded-full hover:bg-gray-100 dark:hover:bg-dark-surface transition-all duration-200 hover:scale-110"
+        data-offer-id={id}
+        aria-label="Guardar en favoritos"
+        title="Guardar en favoritos"
+      >
+        <svg class="w-5 h-5 text-gray-400 dark:text-dark-text-secondary favorite-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+        </svg>
+        <svg class="w-5 h-5 text-red-500 favorite-icon-filled hidden" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"></path>
+        </svg>
+      </button>
+    </div>
 
-      <!-- Comuna y Tipo de Jornada -->
-      <div class="flex items-center gap-4 mb-3 flex-wrap">
-        <span class="text-sm text-gray-500 dark:text-dark-text-secondary flex items-center gap-1">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="w-4 h-4"
-            aria-hidden="true"
-          >
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-            <circle cx="12" cy="10" r="3"/>
+    <!-- Link a detalle -->
+    <a href={`/oferta/${id}`} class="block space-y-3">
+      <article>
+        <!-- Título con mejor tipografía -->
+        <h3 class="text-xl font-bold text-gray-900 dark:text-dark-text-primary mb-2 line-clamp-2 group-hover:text-accent dark:group-hover:text-accent transition-colors duration-200">
+          {titulo}
+        </h3>
+
+        <!-- Empresa con icono -->
+        <div class="flex items-center gap-2 mb-4">
+          <svg class={`w-4 h-4 ${styles.icon} flex-shrink-0`} fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"></path>
           </svg>
-          {comuna}
-        </span>
+          <p class="text-base font-semibold text-gray-700 dark:text-dark-text-secondary">
+            {empresa}
+          </p>
+        </div>
 
-        <span class={`px-2 py-1 ${badgeStyle} dark:opacity-90 rounded text-xs font-medium`}>
-          {tipo_jornada}
-        </span>
-      </div>
+        <!-- Comuna con icono mejorado -->
+        <div class="flex items-center gap-2 mb-4">
+          <svg class="w-4 h-4 text-gray-400 dark:text-dark-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+          <span class="text-sm text-gray-600 dark:text-dark-text-secondary font-medium">
+            {comuna}
+          </span>
+        </div>
 
-      <!-- Descripción (preview) -->
-      {descripcion && (
-        <p class="text-sm text-gray-600 dark:text-dark-text-secondary mb-3 line-clamp-2">
-          {descripcion}
-        </p>
-      )}
+        <!-- Descripción -->
+        {descripcion && (
+          <p class="text-sm text-gray-600 dark:text-dark-text-secondary mb-4 line-clamp-2 leading-relaxed">
+            {descripcion}
+          </p>
+        )}
 
-      <!-- Fecha -->
-      <p class="text-sm text-gray-400 dark:text-dark-text-secondary">
-        {fechaRelativa}
-      </p>
-    </article>
-  </a>
+        <!-- Fecha con icono -->
+        <div class="flex items-center gap-2 pt-3 border-t border-gray-100 dark:border-dark-border">
+          <svg class="w-4 h-4 text-gray-400 dark:text-dark-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <p class="text-xs text-gray-500 dark:text-dark-text-secondary font-medium">
+            {fechaRelativa}
+          </p>
+        </div>
+      </article>
+    </a>
+  </div>
 </div>
 
 <script>

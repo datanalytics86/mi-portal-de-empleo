@@ -42,14 +42,55 @@ const totalOfertas = ofertas?.length || 0;
 
 <Layout>
   <div class="container mx-auto px-4 md:px-8 py-8">
-    <!-- Hero Section -->
-    <div class="text-center mb-8 animate-fade-in-down">
-      <h1 class="text-3xl md:text-4xl font-bold text-text-primary dark:text-dark-text-primary mb-3">
-        Encuentra tu próximo trabajo en Chile
-      </h1>
-      <p class="text-lg text-text-secondary dark:text-dark-text-secondary max-w-2xl mx-auto">
-        Explora ofertas laborales georeferenciadas. Postula sin registro, solo sube tu CV.
-      </p>
+    <!-- Hero Section Mejorado -->
+    <div class="relative text-center mb-12 animate-fade-in-down overflow-hidden">
+      <!-- Background gradient decorativo -->
+      <div class="absolute inset-0 -z-10">
+        <div class="absolute top-0 left-1/4 w-72 h-72 bg-blue-400/20 dark:bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute top-0 right-1/4 w-72 h-72 bg-purple-400/20 dark:bg-purple-500/10 rounded-full blur-3xl"></div>
+      </div>
+
+      <div class="max-w-4xl mx-auto">
+        <!-- Badge superior -->
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 dark:bg-accent/20 rounded-full mb-6 animate-scale-in">
+          <svg class="w-4 h-4 text-accent animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+          </svg>
+          <span class="text-sm font-semibold text-accent">Portal de Empleos #1 en Chile</span>
+        </div>
+
+        <!-- Título principal con gradiente -->
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 leading-tight">
+          <span class="bg-gradient-to-r from-blue-600 via-purple-600 to-accent bg-clip-text text-transparent dark:from-blue-400 dark:via-purple-400 dark:to-accent">
+            Encuentra tu próximo
+          </span>
+          <br>
+          <span class="text-text-primary dark:text-dark-text-primary">
+            trabajo en Chile
+          </span>
+        </h1>
+
+        <!-- Subtítulo -->
+        <p class="text-lg md:text-xl text-text-secondary dark:text-dark-text-secondary max-w-2xl mx-auto mb-8 leading-relaxed">
+          Explora ofertas laborales georeferenciadas. Postula sin registro, solo sube tu CV.
+        </p>
+
+        <!-- Estadísticas rápidas -->
+        <div class="grid grid-cols-3 gap-4 md:gap-8 max-w-2xl mx-auto mb-8">
+          <div class="bg-white/50 dark:bg-dark-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50 dark:border-dark-border/50">
+            <div class="text-2xl md:text-3xl font-bold text-accent mb-1">{totalOfertas}+</div>
+            <div class="text-xs md:text-sm text-text-secondary dark:text-dark-text-secondary font-medium">Ofertas Activas</div>
+          </div>
+          <div class="bg-white/50 dark:bg-dark-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50 dark:border-dark-border/50">
+            <div class="text-2xl md:text-3xl font-bold text-accent mb-1">100+</div>
+            <div class="text-xs md:text-sm text-text-secondary dark:text-dark-text-secondary font-medium">Empresas</div>
+          </div>
+          <div class="bg-white/50 dark:bg-dark-card/50 backdrop-blur-sm rounded-lg p-4 border border-border/50 dark:border-dark-border/50">
+            <div class="text-2xl md:text-3xl font-bold text-accent mb-1">24/7</div>
+            <div class="text-xs md:text-sm text-text-secondary dark:text-dark-text-secondary font-medium">Disponible</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Barra de búsqueda mejorada -->
@@ -170,6 +211,81 @@ const totalOfertas = ofertas?.length || 0;
           <p class="text-text-secondary dark:text-dark-text-secondary">No hay ofertas para mostrar en el mapa</p>
         </div>
       )}
+    </div>
+
+    <!-- Features Section -->
+    <div class="mb-16 animate-fade-in-up">
+      <div class="text-center mb-10">
+        <h2 class="text-3xl md:text-4xl font-bold text-text-primary dark:text-dark-text-primary mb-3">
+          ¿Por qué elegir nuestro portal?
+        </h2>
+        <p class="text-lg text-text-secondary dark:text-dark-text-secondary max-w-2xl mx-auto">
+          La forma más simple y rápida de encontrar trabajo en Chile
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Feature 1 -->
+        <div class="group bg-white dark:bg-dark-card rounded-xl p-6 border border-border dark:border-dark-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-text-primary dark:text-dark-text-primary mb-2">
+            Sin Registro
+          </h3>
+          <p class="text-sm text-text-secondary dark:text-dark-text-secondary leading-relaxed">
+            Postula a ofertas directamente sin necesidad de crear una cuenta. Solo sube tu CV y listo.
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="group bg-white dark:bg-dark-card rounded-xl p-6 border border-border dark:border-dark-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-text-primary dark:text-dark-text-primary mb-2">
+            Georeferenciado
+          </h3>
+          <p class="text-sm text-text-secondary dark:text-dark-text-secondary leading-relaxed">
+            Visualiza las ofertas en un mapa interactivo y encuentra trabajos cerca de ti.
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="group bg-white dark:bg-dark-card rounded-xl p-6 border border-border dark:border-dark-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-text-primary dark:text-dark-text-primary mb-2">
+            Rápido y Simple
+          </h3>
+          <p class="text-sm text-text-secondary dark:text-dark-text-secondary leading-relaxed">
+            Busca, filtra y postula en segundos. Interfaz intuitiva y fácil de usar.
+          </p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="group bg-white dark:bg-dark-card rounded-xl p-6 border border-border dark:border-dark-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-text-primary dark:text-dark-text-primary mb-2">
+            Actualizado
+          </h3>
+          <p class="text-sm text-text-secondary dark:text-dark-text-secondary leading-relaxed">
+            Nuevas ofertas cada día. Mantente informado con las oportunidades más recientes.
+          </p>
+        </div>
+      </div>
     </div>
 
     <!-- Sección de Favoritos (se muestra dinámicamente si hay favoritos) -->
