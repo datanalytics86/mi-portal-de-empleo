@@ -43,7 +43,7 @@ const totalOfertas = ofertas?.length || 0;
 <Layout>
   <div class="container mx-auto px-4 md:px-8 py-8">
     <!-- Hero Section -->
-    <div class="text-center mb-8">
+    <div class="text-center mb-8 animate-fade-in-down">
       <h1 class="text-3xl md:text-4xl font-bold text-text-primary dark:text-dark-text-primary mb-3">
         Encuentra tu próximo trabajo en Chile
       </h1>
@@ -53,7 +53,7 @@ const totalOfertas = ofertas?.length || 0;
     </div>
 
     <!-- Barra de búsqueda mejorada -->
-    <div class="mb-6">
+    <div class="mb-6 animate-fade-in-up delay-100">
       <div class="max-w-3xl mx-auto">
         <div class="relative">
           <input
@@ -249,7 +249,7 @@ const totalOfertas = ofertas?.length || 0;
     )}
 
     {totalOfertas > 0 && (
-      <div id="ofertas-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div id="ofertas-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-fade-in">
         {ofertasConCoordenadas.map(oferta => (
           <div
             class="oferta-item"
