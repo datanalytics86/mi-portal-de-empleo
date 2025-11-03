@@ -8,7 +8,10 @@
     "start": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "cleanup:cvs": "tsx scripts/cleanup-old-cvs.ts",
+    "cleanup:cvs:preview": "tsx scripts/cleanup-old-cvs.ts --preview",
+    "cleanup:cvs:stats": "tsx scripts/cleanup-old-cvs.ts --stats"
   },
   "keywords": [
     "astro",
@@ -28,10 +31,14 @@
     "resend": "^6.4.0",
     "tailwindcss": "^3.4.18",
     "typescript": "^5.9.3",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "@sentry/astro": "^8.0.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.5",
-    "@types/leaflet": "^1.9.21"
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^20.0.0",
+    "dotenv": "^16.3.1",
+    "tsx": "^4.7.0"
   }
 }
