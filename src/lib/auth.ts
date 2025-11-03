@@ -1,10 +1,22 @@
+/**
+ * Utilidades de autenticación con Supabase
+ *
+ * Maneja sesiones de usuario usando cookies HTTP-only para seguridad.
+ * Compatible con SSR de Astro y funciona con fallback a datos mock.
+ */
+
 import type { AstroCookies } from 'astro';
-import { supabaseServer } from './supabase';
+import { supabase } from './supabase';
 
 /**
  * Obtiene la sesión actual del usuario desde las cookies
  */
 export async function getSession(cookies: AstroCookies) {
+  // Si Supabase no está configurado, retornar sin sesión
+  if (!supabase) {
+    return { session: null, user: null };
+  }
+
   const accessToken = cookies.get('sb-access-token')?.value;
   const refreshToken = cookies.get('sb-refresh-token')?.value;
 
@@ -12,17 +24,34 @@ export async function getSession(cookies: AstroCookies) {
     return { session: null, user: null };
   }
 
-  const { data, error } = await supabaseServer.auth.setSession({
-    access_token: accessToken,
-    refresh_token: refreshToken,
-  });
+  try {
+    const { data, error } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
 
-  if (error) {
-    console.error('Error al restaurar sesión:', error.message);
+    if (error || !data.session) {
+      // Limpiar cookies inválidas
+      clearSessionCookies(cookies);
+      return { session: null, user: null };
+    }
+
+    // Si la sesión fue refrescada, actualizar cookies
+    if (data.session.access_token !== accessToken) {
+      setSessionCookies(
+        cookies,
+        data.session.access_token,
+        data.session.refresh_token,
+        data.session.expires_in || 3600
+      );
+    }
+
+    return { session: data.session, user: data.user };
+  } catch (error) {
+    console.error('Error obteniendo sesión:', error);
+    clearSessionCookies(cookies);
     return { session: null, user: null };
   }
-
-  return { session: data.session, user: data.user };
 }
 
 /**
@@ -37,24 +66,51 @@ export async function isAuthenticated(cookies: AstroCookies): Promise<boolean> {
  * Obtiene el perfil del empleador actual
  */
 export async function getEmpleadorProfile(cookies: AstroCookies) {
+  if (!supabase) {
+    return null;
+  }
+
   const { user } = await getSession(cookies);
 
   if (!user) {
     return null;
   }
 
-  const { data, error } = await supabaseServer
-    .from('empleadores')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('empleadores')
+      .select('*')
+      .eq('id', user.id)
+      .single();
 
-  if (error) {
-    console.error('Error al obtener perfil empleador:', error.message);
+    if (error) {
+      console.error('Error al obtener perfil empleador:', error.message);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error obteniendo perfil empleador:', error);
     return null;
   }
+}
 
-  return data;
+/**
+ * Obtiene el ID del usuario autenticado
+ * Retorna null si no hay sesión
+ */
+export async function getUserId(cookies: AstroCookies): Promise<string | null> {
+  const { user } = await getSession(cookies);
+  return user?.id || null;
+}
+
+/**
+ * Verifica si el usuario está autenticado y requiere auth
+ * Útil para proteger rutas
+ */
+export async function requireAuth(cookies: AstroCookies): Promise<boolean> {
+  const { user } = await getSession(cookies);
+  return user !== null;
 }
 
 /**

@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { supabaseServer } from '../../../../lib/supabase';
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin';
 import { getSession, getEmpleadorProfile } from '../../../../lib/auth';
 
 export const prerender = false;
@@ -29,11 +29,11 @@ export const POST: APIRoute = async ({ params, cookies }) => {
     }
 
     // Obtener la oferta actual
-    const { data: oferta, error: fetchError } = await supabaseServer
+    const { data: oferta, error: fetchError } = await supabaseAdmin
       .from('ofertas')
       .select('id, activa')
       .eq('id', id)
-      .eq('empleador_id', empleador.id)
+      .eq('empleador_id', (empleador as any).id)
       .single();
 
     if (fetchError || !oferta) {
@@ -44,13 +44,15 @@ export const POST: APIRoute = async ({ params, cookies }) => {
     }
 
     // Toggle el estado activa
-    const nuevoEstado = !oferta.activa;
+    const nuevoEstado = !(oferta as any).activa;
 
-    const { error: updateError } = await supabaseServer
+    const result = await (supabaseAdmin as any)
       .from('ofertas')
       .update({ activa: nuevoEstado })
       .eq('id', id)
-      .eq('empleador_id', empleador.id);
+      .eq('empleador_id', (empleador as any).id);
+
+    const updateError = result.error;
 
     if (updateError) {
       console.error('Error al actualizar oferta:', updateError);

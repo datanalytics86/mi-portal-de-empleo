@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { supabaseServer } from '../../../../lib/supabase';
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin';
 import { getSession, getEmpleadorProfile } from '../../../../lib/auth';
 
 export const prerender = false;
@@ -38,11 +38,11 @@ export const POST: APIRoute = async ({ params, request, cookies }) => {
     }
 
     // Verificar que la oferta pertenece al empleador autenticado
-    const { data: oferta, error: ofertaError } = await supabaseServer
+    const { data: oferta, error: ofertaError } = await supabaseAdmin
       .from('ofertas')
       .select('id')
       .eq('id', id)
-      .eq('empleador_id', empleador.id)
+      .eq('empleador_id', (empleador as any).id)
       .single();
 
     if (ofertaError || !oferta) {
@@ -53,7 +53,7 @@ export const POST: APIRoute = async ({ params, request, cookies }) => {
     }
 
     // Verificar que el CV pertenece a una postulación de esta oferta
-    const { data: postulacion, error: postulacionError } = await supabaseServer
+    const { data: postulacion, error: postulacionError } = await supabaseAdmin
       .from('postulaciones')
       .select('id')
       .eq('oferta_id', id)
@@ -68,7 +68,7 @@ export const POST: APIRoute = async ({ params, request, cookies }) => {
     }
 
     // Generar URL firmada de Supabase Storage (válida por 1 hora)
-    const { data: signedUrlData, error: signedUrlError } = await supabaseServer
+    const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin
       .storage
       .from('cvs')
       .createSignedUrl(cv_url, 3600); // 3600 segundos = 1 hora
