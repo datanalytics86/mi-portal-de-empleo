@@ -8,7 +8,7 @@
 
 import Layout from '../../layouts/Layout.astro';
 import MapaOfertas from '../../components/MapaOfertas.astro';
-import FormularioPostulacion from '../../components/FormularioPostulacion.astro';
+import FormularioPostulacionMejorado from '../../components/FormularioPostulacionMejorado.astro';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { findOfertaById } from '../../data/mock-ofertas';
 import { findComuna } from '../../lib/comunas';
@@ -328,7 +328,7 @@ const jsonLd = {
       <div class="lg:col-span-1">
         <!-- Sticky container -->
         <div class="lg:sticky lg:top-24">
-          <FormularioPostulacion
+          <FormularioPostulacionMejorado
             ofertaId={oferta.id}
             titulo={oferta.titulo}
             empresa={oferta.empresa}
