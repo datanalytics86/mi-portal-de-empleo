@@ -1,0 +1,36 @@
+---
+interface Props {
+  type?: string;
+  name: string;
+  id?: string;
+  placeholder?: string;
+  required?: boolean;
+  value?: string;
+  class?: string;
+  error?: string;
+}
+
+const {
+  type = 'text',
+  name,
+  id = name,
+  placeholder,
+  required = false,
+  value,
+  class: className = '',
+  error,
+} = Astro.props;
+---
+
+<div class="w-full">
+  <input
+    type={type}
+    name={name}
+    id={id}
+    placeholder={placeholder}
+    required={required}
+    value={value}
+    class={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-colors ${error ? 'border-error' : 'border-border'} ${className}`}
+  />
+  {error && <p class="text-sm text-error mt-1">{error}</p>}
+</div>

@@ -1,0 +1,257 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import Button from '../../../components/ui/Button.astro';
+import Input from '../../../components/ui/Input.astro';
+import Label from '../../../components/ui/Label.astro';
+import Select from '../../../components/ui/Select.astro';
+import Textarea from '../../../components/ui/Textarea.astro';
+import { comunasChile } from '../../../lib/comunas';
+import { categorias } from '../../../lib/validations';
+import { supabase } from '../../../lib/supabase';
+
+// Verificar autenticación
+const { cookies, redirect } = Astro;
+const accessToken = cookies.get('sb-access-token')?.value;
+
+if (!accessToken) {
+  return redirect('/empleador/login');
+}
+
+const { data: { user } } = await supabase.auth.getUser(accessToken);
+
+if (!user) {
+  return redirect('/empleador/login');
+}
+
+// Obtener datos del empleador
+const { data: empleador } = await supabase
+  .from('empleadores')
+  .select('nombre_empresa')
+  .eq('id', user.id)
+  .single();
+
+const comunasOrdenadas = [...comunasChile].sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+// Calcular fecha por defecto (30 días)
+const defaultExpiresAt = new Date();
+defaultExpiresAt.setDate(defaultExpiresAt.getDate() + 30);
+const defaultExpiresAtStr = defaultExpiresAt.toISOString().split('T')[0];
+---
+
+<Layout title="Nueva Oferta - Empleadores">
+  <div class="container mx-auto px-4 sm:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+      <a href="/empleador/dashboard" class="text-accent hover:text-accent-hover transition text-sm">
+        ← Volver al dashboard
+      </a>
+    </nav>
+
+    <div class="max-w-3xl mx-auto">
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-text-primary">Publicar Nueva Oferta</h1>
+        <p class="text-text-secondary mt-2">Completa la información de tu oferta laboral</p>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border border-border p-6 md:p-8">
+        <form id="oferta-form" class="space-y-6">
+          <!-- Título -->
+          <div>
+            <Label for="titulo" required>Título de la Oferta</Label>
+            <Input
+              type="text"
+              name="titulo"
+              id="titulo"
+              placeholder="Ej: Desarrollador Full Stack"
+              required
+            />
+          </div>
+
+          <!-- Empresa -->
+          <div>
+            <Label for="empresa" required>Nombre de la Empresa</Label>
+            <Input
+              type="text"
+              name="empresa"
+              id="empresa"
+              value={empleador?.nombre_empresa || ''}
+              required
+            />
+          </div>
+
+          <!-- Descripción -->
+          <div>
+            <Label for="descripcion" required>Descripción del Puesto</Label>
+            <Textarea
+              name="descripcion"
+              id="descripcion"
+              rows={8}
+              maxlength={2000}
+              placeholder="Describe las responsabilidades, requisitos y beneficios del puesto..."
+              required
+            />
+          </div>
+
+          <!-- Tipo de jornada y Categoría -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Label for="tipo_jornada" required>Tipo de Jornada</Label>
+              <Select name="tipo_jornada" id="tipo_jornada" required>
+                <option value="">Selecciona un tipo</option>
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Freelance">Freelance</option>
+                <option value="Práctica">Práctica</option>
+              </Select>
+            </div>
+
+            <div>
+              <Label for="categoria">Categoría</Label>
+              <Select name="categoria" id="categoria">
+                <option value="">Selecciona una categoría</option>
+                {categorias.map((cat) => (
+                  <option value={cat}>{cat}</option>
+                ))}
+              </Select>
+            </div>
+          </div>
+
+          <!-- Comuna -->
+          <div>
+            <Label for="comuna" required>Comuna</Label>
+            <Select name="comuna" id="comuna" required>
+              <option value="">Selecciona una comuna</option>
+              {comunasOrdenadas.map((comuna) => (
+                <option value={comuna.nombre}>{comuna.nombre}, {comuna.region}</option>
+              ))}
+            </Select>
+          </div>
+
+          <!-- Fecha de expiración -->
+          <div>
+            <Label for="expires_at">Fecha de Expiración</Label>
+            <Input
+              type="date"
+              name="expires_at"
+              id="expires_at"
+              value={defaultExpiresAtStr}
+            />
+            <p class="text-xs text-text-secondary mt-1">
+              Por defecto, la oferta expirará en 30 días
+            </p>
+          </div>
+
+          <!-- Mensajes -->
+          <div id="error-message" class="hidden p-4 bg-error text-white rounded-lg text-sm"></div>
+          <div id="success-message" class="hidden p-4 bg-success text-white rounded-lg text-sm"></div>
+
+          <!-- Botones -->
+          <div class="flex gap-4">
+            <Button type="submit" variant="primary" class="flex-1">
+              <span id="button-text">Publicar Oferta</span>
+              <span id="button-loading" class="hidden">Publicando...</span>
+            </Button>
+            <a href="/empleador/dashboard" class="flex-1">
+              <Button type="button" variant="outline" class="w-full">
+                Cancelar
+              </Button>
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import { supabase } from '../../../lib/supabase';
+    import { getComunaByName } from '../../../lib/comunas';
+
+    const form = document.getElementById('oferta-form') as HTMLFormElement;
+    const errorMessage = document.getElementById('error-message');
+    const successMessage = document.getElementById('success-message');
+    const buttonText = document.getElementById('button-text');
+    const buttonLoading = document.getElementById('button-loading');
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const titulo = formData.get('titulo') as string;
+      const empresa = formData.get('empresa') as string;
+      const descripcion = formData.get('descripcion') as string;
+      const tipoJornada = formData.get('tipo_jornada') as string;
+      const categoria = formData.get('categoria') as string || null;
+      const comunaNombre = formData.get('comuna') as string;
+      const expiresAt = formData.get('expires_at') as string;
+
+      // Validaciones
+      if (titulo.length < 5) {
+        errorMessage!.textContent = 'El título debe tener al menos 5 caracteres';
+        errorMessage!.classList.remove('hidden');
+        return;
+      }
+
+      if (descripcion.length < 50) {
+        errorMessage!.textContent = 'La descripción debe tener al menos 50 caracteres';
+        errorMessage!.classList.remove('hidden');
+        return;
+      }
+
+      // Obtener coordenadas de la comuna
+      const comuna = getComunaByName(comunaNombre);
+      if (!comuna) {
+        errorMessage!.textContent = 'Comuna no válida';
+        errorMessage!.classList.remove('hidden');
+        return;
+      }
+
+      // Mostrar loading
+      buttonText!.classList.add('hidden');
+      buttonLoading!.classList.remove('hidden');
+      errorMessage!.classList.add('hidden');
+      successMessage!.classList.add('hidden');
+
+      try {
+        // Obtener usuario actual
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          throw new Error('Usuario no autenticado');
+        }
+
+        // Crear oferta
+        const { error: insertError } = await supabase.from('ofertas').insert({
+          empleador_id: user.id,
+          titulo,
+          empresa,
+          descripcion,
+          tipo_jornada: tipoJornada,
+          categoria,
+          comuna: comunaNombre,
+          ubicacion: {
+            type: 'Point',
+            coordinates: [comuna.lng, comuna.lat], // PostGIS usa [lng, lat]
+          },
+          expires_at: expiresAt || undefined,
+        });
+
+        if (insertError) throw insertError;
+
+        // Mostrar éxito y redirigir
+        successMessage!.textContent = '✓ Oferta publicada correctamente';
+        successMessage!.classList.remove('hidden');
+
+        setTimeout(() => {
+          window.location.href = '/empleador/dashboard';
+        }, 1500);
+      } catch (error: any) {
+        console.error('Error creating oferta:', error);
+        errorMessage!.textContent = error.message || 'Error al publicar la oferta';
+        errorMessage!.classList.remove('hidden');
+      } finally {
+        buttonText!.classList.remove('hidden');
+        buttonLoading!.classList.add('hidden');
+      }
+    });
+  </script>
+</Layout>

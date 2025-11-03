@@ -1,0 +1,25 @@
+{
+  "name": "mi-portal-de-empleo",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/tailwind": "^5.1.1",
+    "@astrojs/vercel": "^7.8.1",
+    "@supabase/supabase-js": "^2.45.4",
+    "astro": "^4.16.14",
+    "leaflet": "^1.9.4",
+    "tailwindcss": "^3.4.15",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.14",
+    "typescript": "^5.7.3"
+  }
+}

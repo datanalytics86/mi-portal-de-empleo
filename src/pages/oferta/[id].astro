@@ -1,0 +1,156 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import FormularioPostulacion from '../../components/FormularioPostulacion.astro';
+import { supabase } from '../../lib/supabase';
+import type { Oferta } from '../../lib/supabase';
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/');
+}
+
+const { data: oferta, error } = await supabase
+  .from('ofertas')
+  .select('*')
+  .eq('id', id)
+  .eq('activa', true)
+  .single();
+
+if (error || !oferta) {
+  return Astro.redirect('/');
+}
+
+const tipoJornadaColor = {
+  'Full-time': 'bg-blue-50 text-blue-700 border-blue-200',
+  'Part-time': 'bg-green-50 text-green-700 border-green-200',
+  'Freelance': 'bg-purple-50 text-purple-700 border-purple-200',
+  'Práctica': 'bg-orange-50 text-orange-700 border-orange-200',
+};
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('es-CL', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};
+
+// Extraer coordenadas para el mapa
+const lat = oferta.ubicacion.coordinates[1];
+const lng = oferta.ubicacion.coordinates[0];
+---
+
+<Layout title={`${oferta.titulo} - ${oferta.empresa}`} description={oferta.descripcion}>
+  <div class="container mx-auto px-4 sm:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+      <a href="/" class="text-accent hover:text-accent-hover transition text-sm">
+        ← Volver a ofertas
+      </a>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Información de la oferta -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow-sm border border-border p-6 md:p-8">
+          <h1 class="text-3xl font-bold text-text-primary mb-2">{oferta.titulo}</h1>
+          <h2 class="text-xl text-text-secondary mb-6">{oferta.empresa}</h2>
+
+          <div class="flex flex-wrap gap-3 mb-6">
+            <span
+              class={`px-3 py-1 rounded-lg border font-medium ${tipoJornadaColor[oferta.tipo_jornada]}`}
+            >
+              {oferta.tipo_jornada}
+            </span>
+
+            {
+              oferta.categoria && (
+                <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg border border-gray-200">
+                  {oferta.categoria}
+                </span>
+              )
+            }
+
+            <span class="flex items-center gap-1 px-3 py-1 bg-gray-50 text-gray-700 rounded-lg border border-gray-200">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              {oferta.comuna}
+            </span>
+          </div>
+
+          <div class="mb-6 pb-6 border-b border-border">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p class="text-text-secondary">Publicado</p>
+                <p class="font-medium text-text-primary">{formatDate(oferta.created_at)}</p>
+              </div>
+              <div>
+                <p class="text-text-secondary">Válido hasta</p>
+                <p class="font-medium text-text-primary">{formatDate(oferta.expires_at)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <h3 class="text-lg font-semibold text-text-primary mb-3">Descripción</h3>
+            <div class="prose prose-sm max-w-none text-text-secondary whitespace-pre-line">
+              {oferta.descripcion}
+            </div>
+          </div>
+
+          <!-- Mapa pequeño -->
+          <div class="mb-6">
+            <h3 class="text-lg font-semibold text-text-primary mb-3">Ubicación</h3>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+            <div id="mapa-detalle" class="h-[300px] rounded-lg border border-border"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulario de postulación -->
+      <div class="lg:col-span-1">
+        <div class="sticky top-20">
+          <FormularioPostulacion ofertaId={oferta.id} />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script define:vars={{ lat, lng }}>
+    if (typeof window !== 'undefined') {
+      import('leaflet').then((L) => {
+        const leaflet = L.default;
+
+        // Fix para iconos
+        delete leaflet.Icon.Default.prototype._getIconUrl;
+        leaflet.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        });
+
+        const mapa = leaflet.map('mapa-detalle').setView([lat, lng], 13);
+
+        leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors',
+        }).addTo(mapa);
+
+        leaflet.marker([lat, lng]).addTo(mapa);
+      });
+    }
+  </script>
+</Layout>

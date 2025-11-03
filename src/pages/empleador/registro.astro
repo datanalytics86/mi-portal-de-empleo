@@ -1,0 +1,174 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Button from '../../components/ui/Button.astro';
+import Input from '../../components/ui/Input.astro';
+import Label from '../../components/ui/Label.astro';
+---
+
+<Layout title="Registro - Empleadores">
+  <div class="min-h-[calc(100vh-theme(spacing.16))] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-text-primary">Crear Cuenta</h1>
+        <p class="text-text-secondary mt-2">Comienza a publicar ofertas laborales</p>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border border-border p-8">
+        <form id="registro-form" class="space-y-4">
+          <div>
+            <Label for="nombre_empresa" required>Nombre de la Empresa</Label>
+            <Input
+              type="text"
+              name="nombre_empresa"
+              id="nombre_empresa"
+              placeholder="Mi Empresa S.A."
+              required
+            />
+          </div>
+
+          <div>
+            <Label for="email" required>Email</Label>
+            <Input
+              type="email"
+              name="email"
+              id="email"
+              placeholder="tu@empresa.com"
+              required
+            />
+          </div>
+
+          <div>
+            <Label for="password" required>Contraseña</Label>
+            <Input
+              type="password"
+              name="password"
+              id="password"
+              placeholder="Mínimo 8 caracteres"
+              required
+            />
+            <p class="text-xs text-text-secondary mt-1">La contraseña debe tener al menos 8 caracteres</p>
+          </div>
+
+          <div>
+            <Label for="password_confirm" required>Confirmar Contraseña</Label>
+            <Input
+              type="password"
+              name="password_confirm"
+              id="password_confirm"
+              placeholder="Repite tu contraseña"
+              required
+            />
+          </div>
+
+          <div>
+            <label class="flex items-start gap-2">
+              <input
+                type="checkbox"
+                name="acepta_terminos"
+                id="acepta_terminos"
+                required
+                class="mt-1 rounded border-border text-accent focus:ring-accent"
+              />
+              <span class="text-sm text-text-secondary">
+                Acepto los <a href="/terminos" class="text-accent hover:underline">términos y condiciones</a>
+                y la <a href="/privacidad" class="text-accent hover:underline">política de privacidad</a>
+                <span class="text-error">*</span>
+              </span>
+            </label>
+          </div>
+
+          <div id="error-message" class="hidden p-3 bg-error text-white rounded-lg text-sm"></div>
+
+          <Button type="submit" variant="primary" class="w-full">
+            <span id="button-text">Crear Cuenta</span>
+            <span id="button-loading" class="hidden">Creando cuenta...</span>
+          </Button>
+        </form>
+
+        <div class="mt-6 text-center">
+          <p class="text-sm text-text-secondary">
+            ¿Ya tienes cuenta?
+            <a href="/empleador/login" class="text-accent hover:text-accent-hover font-medium">
+              Inicia sesión aquí
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import { supabase } from '../../lib/supabase';
+
+    const form = document.getElementById('registro-form') as HTMLFormElement;
+    const errorMessage = document.getElementById('error-message');
+    const buttonText = document.getElementById('button-text');
+    const buttonLoading = document.getElementById('button-loading');
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const nombreEmpresa = formData.get('nombre_empresa') as string;
+      const email = formData.get('email') as string;
+      const password = formData.get('password') as string;
+      const passwordConfirm = formData.get('password_confirm') as string;
+
+      // Validar contraseñas
+      if (password !== passwordConfirm) {
+        errorMessage!.textContent = 'Las contraseñas no coinciden';
+        errorMessage!.classList.remove('hidden');
+        return;
+      }
+
+      if (password.length < 8) {
+        errorMessage!.textContent = 'La contraseña debe tener al menos 8 caracteres';
+        errorMessage!.classList.remove('hidden');
+        return;
+      }
+
+      // Mostrar loading
+      buttonText!.classList.add('hidden');
+      buttonLoading!.classList.remove('hidden');
+      errorMessage!.classList.add('hidden');
+
+      try {
+        // Crear usuario en Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              nombre_empresa: nombreEmpresa,
+            },
+          },
+        });
+
+        if (authError) throw authError;
+
+        if (authData.user) {
+          // Crear registro en tabla empleadores
+          const { error: dbError } = await supabase.from('empleadores').insert({
+            id: authData.user.id,
+            email: email,
+            nombre_empresa: nombreEmpresa,
+          });
+
+          if (dbError) {
+            console.error('Error creating empleador record:', dbError);
+            // No lanzar error aquí, el usuario ya está creado en Auth
+          }
+
+          // Redirigir al dashboard
+          window.location.href = '/empleador/dashboard';
+        }
+      } catch (error: any) {
+        errorMessage!.textContent = error.message || 'Error al crear la cuenta';
+        errorMessage!.classList.remove('hidden');
+      } finally {
+        buttonText!.classList.remove('hidden');
+        buttonLoading!.classList.add('hidden');
+      }
+    });
+  </script>
+</Layout>

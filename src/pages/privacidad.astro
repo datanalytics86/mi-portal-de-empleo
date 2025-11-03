@@ -1,0 +1,88 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Política de Privacidad">
+  <div class="container mx-auto px-4 sm:px-8 py-12 max-w-4xl">
+    <h1 class="text-4xl font-bold text-text-primary mb-8">Política de Privacidad</h1>
+
+    <div class="prose prose-lg max-w-none text-text-secondary space-y-6">
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">1. Información que Recopilamos</h2>
+        <p>
+          En Portal de Empleo Chile, recopilamos la siguiente información:
+        </p>
+        <ul class="list-disc pl-6 space-y-2">
+          <li><strong>Candidatos:</strong> Nombre (opcional), email (opcional), CV (archivo), dirección IP</li>
+          <li><strong>Empleadores:</strong> Email, nombre de empresa, información de contacto</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">2. Uso de la Información</h2>
+        <p>
+          Utilizamos la información recopilada para:
+        </p>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>Facilitar el proceso de reclutamiento entre candidatos y empleadores</li>
+          <li>Permitir a los empleadores acceder a las postulaciones recibidas</li>
+          <li>Prevenir el uso fraudulento o abusivo de la plataforma</li>
+          <li>Mejorar nuestros servicios</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">3. Almacenamiento y Seguridad</h2>
+        <p>
+          Los datos se almacenan de forma segura utilizando servicios de Supabase. Los CVs se almacenan
+          de manera privada y solo pueden ser accedidos por el empleador que publicó la oferta correspondiente.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">4. Retención de Datos</h2>
+        <p>
+          Los CVs y postulaciones se eliminan automáticamente después de 90 días desde su creación,
+          a menos que el empleador solicite su eliminación antes.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">5. Derechos del Usuario</h2>
+        <p>
+          Los usuarios tienen derecho a:
+        </p>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>Solicitar acceso a sus datos personales</li>
+          <li>Solicitar la corrección de datos incorrectos</li>
+          <li>Solicitar la eliminación de sus datos</li>
+          <li>Oponerse al procesamiento de sus datos</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">6. Cookies</h2>
+        <p>
+          Utilizamos cookies esenciales para el funcionamiento de la plataforma, incluyendo
+          cookies de autenticación para empleadores.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">7. Contacto</h2>
+        <p>
+          Para cualquier consulta sobre esta política de privacidad, por favor contacta a:
+          <a href="mailto:privacidad@portaldeempleo.cl" class="text-accent hover:underline">
+            privacidad@portaldeempleo.cl
+          </a>
+        </p>
+      </section>
+
+      <section class="pt-6 border-t border-border">
+        <p class="text-sm text-text-secondary">
+          Última actualización: {new Date().toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })}
+        </p>
+      </section>
+    </div>
+  </div>
+</Layout>

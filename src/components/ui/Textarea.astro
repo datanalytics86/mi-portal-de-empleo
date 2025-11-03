@@ -1,0 +1,39 @@
+---
+interface Props {
+  name: string;
+  id?: string;
+  placeholder?: string;
+  required?: boolean;
+  rows?: number;
+  maxlength?: number;
+  value?: string;
+  class?: string;
+  error?: string;
+}
+
+const {
+  name,
+  id = name,
+  placeholder,
+  required = false,
+  rows = 4,
+  maxlength,
+  value,
+  class: className = '',
+  error,
+} = Astro.props;
+---
+
+<div class="w-full">
+  <textarea
+    name={name}
+    id={id}
+    placeholder={placeholder}
+    required={required}
+    rows={rows}
+    maxlength={maxlength}
+    class={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent transition-colors resize-y ${error ? 'border-error' : 'border-border'} ${className}`}
+  >{value}</textarea>
+  {error && <p class="text-sm text-error mt-1">{error}</p>}
+  {maxlength && <p class="text-xs text-text-secondary mt-1 text-right">{value?.length || 0}/{maxlength}</p>}
+</div>

@@ -1,0 +1,270 @@
+---
+import Button from './ui/Button.astro';
+import Input from './ui/Input.astro';
+import Label from './ui/Label.astro';
+
+interface Props {
+  ofertaId: string;
+}
+
+const { ofertaId } = Astro.props;
+---
+
+<div class="bg-white rounded-lg shadow-sm border border-border p-6">
+  <h3 class="text-xl font-semibold text-text-primary mb-4">Postular a esta oferta</h3>
+
+  <form id="form-postulacion" class="space-y-4" enctype="multipart/form-data">
+    <input type="hidden" name="oferta_id" value={ofertaId} />
+
+    <!-- Nombre (opcional) -->
+    <div>
+      <Label for="nombre_candidato">Nombre</Label>
+      <Input
+        type="text"
+        name="nombre_candidato"
+        id="nombre_candidato"
+        placeholder="Tu nombre (opcional)"
+      />
+    </div>
+
+    <!-- Email (opcional) -->
+    <div>
+      <Label for="email_candidato">Email</Label>
+      <Input
+        type="email"
+        name="email_candidato"
+        id="email_candidato"
+        placeholder="tu@email.com (opcional)"
+      />
+    </div>
+
+    <!-- CV (requerido) -->
+    <div>
+      <Label for="cv" required>Curriculum Vitae (CV)</Label>
+      <div
+        id="drop-zone"
+        class="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-accent transition-colors cursor-pointer"
+      >
+        <input
+          type="file"
+          name="cv"
+          id="cv"
+          accept=".pdf,.doc,.docx"
+          required
+          class="hidden"
+        />
+        <div id="drop-zone-text">
+          <svg
+            class="mx-auto h-12 w-12 text-text-secondary"
+            stroke="currentColor"
+            fill="none"
+            viewBox="0 0 48 48"
+          >
+            <path
+              d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"></path>
+          </svg>
+          <p class="mt-2 text-sm text-text-secondary">
+            <span class="font-medium text-accent">Click para seleccionar</span> o arrastra tu CV aquí
+          </p>
+          <p class="text-xs text-text-secondary mt-1">PDF o Word (máx. 5MB)</p>
+        </div>
+        <div id="file-info" class="hidden">
+          <svg
+            class="mx-auto h-12 w-12 text-success"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <p class="mt-2 text-sm font-medium text-text-primary" id="file-name"></p>
+          <p class="text-xs text-text-secondary" id="file-size"></p>
+          <button
+            type="button"
+            id="remove-file"
+            class="mt-2 text-sm text-error hover:underline"
+          >
+            Eliminar archivo
+          </button>
+        </div>
+      </div>
+      <p id="cv-error" class="text-sm text-error mt-1 hidden"></p>
+    </div>
+
+    <!-- Checkbox de privacidad -->
+    <div>
+      <label class="flex items-start gap-2">
+        <input
+          type="checkbox"
+          name="acepta_privacidad"
+          id="acepta_privacidad"
+          required
+          class="mt-1 rounded border-border text-accent focus:ring-accent"
+        />
+        <span class="text-sm text-text-secondary">
+          Acepto la <a href="/privacidad" class="text-accent hover:underline">
+            política de privacidad
+          </a> y autorizo el uso de mis datos para fines de reclutamiento.
+          <span class="text-error">*</span>
+        </span>
+      </label>
+    </div>
+
+    <!-- Mensaje de éxito/error -->
+    <div id="mensaje" class="hidden p-4 rounded-lg"></div>
+
+    <!-- Botón de envío -->
+    <Button type="submit" variant="primary" class="w-full">
+      <span id="button-text">Enviar postulación</span>
+      <span id="button-loading" class="hidden">Enviando...</span>
+    </Button>
+  </form>
+</div>
+
+<script>
+  // File upload handling
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('cv') as HTMLInputElement;
+  const dropZoneText = document.getElementById('drop-zone-text');
+  const fileInfo = document.getElementById('file-info');
+  const fileName = document.getElementById('file-name');
+  const fileSize = document.getElementById('file-size');
+  const removeFileBtn = document.getElementById('remove-file');
+  const cvError = document.getElementById('cv-error');
+
+  const allowedTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ];
+  const maxSize = 5 * 1024 * 1024; // 5MB
+
+  function validateFile(file: File): string | null {
+    if (!allowedTypes.includes(file.type)) {
+      return 'Solo se aceptan archivos PDF o Word';
+    }
+    if (file.size > maxSize) {
+      return 'El archivo no puede superar 5MB';
+    }
+    return null;
+  }
+
+  function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function handleFile(file: File) {
+    const error = validateFile(file);
+    if (error) {
+      cvError!.textContent = error;
+      cvError!.classList.remove('hidden');
+      fileInput.value = '';
+      return;
+    }
+
+    cvError!.classList.add('hidden');
+    fileName!.textContent = file.name;
+    fileSize!.textContent = formatFileSize(file.size);
+    dropZoneText!.classList.add('hidden');
+    fileInfo!.classList.remove('hidden');
+  }
+
+  dropZone?.addEventListener('click', () => fileInput?.click());
+
+  fileInput?.addEventListener('change', (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (file) handleFile(file);
+  });
+
+  removeFileBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    fileInput.value = '';
+    dropZoneText!.classList.remove('hidden');
+    fileInfo!.classList.add('hidden');
+    cvError!.classList.add('hidden');
+  });
+
+  // Drag and drop
+  dropZone?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('border-accent', 'bg-blue-50');
+  });
+
+  dropZone?.addEventListener('dragleave', () => {
+    dropZone.classList.remove('border-accent', 'bg-blue-50');
+  });
+
+  dropZone?.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('border-accent', 'bg-blue-50');
+
+    const file = e.dataTransfer?.files[0];
+    if (file) {
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      fileInput.files = dataTransfer.files;
+      handleFile(file);
+    }
+  });
+
+  // Form submission
+  const form = document.getElementById('form-postulacion') as HTMLFormElement;
+  const mensaje = document.getElementById('mensaje');
+  const buttonText = document.getElementById('button-text');
+  const buttonLoading = document.getElementById('button-loading');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+
+    // Validar que hay un archivo
+    if (!fileInput.files || fileInput.files.length === 0) {
+      cvError!.textContent = 'Debes subir tu CV';
+      cvError!.classList.remove('hidden');
+      return;
+    }
+
+    // Mostrar loading
+    buttonText!.classList.add('hidden');
+    buttonLoading!.classList.remove('hidden');
+    form.querySelector('button[type="submit"]')?.setAttribute('disabled', 'true');
+
+    try {
+      const response = await fetch('/api/postular', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        mensaje!.textContent = '✓ Postulación enviada correctamente. ¡Mucha suerte!';
+        mensaje!.className = 'p-4 rounded-lg bg-success text-white';
+        mensaje!.classList.remove('hidden');
+        form.reset();
+        dropZoneText!.classList.remove('hidden');
+        fileInfo!.classList.add('hidden');
+      } else {
+        throw new Error(result.error || 'Error al enviar la postulación');
+      }
+    } catch (error) {
+      mensaje!.textContent = '✗ ' + (error as Error).message;
+      mensaje!.className = 'p-4 rounded-lg bg-error text-white';
+      mensaje!.classList.remove('hidden');
+    } finally {
+      buttonText!.classList.remove('hidden');
+      buttonLoading!.classList.add('hidden');
+      form.querySelector('button[type="submit"]')?.removeAttribute('disabled');
+    }
+  });
+</script>

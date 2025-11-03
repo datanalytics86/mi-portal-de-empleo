@@ -1,0 +1,123 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Términos y Condiciones">
+  <div class="container mx-auto px-4 sm:px-8 py-12 max-w-4xl">
+    <h1 class="text-4xl font-bold text-text-primary mb-8">Términos y Condiciones</h1>
+
+    <div class="prose prose-lg max-w-none text-text-secondary space-y-6">
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">1. Aceptación de Términos</h2>
+        <p>
+          Al utilizar Portal de Empleo Chile, aceptas estar sujeto a estos términos y condiciones.
+          Si no estás de acuerdo con alguna parte de estos términos, no debes usar nuestro servicio.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">2. Uso del Servicio</h2>
+        <p>
+          Portal de Empleo Chile es una plataforma que conecta candidatos con empleadores en Chile.
+          El servicio es gratuito para ambas partes.
+        </p>
+        <h3 class="text-lg font-semibold text-text-primary mt-4 mb-2">Para Candidatos:</h3>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>No es necesario registrarse para postular a ofertas</li>
+          <li>Solo se requiere subir un CV en formato PDF o Word (máx. 5MB)</li>
+          <li>Puedes postular a un máximo de 3 ofertas por hora</li>
+        </ul>
+        <h3 class="text-lg font-semibold text-text-primary mt-4 mb-2">Para Empleadores:</h3>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>Deben registrarse con un email y contraseña</li>
+          <li>Pueden publicar ofertas laborales de manera gratuita</li>
+          <li>Son responsables del contenido de sus ofertas</li>
+          <li>Tienen acceso exclusivo a las postulaciones de sus ofertas</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">3. Contenido del Usuario</h2>
+        <p>
+          Los empleadores son responsables del contenido que publican. Nos reservamos el derecho
+          de eliminar cualquier oferta que:
+        </p>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>Contenga información falsa o engañosa</li>
+          <li>Viole leyes laborales chilenas</li>
+          <li>Sea discriminatoria o inapropiada</li>
+          <li>Incluya esquemas piramidales o fraudes</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">4. Privacidad y Datos Personales</h2>
+        <p>
+          El manejo de datos personales se rige por nuestra
+          <a href="/privacidad" class="text-accent hover:underline">Política de Privacidad</a>.
+          Al usar este servicio, aceptas el procesamiento de tus datos según lo descrito en dicha política.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">5. Limitación de Responsabilidad</h2>
+        <p>
+          Portal de Empleo Chile actúa como intermediario entre candidatos y empleadores. No somos
+          responsables de:
+        </p>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>La veracidad de las ofertas publicadas</li>
+          <li>El proceso de selección o contratación</li>
+          <li>Las relaciones laborales establecidas a través de la plataforma</li>
+          <li>Cualquier daño directo o indirecto derivado del uso del servicio</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">6. Prohibiciones</h2>
+        <p>
+          Está prohibido:
+        </p>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>Usar la plataforma para actividades ilegales</li>
+          <li>Intentar acceder a cuentas de otros usuarios</li>
+          <li>Realizar scraping o extracción masiva de datos</li>
+          <li>Enviar spam o contenido malicioso</li>
+          <li>Evadir las limitaciones de tasa de postulaciones</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">7. Modificaciones</h2>
+        <p>
+          Nos reservamos el derecho de modificar estos términos en cualquier momento.
+          Los cambios entrarán en vigor inmediatamente después de su publicación.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">8. Ley Aplicable</h2>
+        <p>
+          Estos términos se rigen por las leyes de Chile. Cualquier disputa será resuelta
+          en los tribunales competentes de Santiago, Chile.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-semibold text-text-primary mb-3">9. Contacto</h2>
+        <p>
+          Para consultas sobre estos términos, contacta a:
+          <a href="mailto:legal@portaldeempleo.cl" class="text-accent hover:underline">
+            legal@portaldeempleo.cl
+          </a>
+        </p>
+      </section>
+
+      <section class="pt-6 border-t border-border">
+        <p class="text-sm text-text-secondary">
+          Última actualización: {new Date().toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })}
+        </p>
+      </section>
+    </div>
+  </div>
+</Layout>

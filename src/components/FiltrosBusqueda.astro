@@ -1,0 +1,92 @@
+---
+import { comunasChile } from '../lib/comunas';
+import { categorias } from '../lib/validations';
+import Input from './ui/Input.astro';
+import Select from './ui/Select.astro';
+import Button from './ui/Button.astro';
+
+const { searchParams } = Astro.url;
+const currentQuery = searchParams.get('q') || '';
+const currentComuna = searchParams.get('comuna') || '';
+const currentCategoria = searchParams.get('categoria') || '';
+const currentTipoJornada = searchParams.getAll('tipo_jornada[]');
+
+const comunasOrdenadas = [...comunasChile].sort((a, b) => a.nombre.localeCompare(b.nombre));
+const tiposJornada = ['Full-time', 'Part-time', 'Freelance', 'Práctica'];
+---
+
+<div class="bg-white rounded-lg shadow-sm border border-border p-6">
+  <form method="GET" action="/" class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Búsqueda por texto -->
+      <div>
+        <label for="q" class="block text-sm font-medium text-text-primary mb-1">
+          Buscar
+        </label>
+        <Input
+          type="text"
+          name="q"
+          id="q"
+          placeholder="Título o empresa..."
+          value={currentQuery}
+        />
+      </div>
+
+      <!-- Filtro por comuna -->
+      <div>
+        <label for="comuna" class="block text-sm font-medium text-text-primary mb-1">
+          Comuna
+        </label>
+        <Select name="comuna" id="comuna" value={currentComuna}>
+          <option value="">Todas las comunas</option>
+          {comunasOrdenadas.map((comuna) => (
+            <option value={comuna.nombre}>{comuna.nombre}</option>
+          ))}
+        </Select>
+      </div>
+
+      <!-- Filtro por categoría -->
+      <div>
+        <label for="categoria" class="block text-sm font-medium text-text-primary mb-1">
+          Categoría
+        </label>
+        <Select name="categoria" id="categoria" value={currentCategoria}>
+          <option value="">Todas las categorías</option>
+          {categorias.map((cat) => (
+            <option value={cat}>{cat}</option>
+          ))}
+        </Select>
+      </div>
+
+      <!-- Filtro por tipo de jornada -->
+      <div>
+        <label class="block text-sm font-medium text-text-primary mb-1">
+          Tipo de jornada
+        </label>
+        <div class="space-y-2">
+          {tiposJornada.map((tipo) => (
+            <label class="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="tipo_jornada[]"
+                value={tipo}
+                checked={currentTipoJornada.includes(tipo)}
+                class="rounded border-border text-accent focus:ring-accent"
+              />
+              <span>{tipo}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <Button type="submit" variant="primary">
+        Buscar
+      </Button>
+      <Button type="button" variant="outline" onclick="window.location.href='/'">
+        Limpiar filtros
+      </Button>
+    </div>
+  </form>
+</div>

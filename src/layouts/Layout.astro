@@ -1,0 +1,102 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Encuentra tu próximo empleo en Chile' } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <header class="bg-white border-b border-border sticky top-0 z-50">
+      <div class="container mx-auto px-4 sm:px-8">
+        <nav class="flex items-center justify-between h-16">
+          <a href="/" class="text-xl font-semibold text-accent hover:text-accent-hover transition">
+            Portal de Empleo
+          </a>
+
+          <div class="flex items-center gap-4">
+            <a
+              href="/"
+              class={`text-sm hover:text-accent transition ${currentPath === '/' ? 'text-accent font-medium' : 'text-text-secondary'}`}
+            >
+              Ofertas
+            </a>
+            <a
+              href="/empleador/login"
+              class={`text-sm hover:text-accent transition ${currentPath.startsWith('/empleador') ? 'text-accent font-medium' : 'text-text-secondary'}`}
+            >
+              Para Empresas
+            </a>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main class="flex-1">
+      <slot />
+    </main>
+
+    <footer class="bg-surface border-t border-border mt-auto">
+      <div class="container mx-auto px-4 sm:px-8 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <h3 class="font-semibold text-text-primary mb-3">Portal de Empleo</h3>
+            <p class="text-sm text-text-secondary">
+              Conectamos talento con oportunidades en Chile
+            </p>
+          </div>
+
+          <div>
+            <h3 class="font-semibold text-text-primary mb-3">Enlaces</h3>
+            <ul class="space-y-2 text-sm">
+              <li>
+                <a href="/" class="text-text-secondary hover:text-accent transition">
+                  Ver ofertas
+                </a>
+              </li>
+              <li>
+                <a href="/empleador/registro" class="text-text-secondary hover:text-accent transition">
+                  Publicar oferta
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 class="font-semibold text-text-primary mb-3">Legal</h3>
+            <ul class="space-y-2 text-sm">
+              <li>
+                <a href="/privacidad" class="text-text-secondary hover:text-accent transition">
+                  Política de Privacidad
+                </a>
+              </li>
+              <li>
+                <a href="/terminos" class="text-text-secondary hover:text-accent transition">
+                  Términos y Condiciones
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="border-t border-border mt-8 pt-6 text-center text-sm text-text-secondary">
+          <p>&copy; {new Date().getFullYear()} Portal de Empleo Chile. Todos los derechos reservados.</p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

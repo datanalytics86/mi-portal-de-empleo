@@ -1,0 +1,235 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Button from '../../components/ui/Button.astro';
+import { supabase } from '../../lib/supabase';
+
+// Verificar autenticación
+const { cookies, redirect } = Astro;
+const accessToken = cookies.get('sb-access-token')?.value;
+
+if (!accessToken) {
+  return redirect('/empleador/login');
+}
+
+// Configurar cliente autenticado
+const supabaseAuth = supabase;
+
+// Obtener usuario actual
+const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(accessToken);
+
+if (userError || !user) {
+  return redirect('/empleador/login');
+}
+
+// Obtener ofertas del empleador
+const { data: ofertas, error: ofertasError } = await supabase
+  .from('ofertas')
+  .select(`
+    *,
+    postulaciones (count)
+  `)
+  .eq('empleador_id', user.id)
+  .order('created_at', { ascending: false });
+
+// Obtener datos del empleador
+const { data: empleador } = await supabase
+  .from('empleadores')
+  .select('nombre_empresa')
+  .eq('id', user.id)
+  .single();
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('es-CL', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
+
+const isExpired = (dateString: string) => {
+  return new Date(dateString) < new Date();
+};
+---
+
+<Layout title="Dashboard - Empleadores">
+  <div class="container mx-auto px-4 sm:px-8 py-8">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-text-primary">Mi Dashboard</h1>
+        <p class="text-text-secondary mt-1">
+          {empleador?.nombre_empresa || user.email}
+        </p>
+      </div>
+
+      <div class="flex gap-3">
+        <a href="/empleador/oferta/nueva">
+          <Button variant="primary">+ Nueva Oferta</Button>
+        </a>
+        <button id="logout-btn">
+          <Button variant="outline">Cerrar Sesión</Button>
+        </button>
+      </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-white rounded-lg shadow-sm border border-border p-6">
+        <p class="text-text-secondary text-sm">Ofertas Activas</p>
+        <p class="text-3xl font-bold text-text-primary mt-2">
+          {ofertas?.filter((o) => o.activa && !isExpired(o.expires_at)).length || 0}
+        </p>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border border-border p-6">
+        <p class="text-text-secondary text-sm">Total Ofertas</p>
+        <p class="text-3xl font-bold text-text-primary mt-2">
+          {ofertas?.length || 0}
+        </p>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border border-border p-6">
+        <p class="text-text-secondary text-sm">Total Postulaciones</p>
+        <p class="text-3xl font-bold text-text-primary mt-2">
+          {ofertas?.reduce((acc, o: any) => acc + (o.postulaciones?.[0]?.count || 0), 0) || 0}
+        </p>
+      </div>
+    </div>
+
+    <!-- Lista de ofertas -->
+    <div class="bg-white rounded-lg shadow-sm border border-border">
+      <div class="p-6 border-b border-border">
+        <h2 class="text-xl font-semibold text-text-primary">Mis Ofertas</h2>
+      </div>
+
+      {
+        ofertas && ofertas.length > 0 ? (
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-surface">
+                <tr>
+                  <th class="text-left px-6 py-3 text-sm font-medium text-text-secondary">
+                    Título
+                  </th>
+                  <th class="text-left px-6 py-3 text-sm font-medium text-text-secondary">
+                    Publicado
+                  </th>
+                  <th class="text-left px-6 py-3 text-sm font-medium text-text-secondary">
+                    Expira
+                  </th>
+                  <th class="text-left px-6 py-3 text-sm font-medium text-text-secondary">
+                    Estado
+                  </th>
+                  <th class="text-left px-6 py-3 text-sm font-medium text-text-secondary">
+                    Postulaciones
+                  </th>
+                  <th class="text-left px-6 py-3 text-sm font-medium text-text-secondary">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                {ofertas.map((oferta: any) => {
+                  const expired = isExpired(oferta.expires_at);
+                  const postulacionesCount = oferta.postulaciones?.[0]?.count || 0;
+
+                  return (
+                    <tr class="hover:bg-surface transition">
+                      <td class="px-6 py-4">
+                        <div>
+                          <p class="font-medium text-text-primary">{oferta.titulo}</p>
+                          <p class="text-sm text-text-secondary">{oferta.comuna}</p>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 text-sm text-text-secondary">
+                        {formatDate(oferta.created_at)}
+                      </td>
+                      <td class="px-6 py-4 text-sm text-text-secondary">
+                        {formatDate(oferta.expires_at)}
+                      </td>
+                      <td class="px-6 py-4">
+                        {expired ? (
+                          <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                            Expirada
+                          </span>
+                        ) : oferta.activa ? (
+                          <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                            Activa
+                          </span>
+                        ) : (
+                          <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">
+                            Inactiva
+                          </span>
+                        )}
+                      </td>
+                      <td class="px-6 py-4">
+                        <span class="font-medium text-text-primary">{postulacionesCount}</span>
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="flex gap-2">
+                          <a
+                            href={`/empleador/dashboard/oferta/${oferta.id}/postulaciones`}
+                            class="text-accent hover:text-accent-hover text-sm font-medium"
+                          >
+                            Ver postulaciones
+                          </a>
+                          <button
+                            class="text-text-secondary hover:text-text-primary text-sm toggle-oferta"
+                            data-id={oferta.id}
+                            data-activa={oferta.activa}
+                          >
+                            {oferta.activa ? 'Desactivar' : 'Activar'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div class="p-12 text-center">
+            <p class="text-text-secondary mb-4">Aún no has publicado ninguna oferta</p>
+            <a href="/empleador/oferta/nueva">
+              <Button variant="primary">Publicar mi primera oferta</Button>
+            </a>
+          </div>
+        )
+      }
+    </div>
+  </div>
+
+  <script>
+    import { supabase } from '../../lib/supabase';
+
+    // Logout
+    const logoutBtn = document.getElementById('logout-btn');
+    logoutBtn?.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = '/empleador/login';
+    });
+
+    // Toggle oferta activa/inactiva
+    const toggleButtons = document.querySelectorAll('.toggle-oferta');
+    toggleButtons.forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        const button = e.target as HTMLButtonElement;
+        const ofertaId = button.dataset.id;
+        const isActiva = button.dataset.activa === 'true';
+
+        const { error } = await supabase
+          .from('ofertas')
+          .update({ activa: !isActiva })
+          .eq('id', ofertaId);
+
+        if (!error) {
+          window.location.reload();
+        } else {
+          alert('Error al actualizar la oferta');
+        }
+      });
+    });
+  </script>
+</Layout>
