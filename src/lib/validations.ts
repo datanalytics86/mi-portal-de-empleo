@@ -14,11 +14,15 @@ import { z } from 'zod';
 /**
  * Tipos MIME permitidos para CVs
  * Basado en SPECS 8.1
+ *
+ * NOTA (2025-11): Por seguridad y compatibilidad con IA, SOLO aceptamos PDF
+ * - Más seguro (menos vectores de ataque)
+ * - Universal (todos pueden exportar a PDF)
+ * - Fácil procesamiento con Claude AI
+ * - Menor superficie de ataque
  */
 export const ALLOWED_CV_TYPES = [
   'application/pdf',
-  'application/msword', // .doc
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
 ] as const;
 
 /**
@@ -30,7 +34,7 @@ export const MAX_CV_SIZE = 5 * 1024 * 1024; // 5MB en bytes
 /**
  * Extensiones de archivo permitidas
  */
-export const ALLOWED_CV_EXTENSIONS = ['.pdf', '.doc', '.docx'] as const;
+export const ALLOWED_CV_EXTENSIONS = ['.pdf'] as const;
 
 /**
  * Rate limit: máximo de postulaciones por IP por hora
@@ -134,7 +138,7 @@ export type Oferta = z.infer<typeof ofertaSchema>;
 export function validateCVFile(file: File): string | null {
   // Validar tipo MIME
   if (!ALLOWED_CV_TYPES.includes(file.type as any)) {
-    return 'Solo se aceptan archivos PDF o Word (.doc, .docx)';
+    return 'Solo se aceptan archivos PDF. Si tienes un archivo Word, conviértelo a PDF primero.';
   }
 
   // Validar tamaño
@@ -146,7 +150,7 @@ export function validateCVFile(file: File): string | null {
   // Validar extensión (seguridad adicional)
   const extension = '.' + file.name.split('.').pop()?.toLowerCase();
   if (!ALLOWED_CV_EXTENSIONS.includes(extension as any)) {
-    return 'Extensión de archivo no permitida';
+    return 'Solo se aceptan archivos PDF';
   }
 
   return null;

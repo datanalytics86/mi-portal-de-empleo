@@ -101,6 +101,12 @@ export async function deleteCV(path: string) {
  *
  * @param file - Archivo a validar
  * @returns Objeto con validación y mensaje de error si aplica
+ *
+ * NOTA: Por seguridad y facilidad de procesamiento con IA, SOLO aceptamos PDF
+ * - Más seguro (menos vectores de ataque que DOC/DOCX)
+ * - Universal (cualquiera puede exportar a PDF)
+ * - Fácil parsing con IA (Claude, GPT)
+ * - Menor superficie de ataque (exploits en parsers de Office)
  */
 export function validateCV(file: File): { valid: boolean; error?: string } {
   const MAX_SIZE = 5 * 1024 * 1024 // 5MB
@@ -109,7 +115,7 @@ export function validateCV(file: File): { valid: boolean; error?: string } {
   if (!ALLOWED_TYPES.includes(file.type)) {
     return {
       valid: false,
-      error: 'El archivo debe ser PDF'
+      error: 'El archivo debe ser PDF. Si tienes un archivo Word (.doc/.docx), conviértelo a PDF.'
     }
   }
 
@@ -117,6 +123,15 @@ export function validateCV(file: File): { valid: boolean; error?: string } {
     return {
       valid: false,
       error: 'El archivo no debe superar los 5MB'
+    }
+  }
+
+  // Validar extensión (seguridad adicional)
+  const extension = '.' + file.name.split('.').pop()?.toLowerCase()
+  if (extension !== '.pdf') {
+    return {
+      valid: false,
+      error: 'Solo se aceptan archivos PDF'
     }
   }
 
