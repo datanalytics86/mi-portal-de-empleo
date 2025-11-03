@@ -1,0 +1,1042 @@
+---
+/**
+ * Componente FormularioPostulacionMejorado
+ *
+ * Formulario mejorado para postular a ofertas con campos adicionales
+ * que aumentan la probabilidad de contratación
+ *
+ * Incluye:
+ * - Campos obligatorios: Nombre, Email, Teléfono, CV
+ * - Campos recomendados: RUT, Ubicación
+ * - Campos opcionales expandibles: Carrera, experiencia, sueldo, etc.
+ * - Validaciones en tiempo real (RUT chileno, teléfono +56, etc.)
+ * - Drag & drop de CV
+ */
+
+interface Props {
+  ofertaId: string;
+  titulo: string;
+  empresa: string;
+}
+
+const { ofertaId, titulo, empresa } = Astro.props;
+---
+
+<div class="bg-white dark:bg-dark-card rounded-lg shadow-sm border border-border dark:border-dark-border p-6 md:p-8">
+  <div class="mb-6">
+    <h3 class="text-2xl font-semibold text-text-primary dark:text-dark-text-primary mb-2">
+      Postular a esta oferta
+    </h3>
+    <p class="text-text-secondary dark:text-dark-text-secondary">
+      Completa tu información para postular. Los campos marcados con <span class="text-error">*</span> son obligatorios.
+    </p>
+  </div>
+
+  <form id="form-postulacion" class="space-y-6">
+    <!-- =================================================================== -->
+    <!-- SECCIÓN: INFORMACIÓN PERSONAL (OBLIGATORIA) -->
+    <!-- =================================================================== -->
+
+    <div class="space-y-4">
+      <h4 class="text-lg font-semibold text-text-primary dark:text-dark-text-primary flex items-center gap-2">
+        <svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        Información Personal
+      </h4>
+
+      <!-- Grid de 2 columnas en desktop -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Nombre Completo -->
+        <div>
+          <label for="nombre" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+            Nombre completo <span class="text-error">*</span>
+          </label>
+          <input
+            type="text"
+            id="nombre"
+            name="nombre"
+            placeholder="Ej: Juan Pérez González"
+            required
+            class="w-full px-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+            maxlength="100"
+          />
+          <p id="nombre-error" class="text-sm text-error mt-1 hidden" role="alert"></p>
+        </div>
+
+        <!-- RUT -->
+        <div>
+          <label for="rut" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+            RUT <span class="text-text-secondary text-xs">(Recomendado)</span>
+          </label>
+          <input
+            type="text"
+            id="rut"
+            name="rut"
+            placeholder="Ej: 12.345.678-9"
+            class="w-full px-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+            maxlength="12"
+          />
+          <p id="rut-error" class="text-sm text-error mt-1 hidden" role="alert"></p>
+          <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">Se formateará automáticamente</p>
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label for="email" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+            Email <span class="text-error">*</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="tu@email.com"
+            required
+            class="w-full px-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+            maxlength="255"
+          />
+          <p id="email-error" class="text-sm text-error mt-1 hidden" role="alert"></p>
+        </div>
+
+        <!-- Teléfono -->
+        <div>
+          <label for="telefono" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+            Teléfono <span class="text-error">*</span>
+          </label>
+          <input
+            type="tel"
+            id="telefono"
+            name="telefono"
+            placeholder="Ej: +56 9 1234 5678"
+            required
+            class="w-full px-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+            maxlength="20"
+          />
+          <p id="telefono-error" class="text-sm text-error mt-1 hidden" role="alert"></p>
+          <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">Se formateará automáticamente</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- SECCIÓN: UBICACIÓN -->
+    <!-- =================================================================== -->
+
+    <div class="space-y-4">
+      <h4 class="text-lg font-semibold text-text-primary dark:text-dark-text-primary flex items-center gap-2">
+        <svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        Ubicación
+        <span class="text-sm text-text-secondary font-normal">(Recomendado)</span>
+      </h4>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Región -->
+        <div>
+          <label for="region" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+            Región
+          </label>
+          <select
+            id="region"
+            name="region"
+            class="w-full px-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+          >
+            <option value="">Selecciona tu región</option>
+            <option value="Arica y Parinacota">Arica y Parinacota</option>
+            <option value="Tarapacá">Tarapacá</option>
+            <option value="Antofagasta">Antofagasta</option>
+            <option value="Atacama">Atacama</option>
+            <option value="Coquimbo">Coquimbo</option>
+            <option value="Valparaíso">Valparaíso</option>
+            <option value="Metropolitana">Metropolitana de Santiago</option>
+            <option value="O'Higgins">O'Higgins</option>
+            <option value="Maule">Maule</option>
+            <option value="Ñuble">Ñuble</option>
+            <option value="Biobío">Biobío</option>
+            <option value="La Araucanía">La Araucanía</option>
+            <option value="Los Ríos">Los Ríos</option>
+            <option value="Los Lagos">Los Lagos</option>
+            <option value="Aysén">Aysén</option>
+            <option value="Magallanes">Magallanes y Antártica Chilena</option>
+          </select>
+        </div>
+
+        <!-- Comuna -->
+        <div>
+          <label for="comuna" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+            Comuna
+          </label>
+          <input
+            type="text"
+            id="comuna"
+            name="comuna"
+            placeholder="Ej: Santiago, Providencia, etc."
+            class="w-full px-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+            maxlength="100"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- SECCIÓN: CURRÍCULUM (OBLIGATORIO) -->
+    <!-- =================================================================== -->
+
+    <div class="space-y-4">
+      <h4 class="text-lg font-semibold text-text-primary dark:text-dark-text-primary flex items-center gap-2">
+        <svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Currículum Vitae
+        <span class="text-error">*</span>
+      </h4>
+
+      <!-- Zona de drop -->
+      <div
+        id="drop-zone"
+        class="relative border-2 border-dashed border-border dark:border-dark-border rounded-lg p-8 text-center hover:border-accent transition-colors cursor-pointer"
+      >
+        <input
+          type="file"
+          id="cv"
+          name="cv"
+          accept=".pdf,application/pdf"
+          aria-required="true"
+          aria-describedby="cv-error"
+          class="hidden"
+          required
+        />
+
+        <!-- Estado default -->
+        <div id="drop-zone-default">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-12 h-12 mx-auto mb-4 text-accent"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <p class="text-text-primary dark:text-dark-text-primary font-medium mb-1">
+            Arrastra tu CV aquí o haz click para seleccionar
+          </p>
+          <p class="text-sm text-text-secondary dark:text-dark-text-secondary">
+            Solo PDF (máximo 5MB)
+          </p>
+        </div>
+
+        <!-- Preview del archivo -->
+        <div id="drop-zone-preview" class="hidden">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-12 h-12 mx-auto mb-4 text-success"
+          >
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          <p id="file-name" class="text-text-primary dark:text-dark-text-primary font-medium mb-1"></p>
+          <p id="file-size" class="text-sm text-text-secondary dark:text-dark-text-secondary mb-2"></p>
+          <button
+            type="button"
+            id="remove-file"
+            class="text-sm text-error hover:underline"
+          >
+            Eliminar archivo
+          </button>
+        </div>
+      </div>
+
+      <p id="cv-error" class="text-sm text-error mt-1 hidden"></p>
+      <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-2">
+        <strong>Importante:</strong> Solo se aceptan archivos PDF. Si tienes tu CV en Word, conviértelo a PDF primero.
+      </p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- SECCIÓN: CAMPOS ADICIONALES (EXPANDIBLE) -->
+    <!-- =================================================================== -->
+
+    <div class="border-t border-border dark:border-dark-border pt-6">
+      <button
+        type="button"
+        id="toggle-campos-adicionales"
+        class="w-full flex items-center justify-between px-4 py-3 bg-accent/5 hover:bg-accent/10 text-accent rounded-lg transition-colors group"
+      >
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span class="font-semibold">Información Adicional (Opcional)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm">Aumenta tus posibilidades de contratación</span>
+          <svg id="chevron-icon" class="w-5 h-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </button>
+
+      <!-- Campos adicionales (ocultos por defecto) -->
+      <div id="campos-adicionales" class="hidden mt-6 space-y-4 animate-fade-in">
+        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+          <div class="flex gap-3">
+            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+            </svg>
+            <div class="text-sm text-blue-800 dark:text-blue-200">
+              <p class="font-semibold mb-1">💡 Consejo profesional</p>
+              <p>Completar estos campos puede aumentar significativamente tus posibilidades de ser contactado. Los empleadores valoran candidatos que comparten más información.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Carrera/Profesión -->
+          <div>
+            <label for="carrera" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+              Carrera o Profesión
+            </label>
+            <input
+              type="text"
+              id="carrera"
+              name="carrera"
+              placeholder="Ej: Ingeniería Comercial, Diseño Gráfico"
+              class="w-full px-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+              maxlength="255"
+            />
+          </div>
+
+          <!-- Nivel de Estudios -->
+          <div>
+            <label for="nivel_estudios" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+              Nivel de Estudios
+            </label>
+            <select
+              id="nivel_estudios"
+              name="nivel_estudios"
+              class="w-full px-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+            >
+              <option value="">Selecciona un nivel</option>
+              <option value="Educación Básica">Educación Básica</option>
+              <option value="Educación Media">Educación Media</option>
+              <option value="Técnico Nivel Medio">Técnico Nivel Medio</option>
+              <option value="Técnico Nivel Superior">Técnico Nivel Superior</option>
+              <option value="Universitaria Incompleta">Universitaria Incompleta</option>
+              <option value="Universitaria Completa">Universitaria Completa</option>
+              <option value="Postgrado/Magíster">Postgrado/Magíster</option>
+              <option value="Doctorado">Doctorado</option>
+            </select>
+          </div>
+
+          <!-- Años de Experiencia -->
+          <div>
+            <label for="anos_experiencia" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+              Años de Experiencia
+            </label>
+            <input
+              type="number"
+              id="anos_experiencia"
+              name="anos_experiencia"
+              placeholder="Ej: 5"
+              min="0"
+              max="50"
+              class="w-full px-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+            />
+            <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">Experiencia laboral total</p>
+          </div>
+
+          <!-- Rango Sueldo Esperado -->
+          <div>
+            <label for="rango_sueldo" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+              Rango de Sueldo Esperado
+            </label>
+            <select
+              id="rango_sueldo"
+              name="rango_sueldo"
+              class="w-full px-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+            >
+              <option value="">Selecciona un rango</option>
+              <option value="Menos de $500.000">Menos de $500.000</option>
+              <option value="$500.000 - $800.000">$500.000 - $800.000</option>
+              <option value="$800.000 - $1.200.000">$800.000 - $1.200.000</option>
+              <option value="$1.200.000 - $1.800.000">$1.200.000 - $1.800.000</option>
+              <option value="$1.800.000 - $2.500.000">$1.800.000 - $2.500.000</option>
+              <option value="$2.500.000 - $3.500.000">$2.500.000 - $3.500.000</option>
+              <option value="$3.500.000 - $5.000.000">$3.500.000 - $5.000.000</option>
+              <option value="Más de $5.000.000">Más de $5.000.000</option>
+              <option value="A convenir">A convenir</option>
+            </select>
+          </div>
+
+          <!-- Disponibilidad -->
+          <div class="md:col-span-2">
+            <label for="disponibilidad" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+              Disponibilidad para Incorporación
+            </label>
+            <select
+              id="disponibilidad"
+              name="disponibilidad"
+              class="w-full px-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+            >
+              <option value="">Selecciona disponibilidad</option>
+              <option value="Inmediata">Inmediata</option>
+              <option value="1 semana">1 semana</option>
+              <option value="2 semanas">2 semanas</option>
+              <option value="1 mes">1 mes</option>
+              <option value="2 meses">2 meses</option>
+              <option value="3 meses o más">3 meses o más</option>
+            </select>
+          </div>
+
+          <!-- LinkedIn -->
+          <div>
+            <label for="linkedin" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+              LinkedIn
+            </label>
+            <input
+              type="url"
+              id="linkedin"
+              name="linkedin"
+              placeholder="https://linkedin.com/in/tu-perfil"
+              class="w-full px-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+              maxlength="500"
+            />
+            <p id="linkedin-error" class="text-sm text-error mt-1 hidden" role="alert"></p>
+          </div>
+
+          <!-- Portfolio -->
+          <div>
+            <label for="portfolio" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+              Portfolio / Sitio Web
+            </label>
+            <input
+              type="url"
+              id="portfolio"
+              name="portfolio"
+              placeholder="https://tu-portfolio.com"
+              class="w-full px-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+              maxlength="500"
+            />
+          </div>
+
+          <!-- GitHub -->
+          <div class="md:col-span-2">
+            <label for="github" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+              GitHub / Repositorio de Código
+            </label>
+            <input
+              type="url"
+              id="github"
+              name="github"
+              placeholder="https://github.com/tu-usuario"
+              class="w-full px-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+              maxlength="500"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- MENSAJE OPCIONAL -->
+    <!-- =================================================================== -->
+
+    <div>
+      <label for="mensaje" class="block text-sm font-medium text-text-primary dark:text-dark-text-primary mb-2">
+        Mensaje al empleador <span class="text-text-secondary text-sm">(Opcional)</span>
+      </label>
+      <textarea
+        id="mensaje"
+        name="mensaje"
+        rows="4"
+        placeholder="Cuéntale al empleador por qué eres el candidato ideal para esta posición..."
+        class="w-full px-4 py-3 border border-border dark:border-dark-border bg-white dark:bg-dark-surface text-text-primary dark:text-dark-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition resize-none"
+        maxlength="1000"
+      ></textarea>
+      <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-1">
+        <span id="mensaje-contador">0</span>/1000 caracteres
+      </p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- CHECKBOX PRIVACIDAD -->
+    <!-- =================================================================== -->
+
+    <div class="flex items-start gap-3">
+      <input
+        type="checkbox"
+        id="privacidad"
+        name="privacidad"
+        required
+        class="mt-1 w-4 h-4 text-accent border-border dark:border-dark-border rounded focus:ring-2 focus:ring-accent"
+      />
+      <label for="privacidad" class="text-sm text-text-secondary dark:text-dark-text-secondary">
+        Acepto la <a href="/privacidad" target="_blank" class="text-accent hover:underline">política de privacidad</a>
+        y autorizo el uso de mis datos para procesos de selección.
+        <span class="text-error">*</span>
+      </label>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- INDICADOR DE COMPLETITUD -->
+    <!-- =================================================================== -->
+
+    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm font-medium text-blue-900 dark:text-blue-100">Completitud del perfil</span>
+        <span id="completitud-porcentaje" class="text-sm font-bold text-blue-600 dark:text-blue-400">0%</span>
+      </div>
+      <div class="w-full bg-blue-200 dark:bg-blue-900 rounded-full h-2.5">
+        <div id="completitud-barra" class="bg-blue-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+      </div>
+      <p class="text-xs text-blue-700 dark:text-blue-300 mt-2">
+        Completa más campos para aumentar tus posibilidades de ser contactado
+      </p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- BOTONES -->
+    <!-- =================================================================== -->
+
+    <div class="flex flex-col sm:flex-row gap-4">
+      <button
+        type="submit"
+        id="submit-button"
+        class="flex-1 bg-accent hover:bg-accent-dark text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      >
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Enviar Postulación</span>
+      </button>
+
+      <button
+        type="button"
+        id="cancel-button"
+        class="sm:w-auto px-6 py-3 border border-border dark:border-dark-border text-text-primary dark:text-dark-text-primary rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+      >
+        Cancelar
+      </button>
+    </div>
+
+    <!-- Loading state -->
+    <div id="loading-state" class="hidden text-center py-4">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+      <p class="text-text-secondary dark:text-dark-text-secondary mt-2">Enviando postulación...</p>
+    </div>
+
+    <!-- Success state -->
+    <div id="success-state" class="hidden bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 text-center">
+      <svg class="w-16 h-16 text-green-600 dark:text-green-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <h3 class="text-xl font-semibold text-green-900 dark:text-green-100 mb-2">¡Postulación enviada!</h3>
+      <p class="text-green-700 dark:text-green-300">Tu postulación ha sido recibida exitosamente. El empleador la revisará pronto.</p>
+    </div>
+
+    <!-- Error state -->
+    <div id="error-state" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+      <div class="flex gap-3">
+        <svg class="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        <div>
+          <h3 class="text-lg font-semibold text-red-900 dark:text-red-100 mb-1">Error al enviar postulación</h3>
+          <p id="error-message" class="text-red-700 dark:text-red-300"></p>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script define:vars={{ ofertaId, titulo, empresa }}>
+  // Importar utilidades de validación
+  // (En producción, usar imports normales)
+  
+  // ==========================================================================
+  // ESTADO DEL FORMULARIO
+  // ==========================================================================
+  
+  let selectedFile = null;
+  let formData = {};
+  
+  // ==========================================================================
+  // ELEMENTOS DEL DOM
+  // ==========================================================================
+  
+  const form = document.getElementById('form-postulacion');
+  const dropZone = document.getElementById('drop-zone');
+  const dropZoneDefault = document.getElementById('drop-zone-default');
+  const dropZonePreview = document.getElementById('drop-zone-preview');
+  const cvInput = document.getElementById('cv');
+  const removeFileBtn = document.getElementById('remove-file');
+  const toggleCamposBtn = document.getElementById('toggle-campos-adicionales');
+  const camposAdicionalesDiv = document.getElementById('campos-adicionales');
+  const chevronIcon = document.getElementById('chevron-icon');
+  
+  // Inputs
+  const nombreInput = document.getElementById('nombre');
+  const rutInput = document.getElementById('rut');
+  const emailInput = document.getElementById('email');
+  const telefonoInput = document.getElementById('telefono');
+  const linkedinInput = document.getElementById('linkedin');
+  const mensajeTextarea = document.getElementById('mensaje');
+  
+  // Estados
+  const loadingState = document.getElementById('loading-state');
+  const successState = document.getElementById('success-state');
+  const errorState = document.getElementById('error-state');
+  const submitButton = document.getElementById('submit-button');
+  
+  // Completitud
+  const completitudBarra = document.getElementById('completitud-barra');
+  const completitudPorcentaje = document.getElementById('completitud-porcentaje');
+  
+  // ==========================================================================
+  // UTILIDADES DE VALIDACIÓN RUT
+  // ==========================================================================
+  
+  function cleanRut(rut) {
+    return rut.replace(/[.\-]/g, '').toUpperCase();
+  }
+  
+  function formatRut(rut) {
+    const cleaned = cleanRut(rut);
+    if (cleaned.length < 2) return cleaned;
+    
+    const body = cleaned.slice(0, -1);
+    const dv = cleaned.slice(-1);
+    const formattedBody = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `${formattedBody}-${dv}`;
+  }
+  
+  function calculateDV(rut) {
+    const cleanedRut = rut.replace(/[^0-9]/g, '');
+    let suma = 0;
+    let multiplicador = 2;
+    
+    for (let i = cleanedRut.length - 1; i >= 0; i--) {
+      suma += parseInt(cleanedRut[i]) * multiplicador;
+      multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
+    }
+    
+    const resto = suma % 11;
+    const dv = 11 - resto;
+    
+    if (dv === 11) return '0';
+    if (dv === 10) return 'K';
+    return dv.toString();
+  }
+  
+  function validateRut(rut) {
+    if (!rut || rut.trim() === '') return false;
+    
+    const cleaned = cleanRut(rut);
+    
+    if (cleaned.length < 8 || cleaned.length > 9) return false;
+    if (!/^[0-9]+[0-9K]$/.test(cleaned)) return false;
+    
+    const body = cleaned.slice(0, -1);
+    const dv = cleaned.slice(-1);
+    const calculatedDV = calculateDV(body);
+    
+    return dv === calculatedDV;
+  }
+  
+  // ==========================================================================
+  // UTILIDADES DE VALIDACIÓN TELÉFONO
+  // ==========================================================================
+  
+  function cleanPhone(phone) {
+    return phone.replace(/[\s\-()]/g, '');
+  }
+  
+  function formatPhone(phone) {
+    const cleaned = cleanPhone(phone);
+    const withoutPrefix = cleaned.replace(/^\+?56/, '');
+    
+    if (withoutPrefix.length === 9 && withoutPrefix.startsWith('9')) {
+      return `+56 9 ${withoutPrefix.substring(1, 5)} ${withoutPrefix.substring(5)}`;
+    }
+    
+    return `+56 ${withoutPrefix}`;
+  }
+  
+  function validatePhone(phone) {
+    if (!phone || phone.trim() === '') return false;
+    
+    const cleaned = cleanPhone(phone);
+    const withoutPrefix = cleaned.replace(/^\+?56/, '');
+    
+    if (!/^\d+$/.test(withoutPrefix)) return false;
+    
+    if (withoutPrefix.length === 9 && withoutPrefix.startsWith('9')) return true;
+    if (withoutPrefix.length >= 7 && withoutPrefix.length <= 9) return true;
+    
+    return false;
+  }
+  
+  // ==========================================================================
+  // EVENT LISTENERS - TOGGLE CAMPOS ADICIONALES
+  // ==========================================================================
+  
+  toggleCamposBtn?.addEventListener('click', () => {
+    camposAdicionalesDiv.classList.toggle('hidden');
+    chevronIcon.classList.toggle('rotate-180');
+    
+    if (!camposAdicionalesDiv.classList.contains('hidden')) {
+      setTimeout(() => {
+        camposAdicionalesDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+  });
+  
+  // ==========================================================================
+  // EVENT LISTENERS - RUT FORMATTING
+  // ==========================================================================
+  
+  rutInput?.addEventListener('input', (e) => {
+    const input = e.target;
+    const cursorPos = input.selectionStart;
+    const oldValue = input.value;
+    const cleaned = cleanRut(input.value);
+    
+    if (cleaned.length > 0) {
+      input.value = formatRut(input.value);
+      
+      // Mantener posición del cursor
+      if (input.value.length !== oldValue.length) {
+        const diff = input.value.length - oldValue.length;
+        input.setSelectionRange(cursorPos + diff, cursorPos + diff);
+      }
+    }
+    
+    // Validar
+    const errorEl = document.getElementById('rut-error');
+    if (input.value && !validateRut(input.value)) {
+      errorEl.textContent = 'RUT inválido';
+      errorEl.classList.remove('hidden');
+      input.classList.add('border-error');
+    } else {
+      errorEl.classList.add('hidden');
+      input.classList.remove('border-error');
+    }
+    
+    calcularCompletitud();
+  });
+  
+  // ==========================================================================
+  // EVENT LISTENERS - TELÉFONO FORMATTING
+  // ==========================================================================
+  
+  telefonoInput?.addEventListener('blur', (e) => {
+    if (e.target.value) {
+      e.target.value = formatPhone(e.target.value);
+    }
+    
+    const errorEl = document.getElementById('telefono-error');
+    if (e.target.value && !validatePhone(e.target.value)) {
+      errorEl.textContent = 'Teléfono inválido';
+      errorEl.classList.remove('hidden');
+      e.target.classList.add('border-error');
+    } else {
+      errorEl.classList.add('hidden');
+      e.target.classList.remove('border-error');
+    }
+    
+    calcularCompletitud();
+  });
+  
+  // ==========================================================================
+  // EVENT LISTENERS - VALIDACIÓN EMAIL
+  // ==========================================================================
+  
+  emailInput?.addEventListener('blur', (e) => {
+    const errorEl = document.getElementById('email-error');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (e.target.value && !emailRegex.test(e.target.value)) {
+      errorEl.textContent = 'Email inválido';
+      errorEl.classList.remove('hidden');
+      e.target.classList.add('border-error');
+    } else {
+      errorEl.classList.add('hidden');
+      e.target.classList.remove('border-error');
+    }
+    
+    calcularCompletitud();
+  });
+  
+  // ==========================================================================
+  // EVENT LISTENERS - VALIDACIÓN LINKEDIN
+  // ==========================================================================
+  
+  linkedinInput?.addEventListener('blur', (e) => {
+    const errorEl = document.getElementById('linkedin-error');
+    
+    if (e.target.value && !e.target.value.includes('linkedin.com')) {
+      errorEl.textContent = 'Debe ser una URL de LinkedIn válida';
+      errorEl.classList.remove('hidden');
+      e.target.classList.add('border-error');
+    } else {
+      errorEl.classList.add('hidden');
+      e.target.classList.remove('border-error');
+    }
+    
+    calcularCompletitud();
+  });
+  
+  // ==========================================================================
+  // EVENT LISTENERS - CONTADOR DE MENSAJE
+  // ==========================================================================
+  
+  mensajeTextarea?.addEventListener('input', (e) => {
+    const contador = document.getElementById('mensaje-contador');
+    contador.textContent = e.target.value.length;
+    calcularCompletitud();
+  });
+  
+  // ==========================================================================
+  // DRAG & DROP CV
+  // ==========================================================================
+  
+  dropZone?.addEventListener('click', () => cvInput?.click());
+  
+  dropZone?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('border-accent', 'bg-accent/5');
+  });
+  
+  dropZone?.addEventListener('dragleave', () => {
+    dropZone.classList.remove('border-accent', 'bg-accent/5');
+  });
+  
+  dropZone?.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('border-accent', 'bg-accent/5');
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  });
+  
+  cvInput?.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+      handleFileSelect(e.target.files[0]);
+    }
+  });
+  
+  removeFileBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    selectedFile = null;
+    cvInput.value = '';
+    dropZonePreview.classList.add('hidden');
+    dropZoneDefault.classList.remove('hidden');
+    document.getElementById('cv-error')?.classList.add('hidden');
+    calcularCompletitud();
+  });
+  
+  function handleFileSelect(file) {
+    // Validar que sea PDF
+    if (file.type !== 'application/pdf') {
+      showError('cv-error', 'Solo se aceptan archivos PDF');
+      return;
+    }
+    
+    // Validar tamaño (5MB)
+    const MAX_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      showError('cv-error', 'El archivo no debe superar 5MB');
+      return;
+    }
+    
+    selectedFile = file;
+    
+    // Mostrar preview
+    document.getElementById('file-name').textContent = file.name;
+    document.getElementById('file-size').textContent = formatFileSize(file.size);
+    dropZoneDefault.classList.add('hidden');
+    dropZonePreview.classList.remove('hidden');
+    document.getElementById('cv-error')?.classList.add('hidden');
+    
+    calcularCompletitud();
+  }
+  
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  }
+  
+  function showError(elementId, message) {
+    const errorEl = document.getElementById(elementId);
+    if (errorEl) {
+      errorEl.textContent = message;
+      errorEl.classList.remove('hidden');
+    }
+  }
+  
+  // ==========================================================================
+  // CALCULAR COMPLETITUD DEL PERFIL
+  // ==========================================================================
+  
+  function calcularCompletitud() {
+    let score = 0;
+    const maxScore = 100;
+    
+    // Campos obligatorios (40 puntos)
+    if (nombreInput?.value) score += 10;
+    if (emailInput?.value && !emailInput.classList.contains('border-error')) score += 10;
+    if (telefonoInput?.value && !telefonoInput.classList.contains('border-error')) score += 10;
+    if (selectedFile) score += 10;
+    
+    // Campos recomendados (20 puntos)
+    if (rutInput?.value && !rutInput.classList.contains('border-error')) score += 10;
+    if (document.getElementById('region')?.value) score += 5;
+    if (document.getElementById('comuna')?.value) score += 5;
+    
+    // Campos adicionales (40 puntos)
+    if (document.getElementById('carrera')?.value) score += 5;
+    if (document.getElementById('nivel_estudios')?.value) score += 5;
+    if (document.getElementById('anos_experiencia')?.value) score += 5;
+    if (document.getElementById('rango_sueldo')?.value) score += 5;
+    if (document.getElementById('disponibilidad')?.value) score += 5;
+    if (linkedinInput?.value && !linkedinInput.classList.contains('border-error')) score += 5;
+    if (document.getElementById('portfolio')?.value) score += 5;
+    if (document.getElementById('github')?.value) score += 5;
+    
+    // Actualizar barra
+    completitudBarra.style.width = `${score}%`;
+    completitudPorcentaje.textContent = `${score}%`;
+    
+    // Cambiar color según score
+    if (score >= 80) {
+      completitudBarra.className = 'bg-green-600 h-2.5 rounded-full transition-all duration-500';
+    } else if (score >= 50) {
+      completitudBarra.className = 'bg-yellow-500 h-2.5 rounded-full transition-all duration-500';
+    } else {
+      completitudBarra.className = 'bg-blue-600 h-2.5 rounded-full transition-all duration-500';
+    }
+  }
+  
+  // ==========================================================================
+  // ENVÍO DEL FORMULARIO
+  // ==========================================================================
+  
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Validar campos obligatorios
+    if (!selectedFile) {
+      showError('cv-error', 'Debes subir tu CV en formato PDF');
+      return;
+    }
+    
+    if (!nombreInput?.value || !emailInput?.value || !telefonoInput?.value) {
+      alert('Por favor completa todos los campos obligatorios');
+      return;
+    }
+    
+    // Preparar FormData
+    const formDataToSend = new FormData();
+    formDataToSend.append('oferta_id', ofertaId);
+    formDataToSend.append('nombre', nombreInput.value);
+    formDataToSend.append('email', emailInput.value);
+    formDataToSend.append('telefono', telefonoInput.value);
+    formDataToSend.append('cv', selectedFile);
+    
+    // Campos opcionales
+    if (rutInput?.value) formDataToSend.append('rut', rutInput.value);
+    if (document.getElementById('region')?.value) formDataToSend.append('region', document.getElementById('region').value);
+    if (document.getElementById('comuna')?.value) formDataToSend.append('comuna', document.getElementById('comuna').value);
+    if (document.getElementById('carrera')?.value) formDataToSend.append('carrera', document.getElementById('carrera').value);
+    if (document.getElementById('nivel_estudios')?.value) formDataToSend.append('nivel_estudios', document.getElementById('nivel_estudios').value);
+    if (document.getElementById('anos_experiencia')?.value) formDataToSend.append('anos_experiencia', document.getElementById('anos_experiencia').value);
+    if (document.getElementById('rango_sueldo')?.value) formDataToSend.append('rango_sueldo_esperado', document.getElementById('rango_sueldo').value);
+    if (document.getElementById('disponibilidad')?.value) formDataToSend.append('disponibilidad', document.getElementById('disponibilidad').value);
+    if (linkedinInput?.value) formDataToSend.append('linkedin_url', linkedinInput.value);
+    if (document.getElementById('portfolio')?.value) formDataToSend.append('portfolio_url', document.getElementById('portfolio').value);
+    if (document.getElementById('github')?.value) formDataToSend.append('github_url', document.getElementById('github').value);
+    if (mensajeTextarea?.value) formDataToSend.append('mensaje', mensajeTextarea.value);
+    
+    // Mostrar loading
+    form.classList.add('hidden');
+    loadingState.classList.remove('hidden');
+    
+    try {
+      const response = await fetch('/api/postular', {
+        method: 'POST',
+        body: formDataToSend
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        loadingState.classList.add('hidden');
+        successState.classList.remove('hidden');
+        
+        // Redirigir después de 3 segundos
+        setTimeout(() => {
+          window.location.href = `/oferta/${ofertaId}`;
+        }, 3000);
+      } else {
+        throw new Error(result.error || 'Error al enviar postulación');
+      }
+    } catch (error) {
+      loadingState.classList.add('hidden');
+      errorState.classList.remove('hidden');
+      document.getElementById('error-message').textContent = error.message;
+      
+      // Mostrar formulario de nuevo después de 5 segundos
+      setTimeout(() => {
+        errorState.classList.add('hidden');
+        form.classList.remove('hidden');
+      }, 5000);
+    }
+  });
+  
+  // Calcular completitud inicial
+  calcularCompletitud();
+  
+  // Event listeners para todos los campos para recalcular completitud
+  document.querySelectorAll('input, select, textarea').forEach(field => {
+    field.addEventListener('input', calcularCompletitud);
+    field.addEventListener('change', calcularCompletitud);
+  });
+</script>
+
+<style>
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>

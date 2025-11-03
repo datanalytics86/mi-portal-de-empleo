@@ -104,6 +104,19 @@ export interface Database {
           cv_nombre: string
           cv_size: number
           created_at: string
+          // Nuevos campos añadidos
+          rut: string | null
+          telefono_formateado: string | null
+          region: string | null
+          comuna: string | null
+          carrera: string | null
+          nivel_estudios: string | null
+          anos_experiencia: number | null
+          rango_sueldo_esperado: string | null
+          disponibilidad: string | null
+          linkedin_url: string | null
+          portfolio_url: string | null
+          github_url: string | null
         }
         Insert: {
           id?: string
@@ -116,6 +129,19 @@ export interface Database {
           cv_nombre: string
           cv_size: number
           created_at?: string
+          // Nuevos campos opcionales
+          rut?: string | null
+          telefono_formateado?: string | null
+          region?: string | null
+          comuna?: string | null
+          carrera?: string | null
+          nivel_estudios?: string | null
+          anos_experiencia?: number | null
+          rango_sueldo_esperado?: string | null
+          disponibilidad?: string | null
+          linkedin_url?: string | null
+          portfolio_url?: string | null
+          github_url?: string | null
         }
         Update: {
           id?: string
@@ -128,6 +154,19 @@ export interface Database {
           cv_nombre?: string
           cv_size?: number
           created_at?: string
+          // Nuevos campos opcionales
+          rut?: string | null
+          telefono_formateado?: string | null
+          region?: string | null
+          comuna?: string | null
+          carrera?: string | null
+          nivel_estudios?: string | null
+          anos_experiencia?: number | null
+          rango_sueldo_esperado?: string | null
+          disponibilidad?: string | null
+          linkedin_url?: string | null
+          portfolio_url?: string | null
+          github_url?: string | null
         }
       }
     }
