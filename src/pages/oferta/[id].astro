@@ -9,6 +9,7 @@
 import Layout from '../../layouts/Layout.astro';
 import MapaOfertas from '../../components/MapaOfertas.astro';
 import FormularioPostulacion from '../../components/FormularioPostulacion.astro';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { findOfertaById } from '../../data/mock-ofertas';
 import { findComuna } from '../../lib/comunas';
 
@@ -20,8 +21,49 @@ if (!id) {
   return Astro.redirect('/404');
 }
 
-// Buscar oferta en mock data
-const oferta = findOfertaById(id);
+// Buscar oferta en Supabase o mock data
+let oferta: any = null;
+
+if (isSupabaseConfigured() && supabase) {
+  console.log('[Oferta Detail] Cargando desde Supabase:', id);
+
+  const { data, error } = await supabase
+    .from('ofertas')
+    .select('*')
+    .eq('id', id)
+    .eq('activa', true)
+    .single();
+
+  if (error) {
+    console.error('[Oferta Detail] Error cargando oferta:', error);
+    // Fallback a mock en caso de error
+    oferta = findOfertaById(id);
+  } else if (data) {
+    // Transformar datos de Supabase al formato esperado
+    const supabaseData = data as any;
+    oferta = {
+      id: supabaseData.id,
+      titulo: supabaseData.titulo,
+      descripcion: supabaseData.descripcion,
+      empresa: supabaseData.empresa,
+      tipo_jornada: supabaseData.tipo,
+      categoria: supabaseData.categoria,
+      comuna: typeof supabaseData.ubicacion === 'object' && supabaseData.ubicacion !== null
+        ? supabaseData.ubicacion.comuna
+        : '',
+      region: typeof supabaseData.ubicacion === 'object' && supabaseData.ubicacion !== null
+        ? supabaseData.ubicacion.region
+        : '',
+      activa: supabaseData.activa,
+      created_at: supabaseData.created_at,
+      expires_at: null, // No hay expires_at en Supabase schema
+      postulaciones_count: 0 // TODO: Calcular
+    };
+  }
+} else {
+  console.log('[Oferta Detail] Cargando desde mock data:', id);
+  oferta = findOfertaById(id);
+}
 
 // Si no existe o está inactiva, redirigir a 404
 if (!oferta || !oferta.activa) {

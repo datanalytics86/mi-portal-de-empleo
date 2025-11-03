@@ -1,4 +1,14 @@
+/**
+ * API Route: Crear Oferta de Empleo
+ *
+ * Crea nuevas ofertas usando Supabase o sistema mock (fallback)
+ * Si Supabase está configurado: Inserta en tabla ofertas
+ * Si NO está configurado: Usa modo mock (solo para desarrollo)
+ */
+
 import type { APIRoute } from 'astro';
+import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
+import { getUserId } from '../../../lib/auth';
 import { getMockSession } from '../../../lib/mock-auth';
 import { findComuna } from '../../../lib/comunas';
 import { mockOfertas } from '../../../data/mock-ofertas';
@@ -8,15 +18,37 @@ export const prerender = false;
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
-    // Verificar autenticación
-    const empleador = getMockSession(cookies);
+    console.log(`[API /ofertas/crear ${isSupabaseConfigured() ? 'SUPABASE' : 'MOCK'}] Creando oferta`);
 
-    if (!empleador) {
-      return new Response(
-        JSON.stringify({ error: 'No autorizado' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+    // ─────────────────────────────────────────────────────────────────────
+    // 1. VERIFICAR AUTENTICACIÓN
+    // ─────────────────────────────────────────────────────────────────────
+
+    let empleadorId: string | null = null;
+    let empleador: any = null;
+
+    if (isSupabaseConfigured()) {
+      empleadorId = await getUserId(cookies);
+      if (!empleadorId) {
+        return new Response(
+          JSON.stringify({ error: 'No autorizado' }),
+          { status: 401, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      empleador = getMockSession(cookies);
+      if (!empleador) {
+        return new Response(
+          JSON.stringify({ error: 'No autorizado' }),
+          { status: 401, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      empleadorId = empleador.id;
     }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // 2. OBTENER Y VALIDAR DATOS
+    // ─────────────────────────────────────────────────────────────────────
 
     const body = await request.json();
     const { titulo, descripcion, empresa, tipo_jornada, categoria, comuna, expires_at } = body;
@@ -81,49 +113,108 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    // Generar nuevo ID (usar el número siguiente al último)
-    const maxId = Math.max(...mockOfertas.map(o => parseInt(o.id)), 0);
-    const newId = (maxId + 1).toString();
+    // ─────────────────────────────────────────────────────────────────────
+    // 3. CREAR OFERTA EN SUPABASE O MOCK
+    // ─────────────────────────────────────────────────────────────────────
 
-    // Crear nueva oferta
-    const nuevaOferta: typeof mockOfertas[0] = {
-      id: newId,
-      titulo: titulo.trim(),
-      descripcion: descripcion.trim(),
-      empresa: empresa.trim(),
-      tipo_jornada,
-      categoria: categoria || null,
-      comuna: comunaData.nombre,
-      region: comunaData.region,
-      activa: true,
-      expires_at: expires_at + 'T23:59:59Z',
-      created_at: new Date().toISOString(),
-      postulaciones_count: 0
-    };
+    if (isSupabaseConfigured() && supabase && empleadorId) {
+      // Modo Supabase: Insertar en BD
 
-    // Agregar a mock ofertas (en memoria)
-    mockOfertas.push(nuevaOferta);
+      const ubicacion = {
+        region: comunaData.region,
+        comuna: comunaData.nombre,
+        lat: comunaData.lat,
+        lng: comunaData.lng
+      };
 
-    // Actualizar empleadorOfertasMap
-    if (!empleadorOfertasMap[empleador.id]) {
-      empleadorOfertasMap[empleador.id] = [];
+      const { data, error } = await (supabase as any)
+        .from('ofertas')
+        .insert({
+          empleador_id: empleadorId,
+          titulo: titulo.trim(),
+          descripcion: descripcion.trim(),
+          empresa: empresa.trim(),
+          ubicacion,
+          tipo: tipo_jornada,
+          categoria: categoria || 'General',
+          salario: null, // Puede ser extendido en el futuro
+          requisitos: [],
+          beneficios: [],
+          activa: true
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[Supabase] Error creando oferta:', error);
+        return new Response(
+          JSON.stringify({ error: 'Error al crear la oferta' }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('[Supabase] Oferta creada:', (data as any).id);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          oferta: data,
+          message: 'Oferta creada exitosamente'
+        }),
+        { status: 201, headers: { 'Content-Type': 'application/json' } }
+      );
+
+    } else {
+      // Modo Mock: Crear en memoria
+
+      // Generar nuevo ID (usar el número siguiente al último)
+      const maxId = Math.max(...mockOfertas.map(o => parseInt(o.id)), 0);
+      const newId = (maxId + 1).toString();
+
+      // Crear nueva oferta
+      const nuevaOferta: typeof mockOfertas[0] = {
+        id: newId,
+        titulo: titulo.trim(),
+        descripcion: descripcion.trim(),
+        empresa: empresa.trim(),
+        tipo_jornada,
+        categoria: categoria || null,
+        comuna: comunaData.nombre,
+        region: comunaData.region,
+        activa: true,
+        expires_at: expires_at + 'T23:59:59Z',
+        created_at: new Date().toISOString(),
+        postulaciones_count: 0
+      };
+
+      // Agregar a mock ofertas (en memoria)
+      mockOfertas.push(nuevaOferta);
+
+      // Actualizar empleadorOfertasMap
+      if (!empleadorOfertasMap[empleador!.id]) {
+        empleadorOfertasMap[empleador!.id] = [];
+      }
+      empleadorOfertasMap[empleador!.id].push(newId);
+
+      console.log(`[MOCK] Nueva oferta creada: ${newId} - ${titulo}`);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          oferta: nuevaOferta,
+          message: 'Oferta creada exitosamente'
+        }),
+        { status: 201, headers: { 'Content-Type': 'application/json' } }
+      );
     }
-    empleadorOfertasMap[empleador.id].push(newId);
 
-    console.log(`[MOCK] Nueva oferta creada: ${newId} - ${titulo}`);
-
+  } catch (error) {
+    console.error('[API /ofertas/crear] Error inesperado:', error);
     return new Response(
       JSON.stringify({
-        success: true,
-        oferta: nuevaOferta,
-        message: 'Oferta creada exitosamente'
+        error: 'Error interno del servidor',
+        message: error instanceof Error ? error.message : 'Error desconocido'
       }),
-      { status: 201, headers: { 'Content-Type': 'application/json' } }
-    );
-  } catch (error) {
-    console.error('Error inesperado al crear oferta:', error);
-    return new Response(
-      JSON.stringify({ error: 'Error interno del servidor' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

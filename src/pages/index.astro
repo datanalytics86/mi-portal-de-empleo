@@ -11,11 +11,52 @@ export const prerender = false;
 import Layout from '../layouts/Layout.astro';
 import MapaOfertas from '../components/MapaOfertas.astro';
 import OfertaCard from '../components/OfertaCard.astro';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { getOfertasActivas } from '../data/mock-ofertas';
 import { findComuna } from '../lib/comunas';
 
-// Obtener ofertas activas desde mock data
-const ofertas = getOfertasActivas();
+// Obtener ofertas activas desde Supabase o mock data
+let ofertas: any[] = [];
+
+if (isSupabaseConfigured() && supabase) {
+  console.log('[Index] Cargando ofertas desde Supabase');
+
+  const { data, error } = await supabase
+    .from('ofertas')
+    .select('*')
+    .eq('activa', true)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('[Index] Error cargando ofertas:', error);
+    // Fallback a mock en caso de error
+    ofertas = getOfertasActivas();
+  } else {
+    // Transformar datos de Supabase al formato esperado por el frontend
+    ofertas = (data || []).map((oferta: any) => ({
+      id: oferta.id,
+      titulo: oferta.titulo,
+      descripcion: oferta.descripcion,
+      empresa: oferta.empresa,
+      tipo_jornada: oferta.tipo,
+      categoria: oferta.categoria,
+      comuna: typeof oferta.ubicacion === 'object' && oferta.ubicacion !== null
+        ? oferta.ubicacion.comuna
+        : '',
+      region: typeof oferta.ubicacion === 'object' && oferta.ubicacion !== null
+        ? oferta.ubicacion.region
+        : '',
+      activa: oferta.activa,
+      created_at: oferta.created_at,
+      expires_at: null, // No hay expires_at en Supabase schema
+      postulaciones_count: 0 // TODO: Calcular con join o función
+    }));
+    console.log(`[Index] ${ofertas.length} ofertas cargadas desde Supabase`);
+  }
+} else {
+  console.log('[Index] Cargando ofertas desde mock data');
+  ofertas = getOfertasActivas();
+}
 
 // Transformar ofertas para el mapa (agregar coordenadas lat/lng)
 const ofertasConCoordenadas = (ofertas || []).map(oferta => {
