@@ -21,23 +21,32 @@ const currentPath = Astro.url.pathname;
     <title>{title}</title>
   </head>
   <body class="min-h-screen flex flex-col">
-    <header class="bg-white border-b border-border sticky top-0 z-50">
+    <header class="bg-white/80 backdrop-blur-md border-b border-border sticky top-0 z-50 shadow-sm">
       <div class="container mx-auto px-4 sm:px-8">
         <nav class="flex items-center justify-between h-16">
-          <a href="/" class="text-xl font-semibold text-accent hover:text-accent-hover transition">
-            Portal de Empleo
+          <a href="/" class="flex items-center gap-2 group">
+            <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center transform group-hover:scale-110 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+              </svg>
+            </div>
+            <span class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+              Portal de Empleo
+            </span>
           </a>
 
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-6">
             <a
-              href="/"
-              class={`text-sm hover:text-accent transition ${currentPath === '/' ? 'text-accent font-medium' : 'text-text-secondary'}`}
+              href="/ofertas"
+              class={`text-sm font-medium hover:text-accent transition-colors relative ${currentPath === '/ofertas' ? 'text-accent' : 'text-text-secondary'}`}
             >
               Ofertas
+              {currentPath === '/ofertas' && <span class="absolute -bottom-5 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600"></span>}
             </a>
             <a
               href="/empleador/login"
-              class={`text-sm hover:text-accent transition ${currentPath.startsWith('/empleador') ? 'text-accent font-medium' : 'text-text-secondary'}`}
+              class={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${currentPath.startsWith('/empleador') ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-md' : 'text-text-secondary hover:bg-purple-50'}`}
             >
               Para Empresas
             </a>
@@ -50,51 +59,75 @@ const currentPath = Astro.url.pathname;
       <slot />
     </main>
 
-    <footer class="bg-surface border-t border-border mt-auto">
-      <div class="container mx-auto px-4 sm:px-8 py-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
-            <h3 class="font-semibold text-text-primary mb-3">Portal de Empleo</h3>
-            <p class="text-sm text-text-secondary">
-              Conectamos talento con oportunidades en Chile
+    <footer class="bg-gradient-to-br from-gray-50 to-gray-100 border-t border-border mt-auto">
+      <div class="container mx-auto px-4 sm:px-8 py-12">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          <div class="md:col-span-2">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+              </div>
+              <span class="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                Portal de Empleo Chile
+              </span>
+            </div>
+            <p class="text-sm text-text-secondary max-w-md">
+              Conectamos talento con oportunidades en todo Chile. Sin registro, sin complicaciones.
             </p>
           </div>
 
           <div>
-            <h3 class="font-semibold text-text-primary mb-3">Enlaces</h3>
-            <ul class="space-y-2 text-sm">
+            <h3 class="font-semibold text-text-primary mb-4">Para Candidatos</h3>
+            <ul class="space-y-3 text-sm">
               <li>
-                <a href="/" class="text-text-secondary hover:text-accent transition">
-                  Ver ofertas
-                </a>
-              </li>
-              <li>
-                <a href="/empleador/registro" class="text-text-secondary hover:text-accent transition">
-                  Publicar oferta
+                <a href="/ofertas" class="text-text-secondary hover:text-accent transition inline-flex items-center gap-1">
+                  <span>Ver ofertas</span>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
                 </a>
               </li>
             </ul>
           </div>
 
           <div>
-            <h3 class="font-semibold text-text-primary mb-3">Legal</h3>
-            <ul class="space-y-2 text-sm">
+            <h3 class="font-semibold text-text-primary mb-4">Para Empresas</h3>
+            <ul class="space-y-3 text-sm">
               <li>
-                <a href="/privacidad" class="text-text-secondary hover:text-accent transition">
-                  Política de Privacidad
+                <a href="/empleador/registro" class="text-text-secondary hover:text-accent transition inline-flex items-center gap-1">
+                  <span>Publicar oferta</span>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
                 </a>
               </li>
               <li>
-                <a href="/terminos" class="text-text-secondary hover:text-accent transition">
-                  Términos y Condiciones
+                <a href="/empleador/login" class="text-text-secondary hover:text-accent transition inline-flex items-center gap-1">
+                  <span>Iniciar sesión</span>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
                 </a>
               </li>
             </ul>
           </div>
         </div>
 
-        <div class="border-t border-border mt-8 pt-6 text-center text-sm text-text-secondary">
-          <p>&copy; {new Date().getFullYear()} Portal de Empleo Chile. Todos los derechos reservados.</p>
+        <div class="border-t border-gray-300 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p class="text-sm text-text-secondary">
+            &copy; {new Date().getFullYear()} Portal de Empleo Chile. Todos los derechos reservados.
+          </p>
+          <div class="flex gap-6 text-sm">
+            <a href="/privacidad" class="text-text-secondary hover:text-accent transition">
+              Privacidad
+            </a>
+            <a href="/terminos" class="text-text-secondary hover:text-accent transition">
+              Términos
+            </a>
+          </div>
         </div>
       </div>
     </footer>

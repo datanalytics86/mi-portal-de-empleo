@@ -1,0 +1,106 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MapaOfertas from '../components/MapaOfertas.astro';
+import OfertaCard from '../components/OfertaCard.astro';
+import FiltrosBusqueda from '../components/FiltrosBusqueda.astro';
+import { supabase } from '../lib/supabase';
+
+// Obtener parámetros de búsqueda
+const { searchParams } = Astro.url;
+const query = searchParams.get('q') || '';
+const comuna = searchParams.get('comuna') || '';
+const categoria = searchParams.get('categoria') || '';
+const tiposJornada = searchParams.getAll('tipo_jornada[]');
+
+// Construir query de Supabase
+let dbQuery = supabase
+  .from('ofertas')
+  .select('*')
+  .eq('activa', true)
+  .gte('expires_at', new Date().toISOString())
+  .order('created_at', { ascending: false });
+
+// Aplicar filtros
+if (query) {
+  dbQuery = dbQuery.or(`titulo.ilike.%${query}%,empresa.ilike.%${query}%`);
+}
+
+if (comuna) {
+  dbQuery = dbQuery.eq('comuna', comuna);
+}
+
+if (categoria) {
+  dbQuery = dbQuery.eq('categoria', categoria);
+}
+
+if (tiposJornada.length > 0) {
+  dbQuery = dbQuery.in('tipo_jornada', tiposJornada);
+}
+
+const { data: ofertas, error } = await dbQuery;
+
+if (error) {
+  console.error('Error fetching ofertas:', error);
+}
+
+// Preparar datos para el mapa
+const ofertasMap = (ofertas || []).map((oferta) => ({
+  id: oferta.id,
+  titulo: oferta.titulo,
+  empresa: oferta.empresa,
+  lat: oferta.ubicacion.coordinates[1], // PostGIS usa [lng, lat]
+  lng: oferta.ubicacion.coordinates[0],
+}));
+---
+
+<Layout title="Portal de Empleo Chile - Encuentra tu próximo trabajo">
+  <div class="container mx-auto px-4 sm:px-8 py-8">
+    <!-- Hero Section -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold text-text-primary mb-3">
+        Encuentra tu próximo empleo en Chile
+      </h1>
+      <p class="text-lg text-text-secondary">
+        {ofertas?.length || 0} ofertas activas • Sin registro • 100% gratis
+      </p>
+    </div>
+
+    <!-- Filtros de búsqueda -->
+    <div class="mb-8">
+      <FiltrosBusqueda />
+    </div>
+
+    <!-- Mapa -->
+    <div class="mb-8">
+      <h2 class="text-2xl font-semibold text-text-primary mb-4">Explora en el mapa</h2>
+      <MapaOfertas ofertas={ofertasMap} />
+    </div>
+
+    <!-- Lista de ofertas -->
+    <div>
+      <h2 class="text-2xl font-semibold text-text-primary mb-4">Ofertas recientes</h2>
+
+      {
+        ofertas && ofertas.length > 0 ? (
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {ofertas.map((oferta) => (
+              <OfertaCard oferta={oferta} />
+            ))}
+          </div>
+        ) : (
+          <div class="text-center py-12 bg-surface rounded-lg">
+            <p class="text-text-secondary text-lg">
+              No se encontraron ofertas con los filtros seleccionados.
+            </p>
+            <a
+              href="/"
+              class="inline-block mt-4 text-accent hover:text-accent-hover transition"
+            >
+              Ver todas las ofertas
+            </a>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</Layout>

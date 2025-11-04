@@ -21,50 +21,103 @@ const getRelativeTime = (date: string) => {
   return `Hace ${Math.floor(diffInDays / 30)} meses`;
 };
 
-const tipoJornadaColor = {
-  'Full-time': 'bg-blue-50 text-blue-700',
-  'Part-time': 'bg-green-50 text-green-700',
-  'Freelance': 'bg-purple-50 text-purple-700',
-  'Práctica': 'bg-orange-50 text-orange-700',
+const tipoJornadaConfig = {
+  'Full-time': {
+    color: 'from-blue-500 to-blue-600',
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+  },
+  'Part-time': {
+    color: 'from-green-500 to-green-600',
+    bg: 'bg-green-50',
+    text: 'text-green-700',
+    icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+  },
+  'Freelance': {
+    color: 'from-purple-500 to-purple-600',
+    bg: 'bg-purple-50',
+    text: 'text-purple-700',
+    icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'
+  },
+  'Práctica': {
+    color: 'from-orange-500 to-orange-600',
+    bg: 'bg-orange-50',
+    text: 'text-orange-700',
+    icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'
+  },
 };
+
+const config = tipoJornadaConfig[oferta.tipo_jornada];
 ---
 
 <a
   href={`/oferta/${oferta.id}`}
-  class="block bg-white rounded-lg shadow-sm border border-border p-6 hover:shadow-md transition-shadow"
+  class="group block bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 hover:border-gray-200 transition-all duration-300 overflow-hidden transform hover:-translate-y-1"
 >
-  <h3 class="text-xl font-semibold text-text-primary">{oferta.titulo}</h3>
-  <p class="text-text-secondary mt-1">{oferta.empresa}</p>
+  <!-- Gradient Top Border -->
+  <div class={`h-1 bg-gradient-to-r ${config.color}`}></div>
 
-  <div class="flex flex-wrap items-center gap-4 mt-3 text-sm text-text-secondary">
-    <span class="flex items-center gap-1">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
+  <div class="p-6">
+    <!-- Header -->
+    <div class="flex items-start justify-between mb-4">
+      <div class="flex-1">
+        <h3 class="text-xl font-bold text-gray-900 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300 line-clamp-2">
+          {oferta.titulo}
+        </h3>
+        <p class="text-gray-600 mt-1 font-medium">{oferta.empresa}</p>
+      </div>
+
+      <!-- Icon Badge -->
+      <div class={`flex-shrink-0 w-12 h-12 rounded-xl ${config.bg} flex items-center justify-center ml-4`}>
+        <svg xmlns="http://www.w3.org/2000/svg" class={`w-6 h-6 ${config.text}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d={config.icon}></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Tags and Location -->
+    <div class="flex flex-wrap items-center gap-2 mb-4">
+      <!-- Tipo de Jornada -->
+      <span class={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${config.bg} ${config.text} border border-current border-opacity-20`}>
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={config.icon}></path>
+        </svg>
+        {oferta.tipo_jornada}
+      </span>
+
+      <!-- Categoría -->
+      {oferta.categoria && (
+        <span class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium border border-gray-200">
+          {oferta.categoria}
+        </span>
+      )}
+    </div>
+
+    <!-- Location -->
+    <div class="flex items-center gap-2 text-gray-600 mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
         <circle cx="12" cy="10" r="3"></circle>
       </svg>
-      {oferta.comuna}
-    </span>
+      <span class="text-sm font-medium">{oferta.comuna}</span>
+    </div>
 
-    <span class={`px-2 py-1 rounded text-xs font-medium ${tipoJornadaColor[oferta.tipo_jornada]}`}>
-      {oferta.tipo_jornada}
-    </span>
-
-    {oferta.categoria && (
-      <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-        {oferta.categoria}
+    <!-- Footer -->
+    <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+      <span class="text-sm text-gray-500 flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        {getRelativeTime(oferta.created_at)}
       </span>
-    )}
-  </div>
 
-  <p class="text-sm text-gray-400 mt-3">{getRelativeTime(oferta.created_at)}</p>
+      <span class="text-sm font-semibold text-blue-600 group-hover:text-purple-600 flex items-center gap-1 transition-colors">
+        Ver detalles
+        <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </span>
+    </div>
+  </div>
 </a>

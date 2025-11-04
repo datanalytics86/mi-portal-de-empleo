@@ -1,106 +1,253 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import MapaOfertas from '../components/MapaOfertas.astro';
-import OfertaCard from '../components/OfertaCard.astro';
-import FiltrosBusqueda from '../components/FiltrosBusqueda.astro';
-import { supabase } from '../lib/supabase';
-
-// Obtener parámetros de búsqueda
-const { searchParams } = Astro.url;
-const query = searchParams.get('q') || '';
-const comuna = searchParams.get('comuna') || '';
-const categoria = searchParams.get('categoria') || '';
-const tiposJornada = searchParams.getAll('tipo_jornada[]');
-
-// Construir query de Supabase
-let dbQuery = supabase
-  .from('ofertas')
-  .select('*')
-  .eq('activa', true)
-  .gte('expires_at', new Date().toISOString())
-  .order('created_at', { ascending: false });
-
-// Aplicar filtros
-if (query) {
-  dbQuery = dbQuery.or(`titulo.ilike.%${query}%,empresa.ilike.%${query}%`);
-}
-
-if (comuna) {
-  dbQuery = dbQuery.eq('comuna', comuna);
-}
-
-if (categoria) {
-  dbQuery = dbQuery.eq('categoria', categoria);
-}
-
-if (tiposJornada.length > 0) {
-  dbQuery = dbQuery.in('tipo_jornada', tiposJornada);
-}
-
-const { data: ofertas, error } = await dbQuery;
-
-if (error) {
-  console.error('Error fetching ofertas:', error);
-}
-
-// Preparar datos para el mapa
-const ofertasMap = (ofertas || []).map((oferta) => ({
-  id: oferta.id,
-  titulo: oferta.titulo,
-  empresa: oferta.empresa,
-  lat: oferta.ubicacion.coordinates[1], // PostGIS usa [lng, lat]
-  lng: oferta.ubicacion.coordinates[0],
-}));
 ---
 
-<Layout title="Portal de Empleo Chile - Encuentra tu próximo trabajo">
-  <div class="container mx-auto px-4 sm:px-8 py-8">
-    <!-- Hero Section -->
-    <div class="text-center mb-8">
-      <h1 class="text-3xl md:text-4xl font-bold text-text-primary mb-3">
-        Encuentra tu próximo empleo en Chile
-      </h1>
-      <p class="text-lg text-text-secondary">
-        {ofertas?.length || 0} ofertas activas • Sin registro • 100% gratis
-      </p>
+<Layout title="Portal de Empleo Chile - Tu próxima oportunidad laboral">
+  <!-- Hero Section with Gradient Background -->
+  <div class="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <!-- Animated Background Elements -->
+    <div class="absolute inset-0 overflow-hidden">
+      <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+      <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
     </div>
 
-    <!-- Filtros de búsqueda -->
-    <div class="mb-8">
-      <FiltrosBusqueda />
-    </div>
+    <!-- Main Content -->
+    <div class="relative z-10 container mx-auto px-4 py-16">
+      <!-- Logo/Title -->
+      <div class="text-center mb-16 animate-fade-in">
+        <div class="inline-flex items-center justify-center w-20 h-20 mb-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+          </svg>
+        </div>
+        <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
+          Portal de Empleo Chile
+        </h1>
+        <p class="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto">
+          Conectando talento con oportunidades en todo Chile
+        </p>
+      </div>
 
-    <!-- Mapa -->
-    <div class="mb-8">
-      <h2 class="text-2xl font-semibold text-text-primary mb-4">Explora en el mapa</h2>
-      <MapaOfertas ofertas={ofertasMap} />
-    </div>
+      <!-- Role Selection Cards -->
+      <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <!-- Buscador de Empleo Card -->
+        <a href="/ofertas" class="group block animate-fade-in-up">
+          <div class="relative h-full bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-transparent hover:border-blue-500 p-8 md:p-10 transform hover:-translate-y-2">
+            <!-- Card Glow Effect -->
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-    <!-- Lista de ofertas -->
-    <div>
-      <h2 class="text-2xl font-semibold text-text-primary mb-4">Ofertas recientes</h2>
+            <div class="relative z-10">
+              <!-- Icon -->
+              <div class="w-16 h-16 md:w-20 md:h-20 mb-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 md:w-10 md:h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+              </div>
 
-      {
-        ofertas && ofertas.length > 0 ? (
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {ofertas.map((oferta) => (
-              <OfertaCard oferta={oferta} />
-            ))}
+              <!-- Title -->
+              <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+                Busco Trabajo
+              </h2>
+
+              <!-- Description -->
+              <p class="text-gray-600 mb-6 leading-relaxed">
+                Explora cientos de ofertas laborales en Chile. Sin registro, solo sube tu CV y postula en segundos.
+              </p>
+
+              <!-- Features List -->
+              <ul class="space-y-3 mb-8">
+                <li class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="text-gray-700">Sin registro necesario</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="text-gray-700">Mapa interactivo de ofertas</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="text-gray-700">Filtros por comuna y categoría</span>
+                </li>
+              </ul>
+
+              <!-- CTA Button -->
+              <div class="flex items-center text-blue-600 font-semibold group-hover:text-blue-700">
+                Ver ofertas disponibles
+                <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                </svg>
+              </div>
+            </div>
           </div>
-        ) : (
-          <div class="text-center py-12 bg-surface rounded-lg">
-            <p class="text-text-secondary text-lg">
-              No se encontraron ofertas con los filtros seleccionados.
-            </p>
-            <a
-              href="/"
-              class="inline-block mt-4 text-accent hover:text-accent-hover transition"
-            >
-              Ver todas las ofertas
-            </a>
+        </a>
+
+        <!-- Empleador Card -->
+        <a href="/empleador/login" class="group block animate-fade-in-up animation-delay-200">
+          <div class="relative h-full bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-transparent hover:border-purple-500 p-8 md:p-10 transform hover:-translate-y-2">
+            <!-- Card Glow Effect -->
+            <div class="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+            <div class="relative z-10">
+              <!-- Icon -->
+              <div class="w-16 h-16 md:w-20 md:h-20 mb-6 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl shadow-lg flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 md:w-10 md:h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </div>
+
+              <!-- Title -->
+              <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+                Soy Empleador
+              </h2>
+
+              <!-- Description -->
+              <p class="text-gray-600 mb-6 leading-relaxed">
+                Publica ofertas laborales gratis y encuentra al candidato ideal para tu empresa.
+              </p>
+
+              <!-- Features List -->
+              <ul class="space-y-3 mb-8">
+                <li class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="text-gray-700">Publicación 100% gratuita</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="text-gray-700">Dashboard de gestión</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="text-gray-700">Acceso a candidatos calificados</span>
+                </li>
+              </ul>
+
+              <!-- CTA Button -->
+              <div class="flex items-center text-purple-600 font-semibold group-hover:text-purple-700">
+                Iniciar sesión o registrarse
+                <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                </svg>
+              </div>
+            </div>
           </div>
-        )
-      }
+        </a>
+      </div>
+
+      <!-- Stats Section -->
+      <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto animate-fade-in-up animation-delay-400">
+        <div class="text-center">
+          <div class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
+            500+
+          </div>
+          <div class="text-sm md:text-base text-gray-600">Ofertas Activas</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
+            200+
+          </div>
+          <div class="text-sm md:text-base text-gray-600">Empresas</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
+            15
+          </div>
+          <div class="text-sm md:text-base text-gray-600">Regiones</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
+            24/7
+          </div>
+          <div class="text-sm md:text-base text-gray-600">Disponible</div>
+        </div>
+      </div>
     </div>
   </div>
 </Layout>
+
+<style>
+  @keyframes blob {
+    0% {
+      transform: translate(0px, 0px) scale(1);
+    }
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-blob {
+    animation: blob 7s infinite;
+  }
+
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.8s ease-out;
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.8s ease-out;
+  }
+
+  .animation-delay-200 {
+    animation-delay: 0.2s;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+
+  .animation-delay-400 {
+    animation-delay: 0.4s;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+</style>
