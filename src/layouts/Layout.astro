@@ -1,0 +1,109 @@
+---
+import '../styles/global.css';
+
+const { title = 'Mi Portal de Empleo', description = 'Encuentra oportunidades laborales georreferenciadas en Chile.' } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="relative min-h-screen">
+    <div class="pointer-events-none absolute inset-0 -z-20 bg-mesh-light"></div>
+    <div class="pointer-events-none absolute inset-x-0 top-[-45%] -z-10 flex justify-center">
+      <div class="h-[720px] w-[1280px] rounded-[420px] bg-aurora-gradient opacity-70 blur-3xl"></div>
+    </div>
+    <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-48 bg-gradient-to-b from-white/90 via-white/30 to-transparent"></div>
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-44 bg-gradient-to-t from-white via-white/80 to-transparent"></div>
+    <div class="relative flex min-h-screen flex-col">
+      <header class="container-gutter mx-auto w-full max-w-7xl pt-8 sm:pt-10">
+        <div class="glass-panel relative flex flex-col gap-5 rounded-[32px] border-white/60 px-6 py-5 shadow-deluxe ring-1 ring-white/40 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+          <div class="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent"></div>
+          <a href="/" class="flex items-center gap-3 text-slate-900">
+            <span class="grid h-11 w-11 place-items-center rounded-2xl bg-primary-500/10 text-primary-700 shadow-outline">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3.75c-3.866 0-7 3.028-7 6.767 0 3.738 3.134 6.766 7 6.766 1.04 0 2.029-.216 2.933-.6l3.651 2.043-.93-3.315c.83-1.098 1.346-2.43 1.346-3.894 0-3.739-3.134-6.767-7-6.767z" />
+              </svg>
+            </span>
+            <div>
+              <p class="font-display text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">Portal Empleo Chile</p>
+              <p class="text-sm text-slate-500">Talento y oportunidades sin fricción</p>
+            </div>
+          </a>
+          <nav class="flex flex-wrap items-center gap-x-8 gap-y-3 text-sm font-medium text-slate-600">
+            <a class="transition hover:text-slate-900" href="#ofertas">Ofertas</a>
+            <a class="transition hover:text-slate-900" href="#mapa">Mapa</a>
+            <a class="transition hover:text-slate-900" href="#como-funciona">¿Cómo funciona?</a>
+            <a class="transition hover:text-slate-900" href="#empleadores">Empresas</a>
+          </nav>
+          <div class="flex flex-wrap items-center gap-3 text-sm font-semibold">
+            <a
+              href="#postulacion"
+              class="rounded-full border border-slate-200/60 bg-white/60 px-4 py-2 text-slate-700 transition hover:border-primary-500/60 hover:text-primary-700"
+            >
+              Subir CV
+            </a>
+            <a
+              href="#empleadores"
+              class="rounded-full bg-gradient-to-r from-primary-600 via-primary-500 to-secondary-500 px-4 py-2 text-white shadow-glow transition hover:shadow-[0_40px_100px_-45px_rgba(37,95,227,0.55)]"
+            >
+              Soy empleador
+            </a>
+          </div>
+        </div>
+        <div class="mt-4 flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <span class="badge-premium">Lanzamiento 2024</span>
+          <span class="badge-premium">Experiencia guiada</span>
+          <span class="badge-premium">Cobertura nacional</span>
+        </div>
+      </header>
+      <main class="container-gutter mx-auto w-full max-w-7xl flex-1 py-10 sm:py-14">
+        <slot />
+      </main>
+      <footer class="mt-16 border-t border-white/60 bg-white/80 backdrop-blur">
+        <div class="container-gutter mx-auto w-full max-w-6xl py-10">
+          <div class="grid gap-8 md:grid-cols-[1.2fr_0.8fr] md:items-start">
+            <div class="space-y-4">
+              <p class="font-display text-xl font-semibold text-slate-900">Portal Empleo Chile</p>
+              <p class="max-w-xl text-sm text-slate-500">
+                Conectamos talento con oportunidades verificadas combinando datos territoriales, diversidad e insights accionables para empleadores visionarios.
+              </p>
+              <div class="flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                <span class="rounded-full bg-slate-100 px-4 py-2">ISO-ready</span>
+                <span class="rounded-full bg-slate-100 px-4 py-2">Soporte humano</span>
+                <span class="rounded-full bg-slate-100 px-4 py-2">App en desarrollo</span>
+              </div>
+            </div>
+            <div class="grid gap-6 text-sm text-slate-500 sm:grid-cols-2">
+              <div class="space-y-3">
+                <p class="font-semibold uppercase tracking-[0.3em] text-slate-400">Explora</p>
+                <a class="transition hover:text-slate-900" href="#ofertas">Ofertas</a>
+                <a class="transition hover:text-slate-900" href="#mapa">Mapa</a>
+                <a class="transition hover:text-slate-900" href="#como-funciona">Metodología</a>
+              </div>
+              <div class="space-y-3">
+                <p class="font-semibold uppercase tracking-[0.3em] text-slate-400">Legal</p>
+                <a class="transition hover:text-slate-900" href="#">Términos</a>
+                <a class="transition hover:text-slate-900" href="#">Privacidad</a>
+                <a class="transition hover:text-slate-900" href="#">Contacto</a>
+              </div>
+            </div>
+          </div>
+          <div class="mt-10 flex flex-col gap-2 border-t border-white/60 pt-6 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+            <p>© {new Date().getFullYear()} Portal Empleo Chile. Todos los derechos reservados.</p>
+            <p>Diseñado para instituciones públicas y privadas que apuestan por el talento local.</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

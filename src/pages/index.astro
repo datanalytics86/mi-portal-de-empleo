@@ -1,0 +1,217 @@
+---
+import Layout from '../layouts/Layout.astro';
+import FiltrosBusqueda from '../components/FiltrosBusqueda.astro';
+import MapaOfertas from '../components/MapaOfertas.astro';
+import OfertaCard from '../components/OfertaCard.astro';
+import EstadisticasImpacto from '../components/EstadisticasImpacto.astro';
+import EmpresasConfianza from '../components/EmpresasConfianza.astro';
+import TestimoniosTalento from '../components/TestimoniosTalento.astro';
+import PreguntasFrecuentes from '../components/PreguntasFrecuentes.astro';
+import CTAApp from '../components/CTAApp.astro';
+import HighlightsExperiencia from '../components/HighlightsExperiencia.astro';
+import ReconocimientosMedios from '../components/ReconocimientosMedios.astro';
+import RoadmapServicios from '../components/RoadmapServicios.astro';
+import { ofertasDestacadas } from '../lib/ofertas';
+---
+<Layout title="Portal Empleo Chile" description="Oportunidades laborales georreferenciadas, sin fricción, para talento en todo Chile.">
+  <section class="relative overflow-hidden rounded-[48px] border border-white/70 bg-white/80 p-10 shadow-deluxe backdrop-blur">
+    <div class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-primary-50/80 via-white to-secondary-50/60"></div>
+    <div class="pointer-events-none absolute -left-20 top-1/4 -z-10 h-80 w-80 rounded-full bg-aurora-gradient opacity-30 blur-3xl"></div>
+    <div class="pointer-events-none absolute -right-10 bottom-0 -z-10 h-72 w-72 rounded-full bg-aurora-gradient opacity-20 blur-3xl"></div>
+    <div class="relative grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+      <div class="space-y-8">
+        <span class="badge-premium">Estandar de clase mundial</span>
+        <h1 class="max-w-xl font-display text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
+          Una plataforma laboral luminosa con calidad <span class="text-gradient">OpenDoor level</span> creada en Chile.
+        </h1>
+        <p class="max-w-xl text-lg text-slate-600">
+          Traemos diseño inmobiliario premium a la búsqueda de empleo: visualizaciones territoriales, datos verificables y acompañamiento humano en cada interacción.
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <a
+            href="#ofertas"
+            class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary-600 via-primary-500 to-secondary-500 px-6 py-3 font-semibold text-white shadow-[0_30px_90px_-40px_rgba(37,95,227,0.65)] transition hover:shadow-[0_40px_110px_-45px_rgba(37,95,227,0.65)]"
+          >
+            Explorar ofertas
+          </a>
+          <a
+            href="#postulacion"
+            class="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-6 py-3 font-semibold text-slate-700 shadow-innerGlow transition hover:border-primary-400/60 hover:text-primary-700"
+          >
+            Subir mi CV
+          </a>
+        </div>
+        <div class="grid gap-5 sm:grid-cols-3">
+          <div class="card-premium space-y-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">Transparencia</p>
+            <p class="text-sm text-slate-600">Ofertas auditadas con salario, beneficios y cultura contrastada.</p>
+          </div>
+          <div class="card-premium space-y-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">Cobertura</p>
+            <p class="text-sm text-slate-600">Mapa vivo en 16 regiones con layers de movilidad y bienestar.</p>
+          </div>
+          <div class="card-premium space-y-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">Soporte</p>
+            <p class="text-sm text-slate-600">Equipo humano y coachings para cerrar procesos con confianza.</p>
+          </div>
+        </div>
+      </div>
+      <div class="relative">
+        <div class="absolute inset-0 -z-10 rounded-[42px] bg-hero-radial opacity-90 blur-2xl"></div>
+        <div class="glass-panel space-y-6 rounded-[40px] p-8 shadow-[0_60px_110px_-60px_rgba(15,23,42,0.4)]">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.3em] text-primary-600">Oferta destacada</p>
+              <p class="mt-2 font-display text-2xl font-semibold text-slate-900">UX Researcher Senior</p>
+              <p class="text-sm text-slate-500">Santiago Centro • Híbrido</p>
+            </div>
+            <div class="rounded-2xl border border-white/60 bg-white/70 px-4 py-2 text-right text-xs font-semibold text-primary-600 shadow-innerGlow">
+              Publicada hace 48h
+            </div>
+          </div>
+          <div class="grid gap-4 rounded-[30px] border border-white/70 bg-white/80 p-5 shadow-innerGlow">
+            <div class="flex items-center justify-between text-sm text-slate-600">
+              <span>Rango salarial</span>
+              <span class="font-semibold text-slate-900">$1.900.000 - $2.300.000</span>
+            </div>
+            <div class="flex items-center justify-between text-sm text-slate-600">
+              <span>Modalidad</span>
+              <span class="font-semibold text-slate-900">Híbrido 3/2</span>
+            </div>
+            <div class="flex items-center justify-between text-sm text-slate-600">
+              <span>Equipo</span>
+              <span class="font-semibold text-slate-900">Innovación pública</span>
+            </div>
+          </div>
+          <div class="space-y-4 rounded-[30px] border border-white/70 bg-white/80 p-5 shadow-innerGlow">
+            <p class="text-sm font-semibold text-slate-900">Por qué es ideal para ti</p>
+            <ul class="space-y-2 text-sm text-slate-600">
+              <li>• Mentorías y presupuesto anual de investigación.</li>
+              <li>• Trabajo con datos reales y usuarios en terreno.</li>
+              <li>• Cultura flexible y beneficios familiares.</li>
+            </ul>
+          </div>
+          <a
+            href="#ofertas"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            Ver más vacantes similares
+          </a>
+        </div>
+        <div class="absolute -right-6 bottom-6 flex max-w-[220px] items-center gap-3 rounded-[26px] border border-white/70 bg-white/80 p-4 shadow-deluxe backdrop-blur">
+          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-500/20 to-secondary-500/20"></div>
+          <div>
+            <p class="text-sm font-semibold text-slate-900">Rating de talento 4.9/5</p>
+            <p class="text-xs text-slate-500">Basado en 3.200 experiencias verificadas</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="mt-10 flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-white/70 bg-white/70 px-6 py-4 shadow-innerGlow">
+    <div class="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">Sello ChileCompra • Fondos de Innovación • Consejo Nacional de Capacitación</div>
+    <div class="flex flex-wrap gap-4 text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">
+      <span>ISO 27001-ready</span>
+      <span>Data Ethics Lab</span>
+      <span>Equipo bilingüe</span>
+    </div>
+  </div>
+
+  <div class="mt-16 space-y-10">
+    <FiltrosBusqueda />
+    <EstadisticasImpacto />
+  </div>
+
+  <HighlightsExperiencia />
+
+  <div class="mt-20 space-y-16">
+    <EmpresasConfianza />
+    <ReconocimientosMedios />
+  </div>
+
+  <section id="mapa" class="mt-20 space-y-6">
+    <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div class="space-y-3">
+        <span class="section-title">Explora Chile</span>
+        <h2 class="font-display text-3xl font-semibold text-slate-900">Mapa interactivo de oportunidades</h2>
+        <p class="max-w-2xl text-sm text-slate-600">
+          Visualiza clusters, distancias y polos emergentes de empleo con capas dinámicas inspiradas en experiencias inmobiliarias de primer nivel.
+        </p>
+      </div>
+      <a
+        class="inline-flex items-center justify-center rounded-full border border-white/70 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-700 shadow-innerGlow transition hover:border-primary-400/60 hover:text-primary-700"
+        href="#postulacion"
+      >
+        Recibir alertas personalizadas
+      </a>
+    </div>
+    <MapaOfertas ofertas={ofertasDestacadas} />
+  </section>
+
+  <section id="ofertas" class="mt-20 space-y-8">
+    <div class="space-y-3">
+      <span class="section-title">Selección curada</span>
+      <h2 class="font-display text-3xl font-semibold text-slate-900">Ofertas destacadas</h2>
+      <p class="max-w-2xl text-sm text-slate-600">
+        Curamos vacantes con salarios transparentes, equipos inclusivos y propuestas de valor diferenciadas para el talento.
+      </p>
+    </div>
+    <div class="grid gap-6 md:grid-cols-2">
+      {ofertasDestacadas.map((oferta) => (
+        <OfertaCard oferta={oferta} key={oferta.id} />
+      ))}
+    </div>
+  </section>
+
+  <RoadmapServicios />
+
+  <section id="postulacion" class="mt-20">
+    <div class="relative grid gap-10 overflow-hidden rounded-[40px] border border-white/70 bg-white/85 p-10 shadow-deluxe backdrop-blur lg:grid-cols-[1fr_0.9fr]">
+      <div class="pointer-events-none absolute inset-y-0 right-0 -z-10 w-1/2 bg-gradient-to-l from-primary-50/80 via-white to-secondary-50/60"></div>
+      <div class="space-y-4">
+        <span class="section-title">Sube tu CV</span>
+        <h2 class="font-display text-3xl font-semibold text-slate-900">Postula en minutos</h2>
+        <p class="text-sm text-slate-600">
+          Nos enfocamos en la experiencia humana. Comparte tu CV, cuenta tu historia y nuestro equipo hará seguimiento personal.
+        </p>
+        <ul class="space-y-3 text-sm text-slate-600">
+          <li>✔︎ CV cifrado y alojado en Supabase Storage.</li>
+          <li>✔︎ Alertas segmentadas según tus preferencias.</li>
+          <li>✔︎ Equipo de soporte humano disponible 24/7.</li>
+        </ul>
+      </div>
+      <form class="grid gap-4 text-sm text-slate-700">
+        <label class="space-y-2">
+          <span class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Nombre completo</span>
+          <input class="w-full rounded-2xl border border-white/70 bg-white/70 px-4 py-3 shadow-innerGlow focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100" placeholder="Carolina González" />
+        </label>
+        <label class="space-y-2">
+          <span class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Correo electrónico</span>
+          <input class="w-full rounded-2xl border border-white/70 bg-white/70 px-4 py-3 shadow-innerGlow focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100" placeholder="carolina@email.com" />
+        </label>
+        <label class="space-y-2">
+          <span class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Enlace o carga tu CV</span>
+          <div class="flex flex-col gap-3 sm:flex-row">
+            <input class="w-full rounded-2xl border border-white/70 bg-white/70 px-4 py-3 shadow-innerGlow focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100" placeholder="https://miportfolio.cl/cv.pdf" />
+            <button type="button" class="rounded-2xl border border-white/70 bg-white/70 px-4 py-3 font-semibold text-slate-700 shadow-innerGlow transition hover:border-primary-400/70 hover:text-primary-700">
+              Seleccionar archivo
+            </button>
+          </div>
+        </label>
+        <button
+          type="button"
+          class="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 via-primary-500 to-secondary-500 px-6 py-3 font-semibold text-white shadow-[0_30px_90px_-40px_rgba(37,95,227,0.6)] transition hover:shadow-[0_40px_110px_-45px_rgba(37,95,227,0.6)]"
+        >
+          Enviar postulación
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <div class="mt-20 space-y-16">
+    <TestimoniosTalento />
+    <PreguntasFrecuentes />
+    <CTAApp />
+  </div>
+</Layout>
