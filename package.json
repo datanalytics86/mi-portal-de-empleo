@@ -1,0 +1,24 @@
+{
+  "name": "mi-portal-de-empleo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/tailwind": "^5.1.0",
+    "astro": "^4.10.0",
+    "autoprefixer": "^10.4.19",
+    "leaflet": "^1.9.4",
+    "lucide-astro": "^0.372.0",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.7"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.8",
+    "typescript": "^5.4.5"
+  }
+}

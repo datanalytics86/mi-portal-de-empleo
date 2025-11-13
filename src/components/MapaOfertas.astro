@@ -1,0 +1,104 @@
+---
+import type { Oferta } from '../lib/ofertas';
+import 'leaflet/dist/leaflet.css';
+
+const { ofertas } = Astro.props as { ofertas: Oferta[] };
+const mapId = `map-${Math.random().toString(36).slice(2, 9)}`;
+const overlayId = `${mapId}-overlay`;
+const initialView = { lat: -33.4489, lng: -70.6693, zoom: 11 };
+---
+<div
+  id={mapId}
+  class="relative h-[420px] w-full overflow-hidden rounded-[38px] border border-white/70 bg-white/80 shadow-deluxe backdrop-blur"
+  data-ofertas={JSON.stringify(ofertas)}
+  data-initial={JSON.stringify(initialView)}
+>
+  <div
+    id={overlayId}
+    class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-white/80 text-center text-slate-600 backdrop-blur-sm transition-opacity duration-500"
+  >
+    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-600 shadow-outline">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6 animate-pulse">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3.5c-3.59 0-6.5 2.91-6.5 6.5 0 4.288 4.517 8.85 6.024 10.22a.63.63 0 0 0 .95 0C13.983 18.85 18.5 14.288 18.5 10c0-3.59-2.91-6.5-6.5-6.5zm0 8.875a2.375 2.375 0 1 1 0-4.75 2.375 2.375 0 0 1 0 4.75z" />
+      </svg>
+    </div>
+    <p class="max-w-sm text-sm text-slate-600">
+      Mapa en tiempo real de oportunidades. Cargamos marcadores interactivos para cada oferta publicada en la plataforma.
+    </p>
+    <p class="text-xs uppercase tracking-[0.35em] text-slate-400">Cargando capa geográfica</p>
+  </div>
+</div>
+<script type="module">
+  const container = document.getElementById('${mapId}');
+  if (!container) {
+    throw new Error('No se encontró el contenedor del mapa');
+  }
+
+  const overlay = document.getElementById('${overlayId}');
+  const ofertas = JSON.parse(container.dataset.ofertas ?? '[]');
+  const initial = JSON.parse(container.dataset.initial ?? '{}');
+
+  const loadMap = async () => {
+    const L = await import('leaflet');
+    const map = L.map(container, {
+      zoomControl: false,
+      scrollWheelZoom: false,
+      attributionControl: false
+    }).setView([initial.lat, initial.lng], initial.zoom);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      detectRetina: true,
+      className: 'map-tiles'
+    }).addTo(map);
+
+    L.control
+      .zoom({ position: 'bottomright' })
+      .addTo(map);
+
+    ofertas.forEach((oferta) => {
+      const marker = L.circleMarker([oferta.lat, oferta.lng], {
+        radius: 10,
+        weight: 2,
+        color: '#4b7bff',
+        fillColor: '#4b7bff',
+        fillOpacity: 0.35
+      }).addTo(map);
+
+      const popup = `<div class="min-w-[200px] space-y-1 text-left">
+        <p class="text-sm font-semibold text-slate-900">${oferta.titulo}</p>
+        <p class="text-xs text-slate-600">${oferta.empresa} • ${oferta.comuna}</p>
+        <p class="text-xs text-slate-500">${oferta.tipoJornada}</p>
+      </div>`;
+
+      marker.bindPopup(popup);
+    });
+
+    requestAnimationFrame(() => {
+      if (overlay) {
+        overlay.classList.add('opacity-0');
+        setTimeout(() => overlay.remove(), 600);
+      }
+    });
+  };
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          loadMap();
+          observer.disconnect();
+        }
+      });
+    });
+
+    observer.observe(container);
+  } else {
+    loadMap();
+  }
+</script>
+<style>
+  #{mapId} .map-tiles {
+    filter: saturate(1.05) contrast(1.05);
+  }
+</style>

@@ -1,0 +1,28 @@
+---
+const medios = [
+  { nombre: 'Diario Financiero', descripcion: 'Ranking Innovación Pública 2024' },
+  { nombre: 'La Tercera', descripcion: 'Especial Talento Digital' },
+  { nombre: 'Pulso', descripcion: 'Startups con impacto social' },
+  { nombre: 'CNN Chile', descripcion: 'Cobertura inclusión laboral' }
+];
+---
+<section class="mt-24 rounded-[36px] border border-white/60 bg-white/80 p-10 shadow-deluxe backdrop-blur">
+  <div class="flex flex-col gap-6 text-center">
+    <p class="section-title">Visibilidad</p>
+    <h2 class="font-display text-3xl font-semibold text-slate-900 sm:text-4xl">Respaldado por los principales medios</h2>
+    <p class="mx-auto max-w-2xl text-sm text-slate-600">
+      Nuestra plataforma ha sido destacada por medios nacionales por su aporte al empleo regional, la trazabilidad de datos y la experiencia premium para postulantes.
+    </p>
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {medios.map((medio) => (
+        <div class="group relative overflow-hidden rounded-[28px] border border-white/60 bg-white/70 p-6 shadow-innerGlow transition hover:-translate-y-1 hover:shadow-deluxe">
+          <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-aurora-gradient opacity-25 blur-2xl transition group-hover:opacity-50"></div>
+          <div class="relative space-y-2">
+            <p class="font-display text-lg font-semibold text-slate-900">{medio.nombre}</p>
+            <p class="text-xs uppercase tracking-[0.35em] text-slate-400">{medio.descripcion}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

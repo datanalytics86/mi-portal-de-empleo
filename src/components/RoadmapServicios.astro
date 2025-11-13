@@ -1,0 +1,53 @@
+---
+const pasos = [
+  {
+    etapa: '01',
+    titulo: 'Brief inmersivo',
+    descripcion:
+      'Reunimos líderes de talento y RRHH para levantar desafíos, cultura y KPIs críticos con workshops de 90 minutos.'
+  },
+  {
+    etapa: '02',
+    titulo: 'Activación omnicanal',
+    descripcion:
+      'Campañas geo-segmentadas y partnerships regionales impulsan postulaciones diversas en menos de 72 horas.'
+  },
+  {
+    etapa: '03',
+    titulo: 'Inteligencia operacional',
+    descripcion:
+      'Paneles con seguimiento diario, benchmarks de mercado y alertas proactivas sobre brechas o riesgos.'
+  },
+  {
+    etapa: '04',
+    titulo: 'Cierre y expansión',
+    descripcion:
+      'Onboarding acompañado y retroalimentación 360° para escalar programas de talento sostenible.'
+  }
+];
+---
+<section id="como-funciona" class="mt-24 space-y-10">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div class="space-y-3">
+      <span class="section-title">Recorrido guiado</span>
+      <h2 class="font-display text-3xl font-semibold text-slate-900 sm:text-4xl">Metodología de acompañamiento integral</h2>
+    </div>
+    <p class="max-w-xl text-sm text-slate-600">
+      Cada etapa está diseñada para reducir fricciones, aumentar la velocidad de contratación y garantizar trazabilidad en los compromisos públicos.
+    </p>
+  </div>
+  <div class="grid gap-6 lg:grid-cols-4">
+    {pasos.map((paso, index) => (
+      <div class="relative flex h-full flex-col gap-4 rounded-[28px] border border-white/60 bg-white/80 p-6 shadow-deluxe backdrop-blur">
+        <div class="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary-400 via-secondary-400 to-accent-400 opacity-75"></div>
+        <span class="text-xs font-semibold uppercase tracking-[0.45em] text-slate-400">{paso.etapa}</span>
+        <h3 class="font-display text-xl font-semibold text-slate-900">{paso.titulo}</h3>
+        <p class="text-sm leading-relaxed text-slate-600">{paso.descripcion}</p>
+        <div class="mt-auto flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary-600">
+          <span class="h-2 w-2 rounded-full bg-primary-400"></span>
+          {index === 0 ? 'Kick-off' : index === pasos.length - 1 ? 'Expansión' : 'Sprint ' + (index + 1)}
+        </div>
+      </div>
+    ))}
+  </div>
+</section>

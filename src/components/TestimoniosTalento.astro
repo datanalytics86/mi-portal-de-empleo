@@ -1,0 +1,61 @@
+---
+const testimonios = [
+  {
+    nombre: 'Camila Rojas',
+    cargo: 'UX Researcher - Ministerio de Desarrollo Social',
+    cita:
+      'En menos de dos semanas recibí tres ofertas alineadas a mis valores y pude negociar un salario justo con el acompañamiento del equipo.'
+  },
+  {
+    nombre: 'José Morales',
+    cargo: 'Analista de Datos - Gobierno Regional del Biobío',
+    cita:
+      'El mapa territorial me permitió encontrar vacantes en mi región y entender los beneficios complementarios para mi familia.'
+  },
+  {
+    nombre: 'Valentina Lagos',
+    cargo: 'Tech Recruiter - Start-Up Chile',
+    cita:
+      'Como empresa logramos visibilidad premium y reportes de diversidad que mejoraron nuestros indicadores de contratación.'
+  }
+];
+---
+<section class="relative overflow-hidden rounded-[40px] border border-white/70 bg-white/85 p-10 shadow-deluxe backdrop-blur">
+  <div class="pointer-events-none absolute inset-y-0 right-0 -z-10 w-1/2 bg-gradient-to-bl from-primary-100/70 via-white to-secondary-100/60"></div>
+  <div class="pointer-events-none absolute -left-10 top-1/2 -z-10 h-52 w-52 -translate-y-1/2 rounded-full bg-aurora-gradient opacity-25 blur-3xl"></div>
+  <div class="relative space-y-6">
+    <p class="section-title">Historias reales</p>
+    <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+      <h2 class="max-w-xl font-display text-3xl font-semibold text-slate-900">
+        Experiencias que respaldan una plataforma de primer nivel
+      </h2>
+      <a
+        href="#postulacion"
+        class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary-300 hover:text-primary-700"
+      >
+        Únete como talento
+      </a>
+    </div>
+    <div class="grid gap-6 lg:grid-cols-3">
+      {testimonios.map((testimonio) => (
+        <figure class="relative flex h-full flex-col gap-4 overflow-hidden rounded-[30px] border border-white/60 bg-white/80 p-7 text-left shadow-deluxe backdrop-blur">
+          <div class="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-primary-200 to-transparent"></div>
+          <div class="flex items-center gap-3">
+            <div class="grid h-12 w-12 place-items-center rounded-full bg-primary-500/10 text-primary-700 shadow-outline">
+              <span class="font-display text-lg">{testimonio.nombre.split(' ').map((word) => word[0]).join('')}</span>
+            </div>
+            <div>
+              <p class="font-semibold text-slate-900">{testimonio.nombre}</p>
+              <p class="text-xs uppercase tracking-[0.3em] text-slate-500">{testimonio.cargo}</p>
+            </div>
+          </div>
+          <blockquote class="text-sm leading-relaxed text-slate-600">“{testimonio.cita}”</blockquote>
+          <div class="mt-auto flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-primary-600">
+            <span class="h-2 w-2 rounded-full bg-primary-400"></span>
+            Contratación lograda
+          </div>
+        </figure>
+      ))}
+    </div>
+  </div>
+</section>
