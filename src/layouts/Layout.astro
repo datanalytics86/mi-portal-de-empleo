@@ -1,0 +1,204 @@
+---
+import '@/styles/global.css';
+import 'leaflet/dist/leaflet.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  noIndex?: boolean;
+}
+
+const {
+  title,
+  description = 'Encuentra tu próximo empleo en Chile. Plataforma georeferenciada sin registros ni fricciones.',
+  noIndex = false,
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const siteURL = import.meta.env.PUBLIC_SITE_URL || 'http://localhost:4321';
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- SEO -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+    {noIndex && <meta name="robots" content="noindex, nofollow" />}
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:site_name" content="Portal de Empleo Chile" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonicalURL} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- DNS Prefetch -->
+    <link rel="dns-prefetch" href={import.meta.env.PUBLIC_SUPABASE_URL} />
+
+    <!-- Security Headers (adicionales a los del servidor) -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#4299E1" />
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <!-- Skip to main content para accesibilidad -->
+    <a href="#main-content" class="skip-to-main">
+      Saltar al contenido principal
+    </a>
+
+    <!-- Header -->
+    <header class="bg-white border-b border-border sticky top-0 z-40 no-print">
+      <nav class="container-custom py-4">
+        <div class="flex items-center justify-between">
+          <a href="/" class="flex items-center gap-2 hover:opacity-80 transition">
+            <svg
+              class="w-8 h-8 text-accent"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              ></path>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <span class="text-xl font-semibold text-text-primary">
+              Portal de Empleo
+            </span>
+          </a>
+
+          <div class="flex items-center gap-4">
+            <a
+              href="/"
+              class="text-text-secondary hover:text-text-primary transition"
+            >
+              Ofertas
+            </a>
+            <a
+              href="/empleador/login"
+              class="text-text-secondary hover:text-text-primary transition"
+            >
+              Empleadores
+            </a>
+            <a href="/empleador/registro" class="btn btn-primary btn-sm">
+              Publicar Oferta
+            </a>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="flex-1">
+      <slot />
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface border-t border-border mt-16 no-print">
+      <div class="container-custom py-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <h3 class="font-semibold mb-3">Portal de Empleo Chile</h3>
+            <p class="text-sm text-text-secondary">
+              Encuentra tu próximo empleo sin fricciones. Plataforma georeferenciada
+              para conectar talento con oportunidades.
+            </p>
+          </div>
+
+          <div>
+            <h3 class="font-semibold mb-3">Enlaces</h3>
+            <ul class="space-y-2 text-sm">
+              <li>
+                <a
+                  href="/privacidad"
+                  class="text-text-secondary hover:text-accent transition"
+                >
+                  Política de Privacidad
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/terminos"
+                  class="text-text-secondary hover:text-accent transition"
+                >
+                  Términos y Condiciones
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/ayuda"
+                  class="text-text-secondary hover:text-accent transition"
+                >
+                  Ayuda
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 class="font-semibold mb-3">Contacto</h3>
+            <p class="text-sm text-text-secondary">
+              ¿Tienes preguntas o sugerencias?
+            </p>
+            <a
+              href="mailto:contacto@example.com"
+              class="text-sm text-accent hover:underline"
+            >
+              contacto@example.com
+            </a>
+          </div>
+        </div>
+
+        <div class="border-t border-border mt-8 pt-8 text-center text-sm text-text-secondary">
+          <p>
+            © {new Date().getFullYear()} Portal de Empleo Chile. Todos los derechos
+            reservados.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Scripts globales -->
+    <script>
+      // Service Worker para PWA (futuro)
+      // if ('serviceWorker' in navigator) {
+      //   navigator.serviceWorker.register('/sw.js');
+      // }
+
+      // Prevenir FOUC (Flash of Unstyled Content)
+      document.documentElement.classList.add('js-enabled');
+    </script>
+  </body>
+</html>

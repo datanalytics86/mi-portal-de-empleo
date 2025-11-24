@@ -1,170 +1,532 @@
-# Architecture Overview
-This document serves as a critical, living template designed to equip agents with a rapid and comprehensive understanding of the codebase's architecture, enabling efficient navigation and effective contribution from day one. Update this document as the codebase evolves.
+# Architecture Overview - Portal de Empleo Chile
+
+Este documento proporciona una visión completa de la arquitectura del Portal de Empleo Chile, diseñado para facilitar la comprensión rápida del sistema y permitir contribuciones efectivas.
+
+**Última actualización**: 2025-11-24
+
+---
 
 ## 1. Project Structure
-This section provides a high-level overview of the project's directory and file structure, categorised by architectural layer or major functional area. It is essential for quickly navigating the codebase, locating relevant files, and understanding the overall organization and separation of concerns.
 
+```
+mi-portal-de-empleo/
+├── src/
+│   ├── components/          # Componentes reutilizables de Astro
+│   │   ├── ui/             # Componentes básicos de UI
+│   │   ├── OfertaCard.astro
+│   │   ├── MapaOfertas.astro
+│   │   ├── FormularioPostulacion.astro
+│   │   └── FiltrosBusqueda.astro
+│   ├── layouts/            # Layouts de página
+│   │   └── Layout.astro    # Layout base con header/footer
+│   ├── pages/              # Páginas y rutas (file-based routing)
+│   │   ├── index.astro     # Home page con mapa y ofertas
+│   │   ├── oferta/
+│   │   │   └── [id].astro  # Detalle de oferta
+│   │   ├── empleador/
+│   │   │   ├── login.astro
+│   │   │   ├── registro.astro
+│   │   │   ├── dashboard.astro
+│   │   │   └── oferta/
+│   │   │       └── nueva.astro
+│   │   └── api/            # API routes (serverless functions)
+│   │       ├── postular.ts # POST: Crear postulación
+│   │       └── ofertas.ts  # GET: Filtrar ofertas
+│   ├── lib/                # Lógica de negocio y utilidades
+│   │   ├── supabase.ts     # Cliente de Supabase
+│   │   ├── comunas.ts      # Datos de comunas con coordenadas
+│   │   ├── types/          # Tipos de TypeScript
+│   │   │   └── database.ts # Tipos generados desde Supabase
+│   │   ├── validations/    # Schemas de validación
+│   │   │   └── schemas.ts  # Schemas Zod
+│   │   └── utils/          # Funciones auxiliares
+│   │       ├── security.ts # Funciones de seguridad
+│   │       └── formatting.ts # Formateo de datos
+│   ├── core/               # Domain layer (arquitectura hexagonal)
+│   │   ├── entities/       # Entidades de dominio
+│   │   ├── repositories/   # Interfaces de repositorios
+│   │   └── use-cases/      # Casos de uso
+│   ├── infrastructure/     # Adaptadores e integraciones
+│   │   ├── supabase/       # Implementación de repositorios
+│   │   └── storage/        # Gestión de archivos
+│   └── styles/
+│       └── global.css      # Estilos globales con Tailwind
+├── database/
+│   └── schema.sql          # Schema completo de PostgreSQL
+├── public/                 # Assets estáticos
+├── .github/
+│   └── workflows/
+│       └── ci.yml          # Pipeline de CI/CD
+├── astro.config.mjs        # Configuración de Astro
+├── tailwind.config.mjs     # Configuración de Tailwind
+├── tsconfig.json           # Configuración de TypeScript
+└── package.json            # Dependencias y scripts
+```
 
-[Project Root]/
-├── backend/              # Contains all server-side code and APIs
-│   ├── src/              # Main source code for backend services
-│   │   ├── api/          # API endpoints and controllers
-│   │   ├── client/       # Business logic and service implementations
-│   │   ├── models/       # Database models/schemas
-│   │   └── utils/        # Backend utility functions
-│   ├── config/           # Backend configuration files
-│   ├── tests/            # Backend unit and integration tests
-│   └── Dockerfile        # Dockerfile for backend deployment
-├── frontend/             # Contains all client-side code for user interfaces
-│   ├── src/              # Main source code for frontend applications
-│   │   ├── components/   # Reusable UI components
-│   │   ├── pages/        # Application pages/views
-│   │   ├── assets/       # Images, fonts, and other static assets
-│   │   ├── services/     # Frontend services for API interaction
-│   │   └── store/        # State management (e.g., Redux, Vuex, Context API)
-│   ├── public/           # Publicly accessible assets (e.g., index.html)
-│   ├── tests/            # Frontend unit and E2E tests
-│   └── package.json      # Frontend dependencies and scripts
-├── common/               # Shared code, types, and utilities used by both frontend and backend
-│   ├── types/            # Shared TypeScript/interface definitions
-│   └── utils/            # General utility functions
-├── docs/                 # Project documentation (e.g., API docs, setup guides)
-├── scripts/              # Automation scripts (e.g., deployment, data seeding)
-├── .github/              # GitHub Actions or other CI/CD configurations
-├── .gitignore            # Specifies intentionally untracked files to ignore
-├── README.md             # Project overview and quick start guide
-└── ARCHITECTURE.md       # This document
-
-
+---
 
 ## 2. High-Level System Diagram
-Provide a simple block diagram (e.g., a C4 Model Level 1: System Context diagram, or a basic component diagram) or a clear text-based description of the major components and their interactions. Focus on how data flows, services communicate, and key architectural boundaries.
 
-[User] <--> [Frontend Application] <--> [Backend Service 1] <--> [Database 1]
-                                    |
-                                    +--> [Backend Service 2] <--> [External API]
+```
+┌─────────────┐
+│  Candidato  │
+│   (Public)  │
+└──────┬──────┘
+       │
+       │ HTTP/HTTPS
+       ↓
+┌─────────────────────────────────────────────┐
+│         Frontend (Astro + Vercel)           │
+│  ┌────────────┐  ┌──────────────────────┐  │
+│  │   Pages    │  │   API Routes         │  │
+│  │  (SSR/SSG) │  │  (Serverless Funcs)  │  │
+│  └────────────┘  └──────────────────────┘  │
+└──────────┬──────────────────┬───────────────┘
+           │                  │
+           │                  │ Supabase Client SDK
+           ↓                  ↓
+    ┌──────────────────────────────────────┐
+    │      Supabase (Backend as a Service) │
+    │  ┌────────────┐  ┌────────────────┐  │
+    │  │ PostgreSQL │  │  Auth Service  │  │
+    │  │  + PostGIS │  │   (JWT/OAuth)  │  │
+    │  └────────────┘  └────────────────┘  │
+    │  ┌────────────┐  ┌────────────────┐  │
+    │  │  Storage   │  │  Row Level     │  │
+    │  │  (S3-like) │  │  Security (RLS)│  │
+    │  └────────────┘  └────────────────┘  │
+    └──────────────────────────────────────┘
+           ↑
+           │
+    ┌──────┴──────┐
+    │  Empleador  │
+    │ (Autenticado)│
+    └─────────────┘
+
+External Services:
+- OpenStreetMap (tiles para Leaflet)
+- Vercel CDN (static assets)
+```
+
+**Flujo de Datos**:
+
+1. **Candidato busca ofertas**:
+   - Browser → Vercel → `/` (SSG con ofertas públicas)
+   - Cliente JS → Leaflet → OpenStreetMap (tiles)
+   - Usuario filtra → `/api/ofertas` → Supabase → PostgreSQL
+
+2. **Candidato postula**:
+   - Browser → `/api/postular` (POST)
+   - Validación + Rate Limiting (in-memory)
+   - Upload CV → Supabase Storage
+   - Crear registro → PostgreSQL (con IP hasheada)
+
+3. **Empleador crea oferta**:
+   - Browser → Login → Supabase Auth
+   - Dashboard → `/empleador/dashboard` (SSR con RLS)
+   - Nueva oferta → `/api/ofertas` → PostgreSQL (RLS policy valida ownership)
+
+---
 
 ## 3. Core Components
-(List and briefly describe the main components of the system. For each, include its primary responsibility and key technologies used.)
 
-### 3.1. Frontend
+### 3.1. Frontend Application
 
-Name: [e.g., Web App, Mobile App]
+**Name**: Portal de Empleo Web App
 
-Description: Briefly describe its primary purpose, key functionalities, and how users or other systems interact with it. E.g., 'The main user interface for interacting with the system, allowing users to manage their profiles, view data dashboards, and initiate workflows.'
+**Description**: Aplicación web server-side rendered (SSR) con Astro que permite a candidatos buscar empleos georeferenciados sin registro, y a empleadores gestionar ofertas tras autenticarse.
 
-Technologies: [e.g., React, Next.js, Vue.js, Swift/Kotlin, HTML/CSS/JS]
+**Technologies**:
+- **Astro 4.x**: Framework SSR/SSG con file-based routing
+- **Tailwind CSS**: Utility-first CSS framework
+- **TypeScript**: Tipado estático
+- **Leaflet 1.9+**: Librería de mapas interactivos
+- **Zod**: Validación de schemas
 
-Deployment: [e.g., Vercel, Netlify, S3/CloudFront]
+**Key Features**:
+- Server-Side Rendering (SSR) para SEO
+- Static Site Generation (SSG) para páginas públicas
+- API Routes como serverless functions
+- Hybrid rendering (SSR + SSG en la misma app)
+
+**Deployment**: Vercel Edge Network
+
+**Performance Goals**:
+- LCP < 2.5s
+- FID < 100ms
+- CLS < 0.1
 
 ### 3.2. Backend Services
 
-(Repeat for each significant backend service. Add more as needed.)
+#### 3.2.1. Supabase (Backend as a Service)
 
-#### 3.2.1. [Service Name 1]
+**Name**: Supabase Cloud
 
-Name: [e.g., User Management Service, Data Processing API]
+**Description**: Backend completo que proporciona base de datos PostgreSQL con extensiones PostGIS, autenticación, storage de archivos y Row Level Security.
 
-Description: [Briefly describe its purpose, e.g., "Handles user authentication and profile management."]
+**Technologies**:
+- PostgreSQL 15+ con PostGIS
+- Supabase Auth (JWT-based)
+- Supabase Storage (S3-compatible)
+- Realtime (WebSockets, no usado en MVP)
 
-Technologies: [e.g., Node.js (Express), Python (Django/Flask), Java (Spring Boot), Go]
+**Key Services**:
 
-Deployment: [e.g., AWS EC2, Kubernetes, Serverless (Lambda/Cloud Functions)]
+1. **PostgreSQL Database**:
+   - Tablas: `empleadores`, `ofertas`, `postulaciones`
+   - Extensiones: PostGIS (geolocalización), pg_trgm (búsqueda full-text)
+   - Índices espaciales GIST para consultas geográficas
+   - Triggers para auto-desactivar ofertas expiradas
 
-#### 3.2.2. [Service Name 2]
+2. **Authentication**:
+   - Email + Password (bcrypt)
+   - JWT tokens con expiración
+   - Row Level Security integrado
 
-Name: [e.g., Analytics Service, Notification Service]
+3. **Storage**:
+   - Bucket `cvs` para almacenar CVs
+   - Límite de 5MB por archivo
+   - MIME types: PDF, DOC, DOCX
+   - Políticas de acceso: solo empleador propietario puede descargar
 
-Description: [Briefly describe its purpose.]
+**Deployment**: Supabase Cloud (managed)
 
-Technologies: [e.g., Python, Kafka, Redis]
+#### 3.2.2. API Routes (Serverless Functions)
 
-Deployment: [e.g., AWS ECS, Google Cloud Run]
+**Name**: Astro API Routes
+
+**Description**: Endpoints serverless que manejan la lógica de negocio sensible (postulaciones, uploads).
+
+**Technologies**: Node.js (runtime de Vercel)
+
+**Key Endpoints**:
+
+- `POST /api/postular`: Crear postulación con validación de archivos
+- `GET /api/ofertas`: Filtrar ofertas públicas
+- `POST /api/ofertas` (futuro): Crear oferta (empleador autenticado)
+
+**Security Features**:
+- Rate limiting multi-capa (IP, email, global)
+- Validación de magic numbers (archivos)
+- Sanitización de inputs (DOMPurify + Zod)
+- IP hashing (SHA-256)
+
+---
 
 ## 4. Data Stores
 
-(List and describe the databases and other persistent storage solutions used.)
+### 4.1. PostgreSQL con PostGIS
 
-### 4.1. [Data Store Type 1]
+**Name**: Base de Datos Principal
 
-Name: [e.g., Primary User Database, Analytics Data Warehouse]
+**Type**: PostgreSQL 15+ con PostGIS extension
 
-Type: [e.g., PostgreSQL, MongoDB, Redis, S3, Firestore]
+**Purpose**: Almacenar ofertas, postulaciones y perfiles de empleadores con soporte geoespacial.
 
-Purpose: [Briefly describe what data it stores and why.]
+**Key Schemas**:
 
-Key Schemas/Collections: [List important tables/collections, e.g., users, products, orders (no need for full schema, just names)]
+```sql
+empleadores (
+  id UUID PRIMARY KEY,
+  email TEXT UNIQUE,
+  nombre_empresa TEXT,
+  created_at TIMESTAMP
+)
 
-### 4.2. [Data Store Type 2]
+ofertas (
+  id UUID PRIMARY KEY,
+  empleador_id UUID REFERENCES empleadores,
+  titulo TEXT,
+  descripcion TEXT,
+  empresa TEXT,
+  tipo_jornada TEXT CHECK(...),
+  categoria TEXT,
+  comuna TEXT,
+  ubicacion GEOGRAPHY(POINT, 4326), -- PostGIS
+  activa BOOLEAN,
+  expires_at TIMESTAMP
+)
 
-Name: [e.g., Cache, Message Queue]
+postulaciones (
+  id UUID PRIMARY KEY,
+  oferta_id UUID REFERENCES ofertas,
+  nombre_candidato TEXT,
+  email_candidato TEXT,
+  cv_url TEXT,
+  ip_hash TEXT, -- SHA-256 de la IP
+  created_at TIMESTAMP
+)
+```
 
-Type: [e.g., Redis, Kafka, RabbitMQ]
+**Indexes**:
+- Índices espaciales GIST en `ofertas.ubicacion`
+- Índices compuestos para búsqueda (`activa`, `categoria`, `tipo_jornada`)
+- Índices GIN para full-text search con pg_trgm
 
-Purpose: [Briefly describe its purpose, e.g., "Used for caching frequently accessed data" or "Inter-service communication."]
+**Security**:
+- Row Level Security (RLS) habilitado en todas las tablas
+- Políticas granulares por rol (anon, authenticated)
+
+### 4.2. Supabase Storage
+
+**Name**: Almacenamiento de CVs
+
+**Type**: S3-compatible object storage
+
+**Purpose**: Almacenar archivos CV subidos por candidatos de forma segura.
+
+**Bucket Configuration**:
+- Nombre: `cvs`
+- Público: No (acceso solo via signed URLs)
+- Límite de tamaño: 5MB
+- Tipos permitidos: PDF, DOC, DOCX
+- Retención: 90 días (limpieza automática via cron)
+
+---
 
 ## 5. External Integrations / APIs
 
-(List any third-party services or external APIs the system interacts with.)
+### 5.1. OpenStreetMap
 
-Service Name 1: [e.g., Stripe, SendGrid, Google Maps API]
+**Purpose**: Proveer tiles (imágenes de mapa) para Leaflet
 
-Purpose: [Briefly describe its function, e.g., "Payment processing."]
+**Integration Method**: HTTP requests desde el cliente
+- URL: `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`
+- Licencia: Open Database License
+- No requiere API key
 
-Integration Method: [e.g., REST API, SDK]
+### 5.2. Vercel Analytics (Opcional)
+
+**Purpose**: Métricas de Core Web Vitals y performance
+
+**Integration Method**: SDK embebido en el cliente
+
+---
 
 ## 6. Deployment & Infrastructure
 
-Cloud Provider: [e.g., AWS, GCP, Azure, On-premise]
+**Cloud Provider**: Vercel (frontend) + Supabase Cloud (backend)
 
-Key Services Used: [e.g., EC2, Lambda, S3, RDS, Kubernetes, Cloud Functions, App Engine]
+**Key Services Used**:
+- **Vercel Edge Network**: CDN global con 100+ ubicaciones
+- **Vercel Serverless Functions**: Node.js runtime para API routes
+- **Supabase**: Managed PostgreSQL + Auth + Storage
 
-CI/CD Pipeline: [e.g., GitHub Actions, GitLab CI, Jenkins, CircleCI]
+**CI/CD Pipeline**: GitHub Actions
 
-Monitoring & Logging: [e.g., Prometheus, Grafana, CloudWatch, Stackdriver, ELK Stack]
+**Workflow**:
+1. Push a `main` → GitHub Actions
+2. Lint + Type Check
+3. Run Tests
+4. Security Audit (npm audit + Trivy)
+5. Build
+6. Deploy to Vercel Production
+
+**Environments**:
+- **Production**: `main` branch → vercel.com
+- **Preview**: Pull Requests → vercel.app (URLs únicas por PR)
+- **Development**: Local (`npm run dev`)
+
+**Monitoring & Logging**:
+- Vercel Logs (stdout/stderr de functions)
+- Supabase Logs (queries SQL, auth events)
+- Vercel Analytics (Core Web Vitals)
+- *Futuro*: Sentry para error tracking
+
+---
 
 ## 7. Security Considerations
 
-(Highlight any critical security aspects, authentication mechanisms, or data encryption practices.)
+### Authentication
 
-Authentication: [e.g., OAuth2, JWT, API Keys]
+- **Empleadores**: Email + Password via Supabase Auth
+  - Bcrypt para hashing de passwords
+  - JWT tokens con expiración de 1 hora
+  - Refresh tokens para renovación automática
 
-Authorization: [e.g., RBAC, ACLs]
+- **Candidatos**: Sin autenticación (postulación anónima)
 
-Data Encryption: [e.g., TLS in transit, AES-256 at rest]
+### Authorization
 
-Key Security Tools/Practices: [e.g., WAF, regular security audits]
+- **Row Level Security (RLS)** en PostgreSQL:
+  - Candidatos: Pueden ver ofertas activas (SELECT)
+  - Empleadores: Pueden ver/editar solo sus ofertas (WHERE empleador_id = auth.uid())
+  - Empleadores: Pueden ver postulaciones solo de sus ofertas
+
+### Data Encryption
+
+- **En tránsito**: TLS 1.3 obligatorio (Vercel + Supabase)
+- **En reposo**: AES-256 (managed by Supabase)
+- **IPs**: Hasheadas con SHA-256 + salt antes de almacenar
+
+### Key Security Practices
+
+- Validación de archivos por magic numbers (no solo MIME type)
+- Rate limiting multi-capa (IP, email, oferta)
+- Input sanitization (DOMPurify)
+- Security headers (CSP, X-Frame-Options, etc.)
+- Regular dependency audits (Dependabot)
+- No almacenamiento de IPs directas (solo hash)
+
+### OWASP Top 10 Mitigations
+
+| Vulnerabilidad | Mitigación |
+|----------------|------------|
+| Injection | Supabase SQL queries (prepared statements) |
+| Broken Auth | Supabase Auth con bcrypt + JWT |
+| Sensitive Data Exposure | TLS + IP hashing + RLS policies |
+| XXE | N/A (no XML parsing) |
+| Broken Access Control | RLS policies granulares |
+| Security Misconfiguration | Headers de seguridad + environment vars |
+| XSS | DOMPurify + CSP headers |
+| Insecure Deserialization | JSON only (nativo en JS) |
+| Known Vulnerabilities | npm audit + Dependabot |
+| Insufficient Logging | Vercel + Supabase logs |
+
+---
 
 ## 8. Development & Testing Environment
 
-Local Setup Instructions: [Link to CONTRIBUTING.md or brief steps]
+### Local Setup
 
-Testing Frameworks: [e.g., Jest, Pytest, JUnit]
+Ver [CONTRIBUTING.md](./CONTRIBUTING.md) para instrucciones detalladas.
 
-Code Quality Tools: [e.g., ESLint, Black, SonarQube]
+**Quick Start**:
+```bash
+npm install
+cp .env.example .env
+# Configurar variables en .env
+npm run dev
+```
+
+### Testing Frameworks
+
+- **Unit Tests**: Vitest
+- **Integration Tests**: Vitest + Supabase test client
+- **E2E Tests**: *Futuro* (Playwright)
+
+### Code Quality Tools
+
+- **Linter**: ESLint + eslint-plugin-astro
+- **Formatter**: Prettier + prettier-plugin-astro
+- **Type Checker**: TypeScript strict mode
+- **Pre-commit**: *Futuro* (Husky + lint-staged)
+
+### Database Migrations
+
+Actualmente manual via SQL scripts en `database/`.
+
+*Futuro*: Migración a herramientas como Prisma o Supabase Migrations CLI.
+
+---
 
 ## 9. Future Considerations / Roadmap
 
-(Briefly note any known architectural debts, planned major changes, or significant future features that might impact the architecture.)
+### Technical Debt
 
-[e.g., "Migrate from monolith to microservices."]
+1. **Rate Limiting**: Actualmente en memoria (no escala horizontalmente)
+   - **Solución**: Migrar a Redis o Upstash
 
-[e.g., "Implement event-driven architecture for real-time updates."]
+2. **File Validation**: Solo valida magic numbers básicos
+   - **Solución**: Integrar ClamAV o VirusTotal API
+
+3. **Search**: Búsqueda básica con ILIKE
+   - **Solución**: Implementar Meilisearch o Algolia
+
+### Planned Features (Fase 2)
+
+1. **Geolocalización del usuario**: GPS + filtro por radio de distancia
+2. **Emails automáticos**: Confirmación de postulación (Resend/SendGrid)
+3. **Dashboard avanzado**: Estadísticas con gráficos (Chart.js)
+4. **Edición de ofertas**: PATCH endpoint con validación
+5. **Sistema de notificaciones**: WebSockets (Supabase Realtime)
+6. **PWA**: Service Worker + offline support
+7. **Internacionalización**: i18n para inglés
+
+### Architectural Changes
+
+- **Event-Driven Architecture**: Para notificaciones en tiempo real
+- **Microservices**: Si escala > 10,000 usuarios (poco probable en MVP)
+- **Edge Computing**: Mover rate limiting a Cloudflare Workers
+
+---
 
 ## 10. Project Identification
 
-Project Name: [Insert Project Name]
+**Project Name**: Portal de Empleo Chile
 
-Repository URL: [Insert Repository URL]
+**Repository URL**: https://github.com/datanalytics86/mi-portal-de-empleo
 
-Primary Contact/Team: [Insert Lead Developer/Team Name]
+**Primary Contact/Team**: DataAnalytics86
 
-Date of Last Update: [YYYY-MM-DD]
+**Date of Last Update**: 2025-11-24
+
+**Version**: 1.0.0-alpha
+
+**License**: MIT
+
+---
 
 ## 11. Glossary / Acronyms
 
-Define any project-specific terms or acronyms.)
+| Término | Definición |
+|---------|------------|
+| **RLS** | Row Level Security - Sistema de PostgreSQL para controlar acceso a filas |
+| **SSR** | Server-Side Rendering - Renderizado en el servidor |
+| **SSG** | Static Site Generation - Generación de sitios estáticos |
+| **PostGIS** | Extensión de PostgreSQL para datos geoespaciales |
+| **JWT** | JSON Web Token - Estándar para tokens de autenticación |
+| **CSP** | Content Security Policy - Header de seguridad |
+| **GIST** | Generalized Search Tree - Tipo de índice para datos espaciales |
+| **Magic Numbers** | Primeros bytes de un archivo que identifican su tipo real |
+| **Rate Limiting** | Técnica para limitar cantidad de requests por tiempo |
+| **DOMPurify** | Librería para sanitizar HTML y prevenir XSS |
 
-[Acronym]: [Full Definition]
+---
 
-[Term]: [Explanation]
+## 12. Performance Benchmarks
+
+### Targets (Lighthouse)
+
+- Performance: > 90
+- Accessibility: > 95
+- Best Practices: > 90
+- SEO: > 95
+
+### Current Metrics (Estimado)
+
+| Métrica | Target | Actual (TBD) |
+|---------|--------|--------------|
+| LCP | < 2.5s | TBD |
+| FID | < 100ms | TBD |
+| CLS | < 0.1 | TBD |
+| TTFB | < 600ms | TBD |
+
+---
+
+## 13. Scaling Considerations
+
+### Current Capacity (Estimado)
+
+- **Concurrent Users**: ~1,000
+- **API Requests/min**: ~500 (rate limiting global)
+- **Database**: Supabase Free Tier (500MB, 2GB transfer)
+- **Storage**: Supabase Free Tier (1GB)
+
+### Bottlenecks Potenciales
+
+1. **Supabase Free Tier**: Límite de conexiones concurrentes (60)
+2. **Rate Limiting In-Memory**: No funciona con múltiples instancias de Vercel
+3. **Búsqueda Full-Text**: ILIKE no escala > 100,000 ofertas
+
+### Scaling Strategy
+
+- **< 10,000 usuarios**: Mantener arquitectura actual
+- **10,000 - 50,000**: Upgrade a Supabase Pro + Redis para rate limiting
+- **> 50,000**: Evaluar microservicios + CDN dedicado
+
+---
+
+**Fin del documento**
+
+Este documento debe actualizarse con cada cambio arquitectónico significativo.
