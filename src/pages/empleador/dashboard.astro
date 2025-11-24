@@ -1,0 +1,355 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import { getSession, supabase } from '@/lib/supabase';
+import { formatShortDate } from '@/lib/utils/formatting';
+
+// Verificar autenticación
+const session = await getSession();
+if (!session) {
+  return Astro.redirect('/empleador/login');
+}
+
+// Obtener datos del empleador
+const { data: empleador } = await supabase
+  .from('empleadores')
+  .select('*')
+  .eq('id', session.user.id)
+  .single();
+
+// Obtener ofertas del empleador
+const { data: ofertas } = await supabase
+  .from('ofertas')
+  .select(`
+    *,
+    postulaciones (count)
+  `)
+  .eq('empleador_id', session.user.id)
+  .order('created_at', { ascending: false });
+
+const ofertasActivas = ofertas?.filter((o) => o.activa && new Date(o.expires_at) > new Date());
+const ofertasExpiradas = ofertas?.filter((o) => !o.activa || new Date(o.expires_at) <= new Date());
+
+const totalPostulaciones = ofertas?.reduce((sum, o) => {
+  const count = Array.isArray(o.postulaciones) ? o.postulaciones.length : (o.postulaciones as any)?.count || 0;
+  return sum + count;
+}, 0) || 0;
+---
+
+<Layout
+  title="Dashboard Empleador - Portal de Empleo Chile"
+  description="Gestiona tus ofertas laborales y revisa postulaciones"
+  noIndex={true}
+>
+  <div class="container-custom py-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-text-primary mb-2">Dashboard</h1>
+        <p class="text-text-secondary">
+          Bienvenido, <span class="font-medium">{empleador?.nombre_empresa || 'Empleador'}</span>
+        </p>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="/empleador/oferta/nueva" class="btn btn-primary">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"></path>
+          </svg>
+          Nueva Oferta
+        </a>
+        <button id="logout-btn" class="btn btn-secondary">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            ></path>
+          </svg>
+          Salir
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="card bg-gradient-to-br from-blue-50 to-white border-blue-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-text-secondary mb-1">Ofertas Activas</p>
+            <p class="text-3xl font-bold text-accent">{ofertasActivas?.length || 0}</p>
+          </div>
+          <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              ></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-gradient-to-br from-green-50 to-white border-green-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-text-secondary mb-1">Total Postulaciones</p>
+            <p class="text-3xl font-bold text-success">{totalPostulaciones}</p>
+          </div>
+          <div class="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              ></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-gradient-to-br from-yellow-50 to-white border-yellow-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-text-secondary mb-1">Ofertas Expiradas</p>
+            <p class="text-3xl font-bold text-yellow-600">{ofertasExpiradas?.length || 0}</p>
+          </div>
+          <div class="w-12 h-12 bg-yellow-600/10 rounded-lg flex items-center justify-center">
+            <svg
+              class="w-6 h-6 text-yellow-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ofertas Activas -->
+    {
+      ofertasActivas && ofertasActivas.length > 0 && (
+        <section class="mb-8">
+          <h2 class="text-2xl font-semibold text-text-primary mb-4">Ofertas Activas</h2>
+          <div class="card overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="bg-surface border-b border-border">
+                  <tr>
+                    <th class="text-left py-3 px-4 font-semibold text-text-primary">Título</th>
+                    <th class="text-left py-3 px-4 font-semibold text-text-primary">Comuna</th>
+                    <th class="text-left py-3 px-4 font-semibold text-text-primary">
+                      Publicado
+                    </th>
+                    <th class="text-left py-3 px-4 font-semibold text-text-primary">
+                      Postulaciones
+                    </th>
+                    <th class="text-right py-3 px-4 font-semibold text-text-primary">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-border">
+                  {ofertasActivas.map((oferta) => {
+                    const postulacionesCount = Array.isArray(oferta.postulaciones)
+                      ? oferta.postulaciones.length
+                      : (oferta.postulaciones as any)?.count || 0;
+                    return (
+                      <tr class="hover:bg-surface/50 transition">
+                        <td class="py-4 px-4">
+                          <div>
+                            <a
+                              href={`/oferta/${oferta.id}`}
+                              class="font-medium text-text-primary hover:text-accent transition"
+                            >
+                              {oferta.titulo}
+                            </a>
+                            <p class="text-sm text-text-secondary mt-0.5">
+                              {oferta.tipo_jornada}
+                            </p>
+                          </div>
+                        </td>
+                        <td class="py-4 px-4 text-text-secondary">{oferta.comuna}</td>
+                        <td class="py-4 px-4 text-text-secondary text-sm">
+                          {formatShortDate(oferta.created_at)}
+                        </td>
+                        <td class="py-4 px-4">
+                          <span class="badge badge-blue">{postulacionesCount}</span>
+                        </td>
+                        <td class="py-4 px-4 text-right">
+                          <div class="flex items-center justify-end gap-2">
+                            <a
+                              href={`/empleador/oferta/${oferta.id}/postulaciones`}
+                              class="text-accent hover:text-accent-hover"
+                              title="Ver postulaciones"
+                            >
+                              <svg
+                                class="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
+                              </svg>
+                            </a>
+                            <a
+                              href={`/oferta/${oferta.id}`}
+                              class="text-text-secondary hover:text-text-primary"
+                              title="Ver oferta pública"
+                              target="_blank"
+                            >
+                              <svg
+                                class="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                />
+                              </svg>
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      ofertasActivas && ofertasActivas.length === 0 && (
+        <section class="mb-8">
+          <div class="card text-center py-12">
+            <svg
+              class="w-16 h-16 mx-auto text-text-secondary/40 mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            <h3 class="text-xl font-semibold text-text-primary mb-2">
+              No tienes ofertas activas
+            </h3>
+            <p class="text-text-secondary mb-6">Comienza publicando tu primera oferta laboral</p>
+            <a href="/empleador/oferta/nueva" class="btn btn-primary">
+              Publicar mi primera oferta
+            </a>
+          </div>
+        </section>
+      )
+    }
+
+    <!-- Ofertas Expiradas (Colapsado por defecto) -->
+    {
+      ofertasExpiradas && ofertasExpiradas.length > 0 && (
+        <section>
+          <details class="card">
+            <summary class="cursor-pointer font-semibold text-text-primary py-2 flex items-center justify-between">
+              <span>Ofertas Expiradas ({ofertasExpiradas.length})</span>
+              <svg
+                class="w-5 h-5 transform transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </summary>
+            <div class="mt-4 overflow-x-auto">
+              <table class="w-full">
+                <thead class="bg-surface border-b border-border">
+                  <tr>
+                    <th class="text-left py-3 px-4 font-semibold text-text-primary text-sm">
+                      Título
+                    </th>
+                    <th class="text-left py-3 px-4 font-semibold text-text-primary text-sm">
+                      Expiró
+                    </th>
+                    <th class="text-left py-3 px-4 font-semibold text-text-primary text-sm">
+                      Postulaciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-border">
+                  {ofertasExpiradas.map((oferta) => {
+                    const postulacionesCount = Array.isArray(oferta.postulaciones)
+                      ? oferta.postulaciones.length
+                      : (oferta.postulaciones as any)?.count || 0;
+                    return (
+                      <tr class="text-sm">
+                        <td class="py-3 px-4 text-text-secondary">{oferta.titulo}</td>
+                        <td class="py-3 px-4 text-text-secondary">
+                          {formatShortDate(oferta.expires_at)}
+                        </td>
+                        <td class="py-3 px-4">
+                          <span class="badge badge-yellow">{postulacionesCount}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </section>
+      )
+    }
+  </div>
+</Layout>
+
+<script>
+  import { signOut } from '@/lib/supabase';
+
+  const logoutBtn = document.getElementById('logout-btn');
+
+  logoutBtn?.addEventListener('click', async () => {
+    try {
+      await signOut();
+      window.location.href = '/empleador/login';
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      alert('Error al cerrar sesión. Intenta nuevamente.');
+    }
+  });
+</script>

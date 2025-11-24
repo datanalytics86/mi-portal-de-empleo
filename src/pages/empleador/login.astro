@@ -1,0 +1,229 @@
+---
+import Layout from '@/layouts/Layout.astro';
+
+// Si ya está autenticado, redirigir al dashboard
+import { getSession } from '@/lib/supabase';
+const session = await getSession();
+if (session) {
+  return Astro.redirect('/empleador/dashboard');
+}
+---
+
+<Layout
+  title="Login Empleadores - Portal de Empleo Chile"
+  description="Accede a tu cuenta de empleador para gestionar tus ofertas laborales"
+  noIndex={true}
+>
+  <div class="min-h-[80vh] flex items-center justify-center py-12 px-4">
+    <div class="w-full max-w-md">
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-text-primary mb-2">Bienvenido de vuelta</h1>
+        <p class="text-text-secondary">Accede a tu cuenta de empleador</p>
+      </div>
+
+      <!-- Formulario de Login -->
+      <div class="card">
+        <form id="login-form" class="space-y-6" novalidate>
+          <!-- Email -->
+          <div>
+            <label for="email" class="label">
+              Correo electrónico <span class="text-error">*</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="tu@empresa.com"
+              class="input"
+              required
+              autocomplete="email"
+            />
+            <p id="email-error" class="error-message hidden"></p>
+          </div>
+
+          <!-- Password -->
+          <div>
+            <label for="password" class="label">
+              Contraseña <span class="text-error">*</span>
+            </label>
+            <div class="relative">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="••••••••"
+                class="input pr-10"
+                required
+                autocomplete="current-password"
+              />
+              <button
+                type="button"
+                id="toggle-password"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
+                aria-label="Mostrar contraseña"
+              >
+                <svg
+                  id="eye-open"
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  ></path>
+                </svg>
+                <svg
+                  id="eye-closed"
+                  class="w-5 h-5 hidden"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+            <p id="password-error" class="error-message hidden"></p>
+          </div>
+
+          <!-- Mensaje de error general -->
+          <div
+            id="form-error"
+            class="hidden bg-error/10 border border-error text-error p-4 rounded-lg"
+          >
+            <p class="font-medium mb-1">Error al iniciar sesión</p>
+            <p id="form-error-message" class="text-sm"></p>
+          </div>
+
+          <!-- Botón de envío -->
+          <button type="submit" id="submit-btn" class="btn btn-primary w-full">
+            <span id="submit-text">Iniciar sesión</span>
+            <span id="submit-loading" class="hidden">
+              <span class="spinner mr-2"></span>
+              Iniciando sesión...
+            </span>
+          </button>
+
+          <!-- Link a recuperar contraseña (futuro) -->
+          <div class="text-center">
+            <button
+              type="button"
+              class="text-sm text-accent hover:underline"
+              onclick="alert('Funcionalidad próximamente')"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Link a registro -->
+      <p class="text-center mt-6 text-text-secondary">
+        ¿No tienes cuenta?
+        <a href="/empleador/registro" class="text-accent hover:underline font-medium">
+          Regístrate gratis
+        </a>
+      </p>
+
+      <!-- Volver al inicio -->
+      <div class="text-center mt-4">
+        <a href="/" class="text-sm text-text-secondary hover:text-accent transition">
+          ← Volver al inicio
+        </a>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { supabase } from '@/lib/supabase';
+
+  const form = document.getElementById('login-form') as HTMLFormElement;
+  const emailInput = document.getElementById('email') as HTMLInputElement;
+  const passwordInput = document.getElementById('password') as HTMLInputElement;
+  const emailError = document.getElementById('email-error') as HTMLElement;
+  const passwordError = document.getElementById('password-error') as HTMLElement;
+  const formError = document.getElementById('form-error') as HTMLElement;
+  const formErrorMessage = document.getElementById('form-error-message') as HTMLElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const submitText = document.getElementById('submit-text') as HTMLElement;
+  const submitLoading = document.getElementById('submit-loading') as HTMLElement;
+  const togglePasswordBtn = document.getElementById('toggle-password') as HTMLButtonElement;
+  const eyeOpen = document.getElementById('eye-open') as HTMLElement;
+  const eyeClosed = document.getElementById('eye-closed') as HTMLElement;
+
+  // Toggle mostrar/ocultar contraseña
+  togglePasswordBtn.addEventListener('click', () => {
+    const isPassword = passwordInput.type === 'password';
+    passwordInput.type = isPassword ? 'text' : 'password';
+    eyeOpen.classList.toggle('hidden');
+    eyeClosed.classList.toggle('hidden');
+  });
+
+  // Envío del formulario
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Resetear errores
+    emailError.classList.add('hidden');
+    passwordError.classList.add('hidden');
+    formError.classList.add('hidden');
+
+    // Obtener valores
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    // Validación básica
+    if (!email) {
+      emailError.textContent = 'El email es requerido';
+      emailError.classList.remove('hidden');
+      return;
+    }
+
+    if (!password) {
+      passwordError.textContent = 'La contraseña es requerida';
+      passwordError.classList.remove('hidden');
+      return;
+    }
+
+    // Mostrar loading
+    submitBtn.disabled = true;
+    submitText.classList.add('hidden');
+    submitLoading.classList.remove('hidden');
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      // Éxito - redirigir al dashboard
+      window.location.href = '/empleador/dashboard';
+    } catch (error) {
+      formError.classList.remove('hidden');
+      formErrorMessage.textContent =
+        error instanceof Error ? error.message : 'Credenciales inválidas';
+    } finally {
+      submitBtn.disabled = false;
+      submitText.classList.remove('hidden');
+      submitLoading.classList.add('hidden');
+    }
+  });
+</script>

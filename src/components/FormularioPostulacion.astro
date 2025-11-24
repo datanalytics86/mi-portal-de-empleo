@@ -1,0 +1,381 @@
+---
+interface Props {
+  ofertaId: string;
+  ofertaTitulo: string;
+}
+
+const { ofertaId, ofertaTitulo } = Astro.props;
+---
+
+<div class="card">
+  <h3 class="text-2xl font-semibold text-text-primary mb-6">Postular a esta oferta</h3>
+
+  <form
+    id="form-postulacion"
+    class="space-y-6"
+    method="POST"
+    enctype="multipart/form-data"
+    novalidate
+  >
+    <input type="hidden" name="ofertaId" value={ofertaId} />
+
+    <!-- Nombre (Opcional) -->
+    <div>
+      <label for="nombre" class="label">
+        Nombre completo
+        <span class="text-text-secondary font-normal">(opcional)</span>
+      </label>
+      <input
+        type="text"
+        id="nombre"
+        name="nombre"
+        placeholder="Ej: Juan Pérez"
+        class="input"
+        maxlength="100"
+        autocomplete="name"
+      />
+      <p class="text-xs text-text-secondary mt-1">
+        Ayuda al empleador a identificarte, pero no es obligatorio.
+      </p>
+    </div>
+
+    <!-- Email (Opcional) -->
+    <div>
+      <label for="email" class="label">
+        Correo electrónico
+        <span class="text-text-secondary font-normal">(opcional)</span>
+      </label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        placeholder="tu@email.com"
+        class="input"
+        maxlength="255"
+        autocomplete="email"
+      />
+      <p class="text-xs text-text-secondary mt-1">
+        Para que el empleador pueda contactarte directamente.
+      </p>
+    </div>
+
+    <!-- CV (Requerido) -->
+    <div>
+      <label for="cv" class="label">
+        Currículum Vitae <span class="text-error">*</span>
+      </label>
+
+      <!-- Custom file input con drag & drop -->
+      <div
+        id="drop-zone"
+        class="relative border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-accent transition-colors cursor-pointer"
+      >
+        <input
+          type="file"
+          id="cv"
+          name="cv"
+          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          required
+        />
+
+        <div id="drop-zone-content">
+          <svg
+            class="w-12 h-12 mx-auto text-text-secondary mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+            ></path>
+          </svg>
+          <p class="text-text-primary font-medium mb-1">
+            Arrastra tu CV aquí o haz click para seleccionar
+          </p>
+          <p class="text-sm text-text-secondary">
+            PDF, DOC o DOCX (máx. 5MB)
+          </p>
+        </div>
+
+        <div id="file-preview" class="hidden">
+          <svg
+            class="w-12 h-12 mx-auto text-success mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <p id="file-name" class="text-text-primary font-medium mb-1"></p>
+          <p id="file-size" class="text-sm text-text-secondary"></p>
+          <button
+            type="button"
+            id="remove-file"
+            class="text-error hover:underline text-sm mt-2"
+          >
+            Eliminar archivo
+          </button>
+        </div>
+      </div>
+
+      <p id="cv-error" class="error-message hidden"></p>
+    </div>
+
+    <!-- Checkbox de privacidad (Requerido) -->
+    <div>
+      <label class="flex items-start gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          id="acceptPrivacy"
+          name="acceptPrivacy"
+          class="mt-1 w-4 h-4 rounded border-border text-accent focus:ring-2 focus:ring-accent/20"
+          required
+        />
+        <span class="text-sm text-text-secondary">
+          Acepto la <a href="/privacidad" class="text-accent hover:underline" target="_blank"
+            >política de privacidad</a
+          > y autorizo el uso de mis datos para este proceso de postulación. <span
+            class="text-error">*</span
+          >
+        </span>
+      </label>
+      <p id="privacy-error" class="error-message hidden"></p>
+    </div>
+
+    <!-- Mensaje de error general -->
+    <div id="form-error" class="hidden bg-error/10 border border-error text-error p-4 rounded-lg">
+      <p class="font-medium mb-1">Error al enviar postulación</p>
+      <p id="form-error-message" class="text-sm"></p>
+    </div>
+
+    <!-- Mensaje de éxito -->
+    <div
+      id="form-success"
+      class="hidden bg-success/10 border border-success text-success p-4 rounded-lg"
+    >
+      <div class="flex items-start gap-3">
+        <svg class="w-6 h-6 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div>
+          <p class="font-medium mb-1">¡Postulación enviada correctamente!</p>
+          <p class="text-sm">
+            El empleador recibirá tu CV y podrá contactarte si estás dentro del perfil buscado.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botón de envío -->
+    <button type="submit" id="submit-btn" class="btn btn-primary w-full btn-lg">
+      <span id="submit-text">Enviar postulación</span>
+      <span id="submit-loading" class="hidden">
+        <span class="spinner mr-2"></span>
+        Enviando...
+      </span>
+    </button>
+
+    <p class="text-xs text-center text-text-secondary">
+      Al postular, tu CV será enviado directamente al empleador. Tus datos se mantendrán privados y
+      seguros.
+    </p>
+  </form>
+</div>
+
+<script>
+  // Validación y manejo del formulario
+  const form = document.getElementById('form-postulacion') as HTMLFormElement;
+  const cvInput = document.getElementById('cv') as HTMLInputElement;
+  const dropZone = document.getElementById('drop-zone') as HTMLElement;
+  const dropZoneContent = document.getElementById('drop-zone-content') as HTMLElement;
+  const filePreview = document.getElementById('file-preview') as HTMLElement;
+  const fileName = document.getElementById('file-name') as HTMLElement;
+  const fileSize = document.getElementById('file-size') as HTMLElement;
+  const removeFileBtn = document.getElementById('remove-file') as HTMLButtonElement;
+  const cvError = document.getElementById('cv-error') as HTMLElement;
+  const privacyError = document.getElementById('privacy-error') as HTMLElement;
+  const formError = document.getElementById('form-error') as HTMLElement;
+  const formErrorMessage = document.getElementById('form-error-message') as HTMLElement;
+  const formSuccess = document.getElementById('form-success') as HTMLElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const submitText = document.getElementById('submit-text') as HTMLElement;
+  const submitLoading = document.getElementById('submit-loading') as HTMLElement;
+
+  let selectedFile: File | null = null;
+
+  // Validar archivo
+  function validateFile(file: File): string | null {
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (!allowedTypes.includes(file.type)) {
+      return 'Solo se aceptan archivos PDF o Word (.doc, .docx)';
+    }
+
+    if (file.size > maxSize) {
+      return 'El archivo no puede superar 5MB';
+    }
+
+    return null;
+  }
+
+  // Formatear tamaño de archivo
+  function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  // Mostrar preview del archivo
+  function showFilePreview(file: File) {
+    selectedFile = file;
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+    dropZoneContent.classList.add('hidden');
+    filePreview.classList.remove('hidden');
+    dropZone.classList.add('border-success', 'bg-success/5');
+    cvError.classList.add('hidden');
+  }
+
+  // Limpiar archivo
+  function clearFile() {
+    selectedFile = null;
+    cvInput.value = '';
+    dropZoneContent.classList.remove('hidden');
+    filePreview.classList.add('hidden');
+    dropZone.classList.remove('border-success', 'bg-success/5');
+  }
+
+  // Manejar selección de archivo
+  cvInput.addEventListener('change', (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    const error = validateFile(file);
+    if (error) {
+      cvError.textContent = error;
+      cvError.classList.remove('hidden');
+      clearFile();
+      return;
+    }
+
+    showFilePreview(file);
+  });
+
+  // Drag & Drop
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('border-accent', 'bg-accent/5');
+  });
+
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('border-accent', 'bg-accent/5');
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('border-accent', 'bg-accent/5');
+
+    const file = e.dataTransfer?.files[0];
+    if (!file) return;
+
+    const error = validateFile(file);
+    if (error) {
+      cvError.textContent = error;
+      cvError.classList.remove('hidden');
+      return;
+    }
+
+    // Asignar archivo al input
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    cvInput.files = dataTransfer.files;
+
+    showFilePreview(file);
+  });
+
+  // Botón eliminar archivo
+  removeFileBtn.addEventListener('click', clearFile);
+
+  // Envío del formulario
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Resetear mensajes
+    formError.classList.add('hidden');
+    formSuccess.classList.add('hidden');
+    cvError.classList.add('hidden');
+    privacyError.classList.add('hidden');
+
+    // Validar archivo
+    if (!selectedFile) {
+      cvError.textContent = 'Debes subir tu CV';
+      cvError.classList.remove('hidden');
+      return;
+    }
+
+    // Validar privacidad
+    const privacyCheckbox = document.getElementById('acceptPrivacy') as HTMLInputElement;
+    if (!privacyCheckbox.checked) {
+      privacyError.textContent = 'Debes aceptar la política de privacidad';
+      privacyError.classList.remove('hidden');
+      return;
+    }
+
+    // Preparar FormData
+    const formData = new FormData(form);
+
+    // Mostrar loading
+    submitBtn.disabled = true;
+    submitText.classList.add('hidden');
+    submitLoading.classList.remove('hidden');
+
+    try {
+      const response = await fetch('/api/postular', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al enviar postulación');
+      }
+
+      // Éxito
+      formSuccess.classList.remove('hidden');
+      form.reset();
+      clearFile();
+
+      // Scroll al mensaje de éxito
+      formSuccess.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (error) {
+      formError.classList.remove('hidden');
+      formErrorMessage.textContent =
+        error instanceof Error ? error.message : 'Error desconocido';
+
+      // Scroll al error
+      formError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } finally {
+      submitBtn.disabled = false;
+      submitText.classList.remove('hidden');
+      submitLoading.classList.add('hidden');
+    }
+  });
+</script>

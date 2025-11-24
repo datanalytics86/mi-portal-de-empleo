@@ -1,0 +1,358 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import FiltrosBusqueda from '@/components/FiltrosBusqueda.astro';
+import OfertaCard from '@/components/OfertaCard.astro';
+import { supabase } from '@/lib/supabase';
+import type { Oferta } from '@/lib/types/database';
+
+// Obtener parámetros de búsqueda
+const url = new URL(Astro.request.url);
+const searchParams = {
+  q: url.searchParams.get('q') || '',
+  comuna: url.searchParams.get('comuna') || '',
+  tipo_jornada: url.searchParams.get('tipo_jornada') || '',
+  categoria: url.searchParams.get('categoria') || '',
+};
+
+// Construir query para obtener ofertas
+let query = supabase
+  .from('ofertas')
+  .select('*')
+  .eq('activa', true)
+  .gte('expires_at', new Date().toISOString())
+  .order('created_at', { ascending: false })
+  .limit(50);
+
+// Aplicar filtros
+if (searchParams.q) {
+  query = query.or(
+    `titulo.ilike.%${searchParams.q}%,empresa.ilike.%${searchParams.q}%,descripcion.ilike.%${searchParams.q}%`
+  );
+}
+
+if (searchParams.comuna) {
+  query = query.eq('comuna', searchParams.comuna);
+}
+
+if (searchParams.tipo_jornada) {
+  query = query.eq('tipo_jornada', searchParams.tipo_jornada);
+}
+
+if (searchParams.categoria) {
+  query = query.eq('categoria', searchParams.categoria);
+}
+
+// Ejecutar query
+const { data: ofertas, error } = await query;
+
+if (error) {
+  console.error('Error al cargar ofertas:', error);
+}
+
+// Preparar ofertas para el mapa
+const ofertasConCoordenadas = (ofertas || []).map((oferta) => {
+  // Extraer coordenadas del campo ubicacion (PostGIS GEOGRAPHY)
+  let lat = -33.4489; // Default: Santiago
+  let lng = -70.6693;
+
+  if (oferta.ubicacion) {
+    const match = oferta.ubicacion.match(/POINT\(([^ ]+) ([^ ]+)\)/);
+    if (match) {
+      lng = parseFloat(match[1]);
+      lat = parseFloat(match[2]);
+    }
+  }
+
+  return {
+    ...oferta,
+    lat,
+    lng,
+  };
+});
+
+const totalOfertas = ofertasConCoordenadas.length;
+const hayFiltros = searchParams.q || searchParams.comuna || searchParams.tipo_jornada || searchParams.categoria;
+---
+
+<Layout
+  title="Portal de Empleo Chile - Encuentra tu próximo trabajo"
+  description="Busca ofertas de empleo en Chile con mapa interactivo. Postula sin registro, solo sube tu CV."
+>
+  <!-- Hero Section -->
+  <section class="bg-gradient-to-b from-accent/10 to-white py-12 md:py-16">
+    <div class="container-custom">
+      <div class="max-w-3xl mx-auto text-center">
+        <h1 class="text-4xl md:text-5xl font-bold text-text-primary mb-4">
+          Encuentra tu próximo empleo en Chile
+        </h1>
+        <p class="text-lg text-text-secondary mb-8">
+          Explora ofertas laborales en el mapa. Postula sin registro, solo con tu CV.
+        </p>
+        <div class="flex flex-wrap items-center justify-center gap-4">
+          <a href="#ofertas" class="btn btn-primary btn-lg">
+            <svg
+              class="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            Ver Ofertas
+          </a>
+          <a href="/empleador/registro" class="btn btn-secondary btn-lg">
+            ¿Eres empleador? Publica gratis
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filtros de Búsqueda -->
+  <section class="container-custom py-8" id="filtros">
+    <FiltrosBusqueda />
+  </section>
+
+  <!-- Resultados -->
+  <section class="container-custom pb-16" id="ofertas">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-semibold text-text-primary">
+        {
+          hayFiltros
+            ? `${totalOfertas} resultado${totalOfertas !== 1 ? 's' : ''} encontrado${totalOfertas !== 1 ? 's' : ''}`
+            : `${totalOfertas} oferta${totalOfertas !== 1 ? 's' : ''} disponible${totalOfertas !== 1 ? 's' : ''}`
+        }
+      </h2>
+      <button
+        id="toggle-view"
+        class="btn btn-secondary btn-sm md:hidden"
+        aria-label="Alternar vista entre mapa y lista"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+          ></path>
+        </svg>
+        <span class="ml-2">Mapa</span>
+      </button>
+    </div>
+
+    {
+      totalOfertas === 0 ? (
+        <div class="text-center py-16">
+          <svg
+            class="w-24 h-24 mx-auto text-text-secondary/40 mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <h3 class="text-xl font-semibold text-text-primary mb-2">
+            No se encontraron ofertas
+          </h3>
+          <p class="text-text-secondary mb-6">
+            Intenta ajustar tus filtros de búsqueda
+          </p>
+          <a href="/" class="btn btn-primary">Limpiar filtros</a>
+        </div>
+      ) : (
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Mapa (Desktop siempre visible, Mobile toggle) -->
+          <div id="map-container" class="hidden lg:block lg:sticky lg:top-24 lg:h-[600px]">
+            <div
+              id="mapa"
+              class="h-full w-full rounded-lg shadow-md border border-border"
+              aria-label="Mapa interactivo con ubicaciones de ofertas laborales"
+            />
+          </div>
+
+          <!-- Lista de Ofertas -->
+          <div id="ofertas-list" class="space-y-4">
+            {ofertasConCoordenadas.map((oferta) => (
+              <OfertaCard oferta={oferta} />
+            ))}
+          </div>
+        </div>
+      )
+    }
+  </section>
+
+  <!-- Stats Section -->
+  <section class="bg-surface py-12 no-print">
+    <div class="container-custom">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+        <div>
+          <div class="text-4xl font-bold text-accent mb-2">{totalOfertas}+</div>
+          <div class="text-text-secondary">Ofertas Activas</div>
+        </div>
+        <div>
+          <div class="text-4xl font-bold text-accent mb-2">100+</div>
+          <div class="text-text-secondary">Comunas en Chile</div>
+        </div>
+        <div>
+          <div class="text-4xl font-bold text-accent mb-2">0</div>
+          <div class="text-text-secondary">Registros Obligatorios</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="container-custom py-16 text-center no-print">
+    <h2 class="text-3xl font-bold text-text-primary mb-4">¿Buscas talento para tu empresa?</h2>
+    <p class="text-lg text-text-secondary mb-8 max-w-2xl mx-auto">
+      Publica tus ofertas laborales de forma gratuita y recibe postulaciones directamente en tu
+      dashboard.
+    </p>
+    <a href="/empleador/registro" class="btn btn-primary btn-lg">
+      Registrar mi empresa
+      <svg
+        class="w-5 h-5 ml-2"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+      </svg>
+    </a>
+  </section>
+</Layout>
+
+<script>
+  import L from 'leaflet';
+  import 'leaflet/dist/leaflet.css';
+
+  // Fix para iconos de Leaflet en build
+  // @ts-ignore
+  delete L.Icon.Default.prototype._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  });
+
+  // Obtener datos de ofertas del DOM
+  const ofertasElements = document.querySelectorAll('[data-oferta-id]');
+  const ofertas = Array.from(ofertasElements).map((el) => ({
+    id: el.getAttribute('data-oferta-id'),
+    titulo: el.getAttribute('data-oferta-titulo'),
+    empresa: el.getAttribute('data-oferta-empresa'),
+    lat: parseFloat(el.getAttribute('data-oferta-lat') || '-33.4489'),
+    lng: parseFloat(el.getAttribute('data-oferta-lng') || '-70.6693'),
+  }));
+
+  // Inicializar mapa solo si hay ofertas
+  if (ofertas.length > 0) {
+    const mapaElement = document.getElementById('mapa');
+
+    if (mapaElement) {
+      // Calcular centro del mapa basado en ofertas
+      const centerLat = ofertas.reduce((sum, o) => sum + o.lat, 0) / ofertas.length;
+      const centerLng = ofertas.reduce((sum, o) => sum + o.lng, 0) / ofertas.length;
+
+      const mapa = L.map('mapa').setView([centerLat, centerLng], 11);
+
+      // Agregar tiles de OpenStreetMap
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(mapa);
+
+      // Agregar marcadores
+      ofertas.forEach((oferta) => {
+        const marker = L.marker([oferta.lat, oferta.lng]).addTo(mapa);
+        marker.bindPopup(`
+          <div class="p-2">
+            <h4 class="font-semibold text-base mb-1">${oferta.titulo}</h4>
+            <p class="text-sm text-gray-600 mb-2">${oferta.empresa}</p>
+            <a href="/oferta/${oferta.id}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+              Ver detalles →
+            </a>
+          </div>
+        `);
+
+        // Highlight en la lista cuando hover en marcador
+        marker.on('mouseover', () => {
+          const card = document.querySelector(`[data-oferta-id="${oferta.id}"]`);
+          card?.classList.add('ring-2', 'ring-accent');
+        });
+
+        marker.on('mouseout', () => {
+          const card = document.querySelector(`[data-oferta-id="${oferta.id}"]`);
+          card?.classList.remove('ring-2', 'ring-accent');
+        });
+      });
+
+      // Ajustar vista para mostrar todos los marcadores
+      if (ofertas.length > 1) {
+        const bounds = L.latLngBounds(ofertas.map((o) => [o.lat, o.lng]));
+        mapa.fitBounds(bounds, { padding: [50, 50] });
+      }
+    }
+  }
+
+  // Toggle mapa/lista en mobile
+  const toggleBtn = document.getElementById('toggle-view');
+  const mapContainer = document.getElementById('map-container');
+  const ofertasList = document.getElementById('ofertas-list');
+
+  if (toggleBtn && mapContainer && ofertasList) {
+    let showingMap = false;
+
+    toggleBtn.addEventListener('click', () => {
+      showingMap = !showingMap;
+
+      if (showingMap) {
+        mapContainer.classList.remove('hidden');
+        ofertasList.classList.add('hidden');
+        toggleBtn.innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+          <span class="ml-2">Lista</span>
+        `;
+      } else {
+        mapContainer.classList.add('hidden');
+        ofertasList.classList.remove('hidden');
+        toggleBtn.innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+          </svg>
+          <span class="ml-2">Mapa</span>
+        `;
+      }
+    });
+  }
+</script>
+
+<style>
+  /* Asegurar que el mapa tenga altura en mobile cuando está visible */
+  #map-container.block {
+    height: 500px;
+  }
+
+  @media (min-width: 1024px) {
+    #map-container {
+      height: 600px;
+    }
+  }
+</style>

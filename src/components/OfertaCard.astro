@@ -3,13 +3,20 @@ import type { Oferta } from '@/lib/types/database';
 import { formatRelativeTime } from '@/lib/utils/formatting';
 
 interface Props {
-  oferta: Oferta;
+  oferta: Oferta & { lat?: number; lng?: number };
 }
 
 const { oferta } = Astro.props;
 ---
 
-<article class="card group">
+<article
+  class="card group transition-all"
+  data-oferta-id={oferta.id}
+  data-oferta-titulo={oferta.titulo}
+  data-oferta-empresa={oferta.empresa}
+  data-oferta-lat={oferta.lat || -33.4489}
+  data-oferta-lng={oferta.lng || -70.6693}
+>
   <div class="flex flex-col gap-3">
     <div class="flex items-start justify-between gap-4">
       <h3 class="text-xl font-semibold text-text-primary group-hover:text-accent transition-colors">

@@ -1,0 +1,386 @@
+---
+import Layout from '@/layouts/Layout.astro';
+
+// Si ya está autenticado, redirigir al dashboard
+import { getSession } from '@/lib/supabase';
+const session = await getSession();
+if (session) {
+  return Astro.redirect('/empleador/dashboard');
+}
+---
+
+<Layout
+  title="Registro Empleadores - Portal de Empleo Chile"
+  description="Regístrate como empleador para publicar ofertas laborales gratis"
+  noIndex={true}
+>
+  <div class="min-h-[80vh] flex items-center justify-center py-12 px-4">
+    <div class="w-full max-w-md">
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-text-primary mb-2">Crea tu cuenta</h1>
+        <p class="text-text-secondary">Publica ofertas laborales de forma gratuita</p>
+      </div>
+
+      <!-- Formulario de Registro -->
+      <div class="card">
+        <form id="registro-form" class="space-y-6" novalidate>
+          <!-- Nombre de la empresa -->
+          <div>
+            <label for="nombreEmpresa" class="label">
+              Nombre de la empresa <span class="text-error">*</span>
+            </label>
+            <input
+              type="text"
+              id="nombreEmpresa"
+              name="nombreEmpresa"
+              placeholder="Ej: Mi Empresa Ltda."
+              class="input"
+              required
+              maxlength="100"
+              autocomplete="organization"
+            />
+            <p id="nombreEmpresa-error" class="error-message hidden"></p>
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label for="email" class="label">
+              Correo electrónico <span class="text-error">*</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="contacto@empresa.com"
+              class="input"
+              required
+              autocomplete="email"
+            />
+            <p class="text-xs text-text-secondary mt-1">
+              Usarás este email para iniciar sesión
+            </p>
+            <p id="email-error" class="error-message hidden"></p>
+          </div>
+
+          <!-- Password -->
+          <div>
+            <label for="password" class="label">
+              Contraseña <span class="text-error">*</span>
+            </label>
+            <div class="relative">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Mínimo 8 caracteres"
+                class="input pr-10"
+                required
+                autocomplete="new-password"
+                minlength="8"
+              />
+              <button
+                type="button"
+                id="toggle-password"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
+                aria-label="Mostrar contraseña"
+              >
+                <svg
+                  id="eye-open"
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  ></path>
+                </svg>
+                <svg
+                  id="eye-closed"
+                  class="w-5 h-5 hidden"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Validador de fortaleza de contraseña -->
+            <div class="mt-2 space-y-1">
+              <div class="flex items-center gap-2 text-xs">
+                <span id="length-check" class="text-text-secondary">✗ Mínimo 8 caracteres</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <span id="uppercase-check" class="text-text-secondary">✗ Una mayúscula</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <span id="lowercase-check" class="text-text-secondary">✗ Una minúscula</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <span id="number-check" class="text-text-secondary">✗ Un número</span>
+              </div>
+            </div>
+            <p id="password-error" class="error-message hidden"></p>
+          </div>
+
+          <!-- Términos y condiciones -->
+          <div>
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                id="acceptTerms"
+                name="acceptTerms"
+                class="mt-1 w-4 h-4 rounded border-border text-accent focus:ring-2 focus:ring-accent/20"
+                required
+              />
+              <span class="text-sm text-text-secondary">
+                Acepto los <a
+                  href="/terminos"
+                  class="text-accent hover:underline"
+                  target="_blank">términos y condiciones</a
+                > y la <a href="/privacidad" class="text-accent hover:underline" target="_blank"
+                  >política de privacidad</a
+                >. <span class="text-error">*</span>
+              </span>
+            </label>
+            <p id="terms-error" class="error-message hidden"></p>
+          </div>
+
+          <!-- Mensaje de error general -->
+          <div
+            id="form-error"
+            class="hidden bg-error/10 border border-error text-error p-4 rounded-lg"
+          >
+            <p class="font-medium mb-1">Error al crear cuenta</p>
+            <p id="form-error-message" class="text-sm"></p>
+          </div>
+
+          <!-- Botón de envío -->
+          <button type="submit" id="submit-btn" class="btn btn-primary w-full">
+            <span id="submit-text">Crear cuenta</span>
+            <span id="submit-loading" class="hidden">
+              <span class="spinner mr-2"></span>
+              Creando cuenta...
+            </span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Link a login -->
+      <p class="text-center mt-6 text-text-secondary">
+        ¿Ya tienes cuenta?
+        <a href="/empleador/login" class="text-accent hover:underline font-medium">
+          Inicia sesión
+        </a>
+      </p>
+
+      <!-- Volver al inicio -->
+      <div class="text-center mt-4">
+        <a href="/" class="text-sm text-text-secondary hover:text-accent transition">
+          ← Volver al inicio
+        </a>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { supabase } from '@/lib/supabase';
+
+  const form = document.getElementById('registro-form') as HTMLFormElement;
+  const nombreEmpresaInput = document.getElementById('nombreEmpresa') as HTMLInputElement;
+  const emailInput = document.getElementById('email') as HTMLInputElement;
+  const passwordInput = document.getElementById('password') as HTMLInputElement;
+  const acceptTermsCheckbox = document.getElementById('acceptTerms') as HTMLInputElement;
+
+  const nombreEmpresaError = document.getElementById('nombreEmpresa-error') as HTMLElement;
+  const emailError = document.getElementById('email-error') as HTMLElement;
+  const passwordError = document.getElementById('password-error') as HTMLElement;
+  const termsError = document.getElementById('terms-error') as HTMLElement;
+  const formError = document.getElementById('form-error') as HTMLElement;
+  const formErrorMessage = document.getElementById('form-error-message') as HTMLElement;
+
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const submitText = document.getElementById('submit-text') as HTMLElement;
+  const submitLoading = document.getElementById('submit-loading') as HTMLElement;
+
+  const togglePasswordBtn = document.getElementById('toggle-password') as HTMLButtonElement;
+  const eyeOpen = document.getElementById('eye-open') as HTMLElement;
+  const eyeClosed = document.getElementById('eye-closed') as HTMLElement;
+
+  const lengthCheck = document.getElementById('length-check') as HTMLElement;
+  const uppercaseCheck = document.getElementById('uppercase-check') as HTMLElement;
+  const lowercaseCheck = document.getElementById('lowercase-check') as HTMLElement;
+  const numberCheck = document.getElementById('number-check') as HTMLElement;
+
+  // Toggle mostrar/ocultar contraseña
+  togglePasswordBtn.addEventListener('click', () => {
+    const isPassword = passwordInput.type === 'password';
+    passwordInput.type = isPassword ? 'text' : 'password';
+    eyeOpen.classList.toggle('hidden');
+    eyeClosed.classList.toggle('hidden');
+  });
+
+  // Validador de contraseña en tiempo real
+  passwordInput.addEventListener('input', () => {
+    const password = passwordInput.value;
+
+    // Mínimo 8 caracteres
+    if (password.length >= 8) {
+      lengthCheck.textContent = '✓ Mínimo 8 caracteres';
+      lengthCheck.classList.remove('text-text-secondary');
+      lengthCheck.classList.add('text-success');
+    } else {
+      lengthCheck.textContent = '✗ Mínimo 8 caracteres';
+      lengthCheck.classList.remove('text-success');
+      lengthCheck.classList.add('text-text-secondary');
+    }
+
+    // Una mayúscula
+    if (/[A-Z]/.test(password)) {
+      uppercaseCheck.textContent = '✓ Una mayúscula';
+      uppercaseCheck.classList.remove('text-text-secondary');
+      uppercaseCheck.classList.add('text-success');
+    } else {
+      uppercaseCheck.textContent = '✗ Una mayúscula';
+      uppercaseCheck.classList.remove('text-success');
+      uppercaseCheck.classList.add('text-text-secondary');
+    }
+
+    // Una minúscula
+    if (/[a-z]/.test(password)) {
+      lowercaseCheck.textContent = '✓ Una minúscula';
+      lowercaseCheck.classList.remove('text-text-secondary');
+      lowercaseCheck.classList.add('text-success');
+    } else {
+      lowercaseCheck.textContent = '✗ Una minúscula';
+      lowercaseCheck.classList.remove('text-success');
+      lowercaseCheck.classList.add('text-text-secondary');
+    }
+
+    // Un número
+    if (/[0-9]/.test(password)) {
+      numberCheck.textContent = '✓ Un número';
+      numberCheck.classList.remove('text-text-secondary');
+      numberCheck.classList.add('text-success');
+    } else {
+      numberCheck.textContent = '✗ Un número';
+      numberCheck.classList.remove('text-success');
+      numberCheck.classList.add('text-text-secondary');
+    }
+  });
+
+  // Envío del formulario
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Resetear errores
+    nombreEmpresaError.classList.add('hidden');
+    emailError.classList.add('hidden');
+    passwordError.classList.add('hidden');
+    termsError.classList.add('hidden');
+    formError.classList.add('hidden');
+
+    // Obtener valores
+    const nombreEmpresa = nombreEmpresaInput.value.trim();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    const acceptTerms = acceptTermsCheckbox.checked;
+
+    // Validación
+    let hasErrors = false;
+
+    if (!nombreEmpresa || nombreEmpresa.length < 2) {
+      nombreEmpresaError.textContent = 'El nombre de la empresa debe tener al menos 2 caracteres';
+      nombreEmpresaError.classList.remove('hidden');
+      hasErrors = true;
+    }
+
+    if (!email) {
+      emailError.textContent = 'El email es requerido';
+      emailError.classList.remove('hidden');
+      hasErrors = true;
+    }
+
+    if (
+      password.length < 8 ||
+      !/[A-Z]/.test(password) ||
+      !/[a-z]/.test(password) ||
+      !/[0-9]/.test(password)
+    ) {
+      passwordError.textContent =
+        'La contraseña debe cumplir todos los requisitos de seguridad';
+      passwordError.classList.remove('hidden');
+      hasErrors = true;
+    }
+
+    if (!acceptTerms) {
+      termsError.textContent = 'Debes aceptar los términos y condiciones';
+      termsError.classList.remove('hidden');
+      hasErrors = true;
+    }
+
+    if (hasErrors) return;
+
+    // Mostrar loading
+    submitBtn.disabled = true;
+    submitText.classList.add('hidden');
+    submitLoading.classList.remove('hidden');
+
+    try {
+      // 1. Crear usuario en Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            nombre_empresa: nombreEmpresa,
+          },
+        },
+      });
+
+      if (authError) throw authError;
+
+      // 2. Crear registro en tabla empleadores
+      if (authData.user) {
+        const { error: insertError } = await supabase.from('empleadores').insert({
+          id: authData.user.id,
+          email: email,
+          nombre_empresa: nombreEmpresa,
+        });
+
+        if (insertError) {
+          console.error('Error al crear empleador:', insertError);
+          // Continuamos igual porque el usuario ya fue creado
+        }
+      }
+
+      // Éxito - redirigir al dashboard
+      window.location.href = '/empleador/dashboard';
+    } catch (error) {
+      formError.classList.remove('hidden');
+      formErrorMessage.textContent =
+        error instanceof Error ? error.message : 'Error al crear la cuenta';
+    } finally {
+      submitBtn.disabled = false;
+      submitText.classList.remove('hidden');
+      submitLoading.classList.add('hidden');
+    }
+  });
+</script>
