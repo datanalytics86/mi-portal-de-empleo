@@ -1,0 +1,7 @@
+---
+const { label, icon = '' } = Astro.props as { label: string; icon?: string };
+---
+<span class="badge">
+  {icon && <span aria-hidden="true">{icon}</span>}
+  {label}
+</span>

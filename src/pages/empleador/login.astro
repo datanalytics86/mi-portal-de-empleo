@@ -1,0 +1,29 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navigation from '../../components/Navigation.astro';
+import Input from '../../components/ui/Input.astro';
+import Button from '../../components/ui/Button.astro';
+---
+<Layout title="Login Empleadores">
+  <Navigation />
+  <main class="container-max py-10">
+    <div class="max-w-xl mx-auto card p-6 space-y-4">
+      <p class="text-xs uppercase text-slate-500 font-semibold">Acceso seguro</p>
+      <h1 class="text-2xl font-bold text-slate-900">Ingresa a tu dashboard</h1>
+      <p class="text-sm text-slate-600">Autenticación Supabase con protección RLS para tus ofertas y CVs.</p>
+      <form class="space-y-4">
+        <Input label="Correo corporativo" type="email" required />
+        <Input label="Contraseña" type="password" required />
+        <div class="flex items-center justify-between">
+          <label class="flex items-center gap-2 text-sm text-slate-600">
+            <input type="checkbox" class="rounded border-slate-300" />
+            Recordar sesión
+          </label>
+          <a class="text-sm text-brand-700" href="#">¿Olvidaste tu contraseña?</a>
+        </div>
+        <Button>Ingresar</Button>
+      </form>
+      <p class="text-sm text-slate-600">¿Primera vez? <a class="text-brand-700" href="/empleador/registro">Crea tu cuenta</a></p>
+    </div>
+  </main>
+</Layout>

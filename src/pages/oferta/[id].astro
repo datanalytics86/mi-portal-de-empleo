@@ -1,0 +1,46 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navigation from '../../components/Navigation.astro';
+import OfertaCard from '../../components/OfertaCard.astro';
+import FormularioPostulacion from '../../components/FormularioPostulacion.astro';
+import { ofertasDestacadas } from '../../lib/mockData';
+
+const { id } = Astro.params;
+const oferta = ofertasDestacadas.find((item) => item.id === id) ?? ofertasDestacadas[0];
+---
+<Layout title={`${oferta.titulo} · ${oferta.empresa}`}>
+  <Navigation />
+  <main class="container-max space-y-6 py-10">
+    <div class="grid gap-6 lg:grid-cols-[2fr,1.2fr]">
+      <div class="card p-6 space-y-3">
+        <p class="text-xs uppercase text-slate-500 font-semibold">{oferta.empresa}</p>
+        <h1 class="text-2xl font-bold text-slate-900">{oferta.titulo}</h1>
+        <p class="text-sm text-slate-600">{oferta.descripcion}</p>
+        <div class="flex flex-wrap gap-2 text-xs text-slate-600">
+          <span class="badge">{oferta.tipo_jornada}</span>
+          <span class="badge">{oferta.categoria}</span>
+          <span class="badge">📍 {oferta.comuna}</span>
+        </div>
+        <div class="rounded-xl bg-slate-50 p-4 text-sm text-slate-700">
+          <p><strong>Experiencia:</strong> {oferta.experiencia}</p>
+          <p><strong>Rango salarial:</strong> {oferta.salario}</p>
+          <p><strong>Stack:</strong> {oferta.tags?.join(', ')}</p>
+        </div>
+      </div>
+      <FormularioPostulacion />
+    </div>
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs uppercase text-slate-500 font-semibold">Recomendaciones</p>
+          <h2 class="text-lg font-semibold">Otras vacantes similares</h2>
+        </div>
+      </div>
+      <div class="grid gap-4 md:grid-cols-2">
+        {ofertasDestacadas.slice(0, 2).map((item) => (
+          <OfertaCard oferta={item} />
+        ))}
+      </div>
+    </section>
+  </main>
+</Layout>

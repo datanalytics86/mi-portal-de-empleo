@@ -1,0 +1,45 @@
+---
+import type { Oferta } from '../lib/mockData';
+import { filtrosDisponibles } from '../lib/mockData';
+
+const { onChange } = Astro.props as { onChange?: (filters: Record<string, string>) => void };
+---
+<section class="card p-5 space-y-4">
+  <div class="flex items-center justify-between gap-3">
+    <div>
+      <p class="text-xs uppercase text-slate-500 font-semibold">Búsqueda inteligente</p>
+      <p class="text-base font-semibold text-slate-900">Filtra por ubicación, jornada o categoría</p>
+    </div>
+    <span class="badge"><strong>RLS</strong> activado</span>
+  </div>
+  <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+    <label class="text-sm font-semibold text-slate-700">
+      Comuna
+      <select class="input mt-2">
+        <option>Todos</option>
+        {filtrosDisponibles.comunas.map((item) => (
+          <option value={item}>{item}</option>
+        ))}
+      </select>
+    </label>
+    <label class="text-sm font-semibold text-slate-700">
+      Jornada
+      <select class="input mt-2">
+        <option>Todos</option>
+        {filtrosDisponibles.jornadas.map((item) => (
+          <option value={item}>{item}</option>
+        ))}
+      </select>
+    </label>
+    <label class="text-sm font-semibold text-slate-700">
+      Categoría
+      <select class="input mt-2">
+        <option>Todos</option>
+        {filtrosDisponibles.categorias.map((item) => (
+          <option value={item}>{item}</option>
+        ))}
+      </select>
+    </label>
+  </div>
+  <p class="text-xs text-slate-500">Tip: combina filtros y usa el mapa para buscar por proximidad.</p>
+</section>

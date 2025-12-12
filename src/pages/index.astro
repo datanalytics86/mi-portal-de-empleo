@@ -1,0 +1,50 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+import Hero from '../components/Hero.astro';
+import FiltrosBusqueda from '../components/FiltrosBusqueda.astro';
+import OfertaCard from '../components/OfertaCard.astro';
+import MapaOfertas from '../components/MapaOfertas.astro';
+import FormularioPostulacion from '../components/FormularioPostulacion.astro';
+import Button from '../components/ui/Button.astro';
+import { ofertasDestacadas } from '../lib/mockData';
+---
+<Layout>
+  <Navigation />
+  <main class="container-max space-y-8 py-10">
+    <Hero />
+    <section class="grid gap-6 lg:grid-cols-[2fr,1.1fr]" id="ofertas">
+      <div class="space-y-4">
+        <FiltrosBusqueda />
+        <div class="space-y-4">
+          {ofertasDestacadas.map((oferta) => (
+            <OfertaCard oferta={oferta} />
+          ))}
+        </div>
+      </div>
+      <div class="space-y-4">
+        <MapaOfertas ofertas={ofertasDestacadas} />
+        <div class="card p-5 space-y-3">
+          <p class="text-xs uppercase text-slate-500 font-semibold">Alertas inteligentes</p>
+          <h3 class="text-lg font-semibold text-slate-900">Activa avisos en tiempo real</h3>
+          <p class="text-sm text-slate-600">Recibe notificaciones cuando aparezcan ofertas según tu perfil.</p>
+          <Button href="#postular">Activar alertas</Button>
+        </div>
+      </div>
+    </section>
+    <FormularioPostulacion />
+  </main>
+  <footer class="border-t border-slate-100 bg-white py-8">
+    <div class="container-max flex flex-col gap-3 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
+      <div>
+        <p class="font-semibold text-slate-900">Mi Portal de Empleo · Chile</p>
+        <p>Desarrollado con Astro, Supabase y Leaflet. Privacidad garantizada.</p>
+      </div>
+      <div class="flex gap-4">
+        <a href="/empleador/login" class="hover:text-brand-700">Modo empleador</a>
+        <a href="/empleador/registro" class="hover:text-brand-700">Crear cuenta empleador</a>
+        <a href="/empleador/oferta/nueva" class="hover:text-brand-700">Publicar oferta</a>
+      </div>
+    </div>
+  </footer>
+</Layout>

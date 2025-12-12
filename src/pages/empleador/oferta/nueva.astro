@@ -1,0 +1,44 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import Navigation from '../../../components/Navigation.astro';
+import Input from '../../../components/ui/Input.astro';
+import Button from '../../../components/ui/Button.astro';
+---
+<Layout title="Nueva Oferta">
+  <Navigation />
+  <main class="container-max py-10 space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-xs uppercase text-slate-500 font-semibold">Publicación guiada</p>
+        <h1 class="text-2xl font-bold text-slate-900">Crear nueva oferta</h1>
+        <p class="text-sm text-slate-600">Optimizado para completarse en menos de 3 minutos.</p>
+      </div>
+      <Button variant="secondary" href="/empleador/dashboard">Volver al dashboard</Button>
+    </div>
+    <form class="card p-6 space-y-4">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Input label="Título del cargo" required />
+        <Input label="Empresa" required />
+        <Input label="Tipo de jornada" placeholder="Full-time, Part-time, Freelance" required />
+        <Input label="Categoría" placeholder="Tecnología, Ventas, Data..." required />
+        <Input label="Comuna" placeholder="Ej: Santiago" required />
+        <Input label="Rango salarial" placeholder="$" />
+      </div>
+      <label class="block text-sm font-semibold text-slate-700">
+        Descripción
+        <textarea class="input mt-2 min-h-[120px]" placeholder="Cuéntanos sobre el rol, responsabilidades y requisitos" />
+      </label>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Input label="Latitud" placeholder="-33.4" />
+        <Input label="Longitud" placeholder="-70.6" />
+      </div>
+      <div class="flex items-center justify-between">
+        <p class="text-xs text-slate-500">Guardamos en Supabase con políticas RLS y validaciones Zod.</p>
+        <div class="flex gap-3">
+          <Button variant="secondary">Guardar borrador</Button>
+          <Button>Publicar</Button>
+        </div>
+      </div>
+    </form>
+  </main>
+</Layout>

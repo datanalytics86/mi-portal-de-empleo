@@ -1,1 +1,7 @@
+node_modules
 .vercel
+.env
+.env.*
+dist
+.astro
+.DS_Store
