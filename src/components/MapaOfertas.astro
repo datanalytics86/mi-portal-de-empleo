@@ -1,0 +1,39 @@
+---
+import type { Oferta } from '../lib/mockData';
+const { ofertas } = Astro.props as { ofertas: Oferta[] };
+---
+<section id="mapa" class="card p-4 space-y-3">
+  <div class="flex items-center justify-between">
+    <div>
+      <p class="text-xs uppercase text-slate-500 font-semibold">Mapa interactivo</p>
+      <h2 class="text-lg font-semibold text-slate-900">Explora ofertas por proximidad</h2>
+    </div>
+    <span class="badge">OpenStreetMap + Leaflet</span>
+  </div>
+  <div class="h-80 rounded-xl overflow-hidden border border-slate-100" id="map"></div>
+</section>
+
+<script>
+  import L from 'leaflet';
+
+  const ofertas = JSON.parse('{JSON.stringify(ofertas)}');
+
+  const map = L.map('map', { zoomControl: true, scrollWheelZoom: false }).setView([-33.4489, -70.6693], 12);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors',
+  }).addTo(map);
+
+  ofertas.forEach((oferta) => {
+    if (!oferta.lat || !oferta.lng) return;
+    const marker = L.marker([oferta.lat, oferta.lng]).addTo(map);
+    marker.bindPopup(`
+      <div class="p-2">
+        <h4 class="font-semibold">${oferta.titulo}</h4>
+        <p class="text-sm text-gray-600">${oferta.empresa}</p>
+        <a href="/oferta/${oferta.id}" class="text-blue-600 text-sm">Ver detalles →</a>
+      </div>
+    `);
+  });
+</script>

@@ -1,0 +1,17 @@
+---
+import '../styles/tailwind.css';
+const { title = 'Mi Portal de Empleo', description = 'Plataforma minimalista de empleos con geolocalización avanzada.' } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  </head>
+  <body class="min-h-screen bg-slate-50">
+    <slot />
+  </body>
+</html>

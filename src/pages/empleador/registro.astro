@@ -1,0 +1,37 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navigation from '../../components/Navigation.astro';
+import Input from '../../components/ui/Input.astro';
+import Button from '../../components/ui/Button.astro';
+---
+<Layout title="Registro de Empleadores">
+  <Navigation />
+  <main class="container-max py-10">
+    <div class="max-w-2xl mx-auto card p-6 space-y-4">
+      <p class="text-xs uppercase text-slate-500 font-semibold">Onboarding guiado</p>
+      <h1 class="text-2xl font-bold text-slate-900">Crea tu cuenta de empleador</h1>
+      <p class="text-sm text-slate-600">Valida tu empresa y publica con verificación rápida.</p>
+      <form class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Input label="Nombre" required />
+        <Input label="Apellido" required />
+        <Input label="Correo corporativo" type="email" required />
+        <Input label="Nombre de empresa" required />
+        <Input label="Rol/Cargo" />
+        <Input label="Teléfono" />
+        <div class="md:col-span-2">
+          <label class="block text-sm font-semibold text-slate-700">
+            URL de sitio o LinkedIn
+            <input class="input mt-2" placeholder="https://" />
+          </label>
+        </div>
+        <div class="md:col-span-2 flex items-center justify-between">
+          <label class="flex items-center gap-2 text-sm text-slate-600">
+            <input type="checkbox" class="rounded border-slate-300" required />
+            Acepto los términos y la validación de identidad
+          </label>
+          <Button>Crear cuenta</Button>
+        </div>
+      </form>
+    </div>
+  </main>
+</Layout>

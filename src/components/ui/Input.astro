@@ -1,0 +1,19 @@
+---
+const { label, placeholder, type = 'text', name, required = false } = Astro.props as {
+  label: string;
+  placeholder?: string;
+  type?: string;
+  name?: string;
+  required?: boolean;
+};
+---
+<label class="block text-sm font-semibold text-slate-700">
+  <span>{label}</span>
+  <input
+    class="input mt-2"
+    type={type}
+    name={name}
+    placeholder={placeholder}
+    required={required}
+  />
+</label>

@@ -1,0 +1,29 @@
+---
+import Input from './ui/Input.astro';
+import Button from './ui/Button.astro';
+---
+<section id="postular" class="card p-6 space-y-4">
+  <div class="flex items-center justify-between gap-3">
+    <div>
+      <p class="text-xs uppercase text-slate-500 font-semibold">Postula en 60s</p>
+      <h2 class="text-xl font-semibold text-slate-900">Sube tu CV sin crear cuenta</h2>
+      <p class="text-sm text-slate-600">Aceptamos PDF o DOCX · Máx 5MB · Encriptado en Supabase Storage</p>
+    </div>
+    <span class="badge">Storage seguro</span>
+  </div>
+  <form class="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <Input label="Nombre completo" name="nombre" required placeholder="María Pérez" />
+    <Input label="Correo electrónico" name="email" type="email" required placeholder="maria@email.com" />
+    <Input label="Teléfono" name="telefono" placeholder="+56 9 1234 5678" />
+    <div class="md:col-span-2">
+      <label class="block text-sm font-semibold text-slate-700">
+        Adjunta tu CV
+        <input type="file" accept=".pdf,.doc,.docx" class="input mt-2" required />
+      </label>
+    </div>
+    <div class="md:col-span-2 flex items-center justify-between">
+      <p class="text-xs text-slate-500">Tus datos están protegidos bajo políticas RLS. No compartimos tu información sin consentimiento.</p>
+      <Button>Enviar postulación</Button>
+    </div>
+  </form>
+</section>

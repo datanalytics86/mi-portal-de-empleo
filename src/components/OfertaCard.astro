@@ -1,0 +1,35 @@
+---
+import Badge from './ui/Badge.astro';
+import Button from './ui/Button.astro';
+import type { Oferta } from '../lib/mockData';
+
+const { oferta } = Astro.props as { oferta: Oferta };
+---
+<article class="card p-5 space-y-3">
+  <div class="flex items-start justify-between gap-3">
+    <div class="space-y-1">
+      <p class="text-xs uppercase tracking-wide text-slate-500 font-semibold">{oferta.empresa}</p>
+      <h3 class="text-lg font-semibold text-slate-900">{oferta.titulo}</h3>
+      <p class="text-sm text-slate-600">{oferta.descripcion}</p>
+    </div>
+    <Badge label={oferta.tipo_jornada} />
+  </div>
+  <div class="flex flex-wrap gap-2 text-xs text-slate-600">
+    <Badge label={oferta.comuna} icon="📍" />
+    <Badge label={oferta.categoria} icon="🏷️" />
+    {oferta.salario && <Badge label={oferta.salario} icon="💰" />}
+  </div>
+  {oferta.tags && (
+    <div class="flex flex-wrap gap-2 text-xs text-slate-500">
+      {oferta.tags.map((tag) => (
+        <span class="rounded-full bg-slate-100 px-3 py-1" aria-label={`Habilidad ${tag}`}>
+          {tag}
+        </span>
+      ))}
+    </div>
+  )}
+  <div class="flex items-center justify-between pt-2">
+    <div class="text-xs text-slate-500">Experiencia: {oferta.experiencia ?? 'Abierta a trainee'}</div>
+    <Button href={`/oferta/${oferta.id}`}>Ver detalles</Button>
+  </div>
+</article>

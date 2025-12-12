@@ -1,0 +1,48 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navigation from '../../components/Navigation.astro';
+import OfertaCard from '../../components/OfertaCard.astro';
+import Button from '../../components/ui/Button.astro';
+import { ofertasDestacadas } from '../../lib/mockData';
+---
+<Layout title="Dashboard Empleador">
+  <Navigation />
+  <main class="container-max space-y-6 py-10">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-xs uppercase text-slate-500 font-semibold">Panel</p>
+        <h1 class="text-2xl font-bold text-slate-900">Control de ofertas y postulaciones</h1>
+        <p class="text-sm text-slate-600">Visibilidad en tiempo real, descargas de CV y métricas clave.</p>
+      </div>
+      <Button href="/empleador/oferta/nueva">Publicar nueva oferta</Button>
+    </div>
+    <section class="grid gap-4 md:grid-cols-3">
+      <div class="card p-4 space-y-2">
+        <p class="text-xs text-slate-500 font-semibold">Postulaciones últimas 24h</p>
+        <p class="text-3xl font-bold text-slate-900">32</p>
+        <p class="text-xs text-brand-700">+18% vs ayer</p>
+      </div>
+      <div class="card p-4 space-y-2">
+        <p class="text-xs text-slate-500 font-semibold">Ofertas activas</p>
+        <p class="text-3xl font-bold text-slate-900">6</p>
+        <p class="text-xs text-brand-700">RLS protegiendo CVs</p>
+      </div>
+      <div class="card p-4 space-y-2">
+        <p class="text-xs text-slate-500 font-semibold">Tiempo promedio de publicación</p>
+        <p class="text-3xl font-bold text-slate-900">2.5 min</p>
+        <p class="text-xs text-brand-700">Autoguardado</p>
+      </div>
+    </section>
+    <section class="space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-slate-900">Tus ofertas</h2>
+        <Button variant="secondary">Exportar CVs</Button>
+      </div>
+      <div class="grid gap-4 md:grid-cols-2">
+        {ofertasDestacadas.map((oferta) => (
+          <OfertaCard oferta={oferta} />
+        ))}
+      </div>
+    </section>
+  </main>
+</Layout>
