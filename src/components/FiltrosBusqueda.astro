@@ -1,0 +1,39 @@
+<section class="rounded-xl border border-border bg-surface p-6">
+  <div class="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
+    <label class="flex-1">
+      <span class="text-sm font-medium text-text-secondary">Búsqueda rápida</span>
+      <input
+        type="text"
+        placeholder="Cargo o empresa"
+        data-filter="search"
+        class="mt-2 w-full rounded-lg border border-border bg-white px-4 py-2 text-sm focus:border-accent focus:outline-none"
+      />
+    </label>
+    <label class="w-full md:w-48">
+      <span class="text-sm font-medium text-text-secondary">Tipo de jornada</span>
+      <select
+        data-filter="jornada"
+        class="mt-2 w-full rounded-lg border border-border bg-white px-4 py-2 text-sm focus:border-accent focus:outline-none"
+      >
+        <option>Todos</option>
+        <option>Full-time</option>
+        <option>Part-time</option>
+        <option>Freelance</option>
+        <option>Práctica</option>
+      </select>
+    </label>
+    <label class="w-full md:w-52">
+      <span class="text-sm font-medium text-text-secondary">Comuna</span>
+      <select
+        data-filter="comuna"
+        class="mt-2 w-full rounded-lg border border-border bg-white px-4 py-2 text-sm focus:border-accent focus:outline-none"
+      >
+        <option>Todas</option>
+        <option>Santiago</option>
+        <option>Providencia</option>
+        <option>Ñuñoa</option>
+        <option>Las Condes</option>
+      </select>
+    </label>
+  </div>
+</section>

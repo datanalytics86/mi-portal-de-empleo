@@ -1,0 +1,82 @@
+---
+import 'leaflet/dist/leaflet.css';
+import type { Oferta } from '../lib/ofertas';
+
+interface Props {
+  ofertas: Oferta[];
+}
+
+const { ofertas } = Astro.props;
+---
+
+<div class="rounded-xl border border-border bg-white p-4">
+  <div id="mapa" class="h-[320px] w-full rounded-lg md:h-[420px]"></div>
+</div>
+
+<script define:vars={{ ofertas }}>
+  import L from 'leaflet';
+
+  delete L.Icon.Default.prototype._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  });
+
+  const map = L.map('mapa', {
+    zoomControl: true,
+  }).setView([-33.4489, -70.6693], 12);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+  }).addTo(map);
+
+  const markers = new Map();
+  const bounds = [];
+
+  ofertas.forEach((oferta) => {
+    const marker = L.marker([oferta.lat, oferta.lng]).addTo(map);
+    marker.bindPopup(`
+      <div style="font-family: Inter, sans-serif; padding: 4px 2px;">
+        <strong>${oferta.titulo}</strong><br />
+        <span style="color: #718096; font-size: 12px;">${oferta.empresa}</span><br />
+        <a href="/oferta/${oferta.id}" style="color: #3182ce; font-size: 12px;">Ver detalles →</a>
+      </div>
+    `);
+    markers.set(oferta.id, marker);
+    bounds.push([oferta.lat, oferta.lng]);
+  });
+
+  if (bounds.length > 0) {
+    map.fitBounds(bounds, { padding: [32, 32] });
+  }
+
+  const applyFilter = (ids) => {
+    markers.forEach((marker, id) => {
+      if (ids.includes(id)) {
+        if (!map.hasLayer(marker)) {
+          marker.addTo(map);
+        }
+      } else if (map.hasLayer(marker)) {
+        map.removeLayer(marker);
+      }
+    });
+
+    if (ids.length > 0) {
+      const filteredBounds = ids
+        .map((id) => markers.get(id))
+        .filter(Boolean)
+        .map((marker) => marker.getLatLng());
+      if (filteredBounds.length > 0) {
+        map.fitBounds(filteredBounds, { padding: [32, 32] });
+      }
+    }
+  };
+
+  document.addEventListener('ofertas:filter', (event) => {
+    if (!event.detail || !Array.isArray(event.detail.ids)) {
+      return;
+    }
+    applyFilter(event.detail.ids);
+  });
+</script>

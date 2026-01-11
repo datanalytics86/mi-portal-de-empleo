@@ -1,0 +1,47 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import FormularioPostulacion from '../../components/FormularioPostulacion.astro';
+import MapaOfertas from '../../components/MapaOfertas.astro';
+import { ofertas } from '../../lib/ofertas';
+
+export function getStaticPaths() {
+  return ofertas.map((oferta) => ({ params: { id: oferta.id } }));
+}
+
+const { id } = Astro.params;
+const oferta = ofertas.find((item) => item.id === id);
+
+if (!oferta) {
+  throw new Error('Oferta no encontrada');
+}
+---
+
+<Layout title={`${oferta.titulo} | Mi portal de empleo`}>
+  <section class="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+    <article class="rounded-xl border border-border bg-white p-6">
+      <header class="space-y-3">
+        <p class="text-sm uppercase tracking-[0.2em] text-text-secondary">Oferta activa</p>
+        <h2 class="text-3xl font-semibold text-text-primary">{oferta.titulo}</h2>
+        <div class="flex flex-wrap items-center gap-3 text-sm text-text-secondary">
+          <span>{oferta.empresa}</span>
+          <span>•</span>
+          <span>{oferta.comuna}</span>
+          <span>•</span>
+          <span>{oferta.tipoJornada}</span>
+        </div>
+      </header>
+
+      <p class="mt-6 text-text-secondary">{oferta.descripcion}</p>
+
+      <div class="mt-8">
+        <h3 class="text-lg font-semibold text-text-primary">Ubicación</h3>
+        <p class="mt-2 text-sm text-text-secondary">Visualiza la comuna en el mapa.</p>
+        <div class="mt-4">
+          <MapaOfertas ofertas={[oferta]} />
+        </div>
+      </div>
+    </article>
+
+    <FormularioPostulacion />
+  </section>
+</Layout>

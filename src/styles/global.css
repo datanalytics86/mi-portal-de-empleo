@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-background text-text-primary antialiased;
+}
+
+::selection {
+  background: rgba(66, 153, 225, 0.2);
+}
+
+.container-shell {
+  @apply mx-auto w-full max-w-6xl px-4 md:px-8;
+}

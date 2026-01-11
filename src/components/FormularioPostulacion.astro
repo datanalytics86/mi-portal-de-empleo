@@ -1,0 +1,44 @@
+<form class="rounded-xl border border-border bg-white p-6 shadow-sm">
+  <h2 class="text-lg font-semibold text-text-primary">Postula en segundos</h2>
+  <p class="mt-2 text-sm text-text-secondary">Sin registro. Solo sube tu CV y listo.</p>
+
+  <div class="mt-6 grid gap-4">
+    <label class="text-sm text-text-secondary">
+      Nombre (opcional)
+      <input
+        type="text"
+        placeholder="Tu nombre"
+        class="mt-2 w-full rounded-lg border border-border px-4 py-2 focus:border-accent focus:outline-none"
+      />
+    </label>
+    <label class="text-sm text-text-secondary">
+      Email (opcional)
+      <input
+        type="email"
+        placeholder="tu@email.com"
+        class="mt-2 w-full rounded-lg border border-border px-4 py-2 focus:border-accent focus:outline-none"
+      />
+    </label>
+    <label class="text-sm text-text-secondary">
+      CV (PDF o Word)
+      <input
+        type="file"
+        accept=".pdf,.doc,.docx"
+        required
+        class="mt-2 w-full rounded-lg border border-dashed border-border bg-surface px-4 py-4 text-sm"
+      />
+    </label>
+  </div>
+
+  <label class="mt-4 flex items-start gap-3 text-sm text-text-secondary">
+    <input type="checkbox" required class="mt-1 h-4 w-4 rounded border-border" />
+    Acepto la política de privacidad
+  </label>
+
+  <button
+    type="submit"
+    class="mt-6 w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:bg-accent-hover"
+  >
+    Enviar postulación
+  </button>
+</form>

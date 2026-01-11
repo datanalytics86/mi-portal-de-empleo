@@ -1,0 +1,44 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { ofertas } from '../../../lib/ofertas';
+---
+
+<Layout title="Dashboard empleador">
+  <section class="space-y-6">
+    <header class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h2 class="text-2xl font-semibold text-text-primary">Tus ofertas activas</h2>
+        <p class="text-sm text-text-secondary">Mantén tu pipeline actualizado.</p>
+      </div>
+      <a
+        href="/empleador/oferta/nueva"
+        class="inline-flex items-center justify-center rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-hover"
+      >
+        + Nueva oferta
+      </a>
+    </header>
+
+    <div class="overflow-hidden rounded-xl border border-border bg-white">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-surface text-text-secondary">
+          <tr>
+            <th class="px-6 py-3 font-medium">Oferta</th>
+            <th class="px-6 py-3 font-medium">Comuna</th>
+            <th class="px-6 py-3 font-medium">Estado</th>
+            <th class="px-6 py-3 font-medium">Postulaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ofertas.map((oferta) => (
+            <tr class="border-t border-border">
+              <td class="px-6 py-4 font-medium text-text-primary">{oferta.titulo}</td>
+              <td class="px-6 py-4 text-text-secondary">{oferta.comuna}</td>
+              <td class="px-6 py-4 text-text-secondary">Activa</td>
+              <td class="px-6 py-4 text-text-secondary">12</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</Layout>
