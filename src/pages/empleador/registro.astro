@@ -1,0 +1,36 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Registro empleador">
+  <section class="mx-auto max-w-md rounded-xl border border-border bg-white p-6">
+    <h2 class="text-2xl font-semibold text-text-primary">Crea tu cuenta</h2>
+    <p class="mt-2 text-sm text-text-secondary">Publica ofertas en menos de 3 minutos.</p>
+    <form class="mt-6 grid gap-4">
+      <label class="text-sm text-text-secondary">
+        Empresa
+        <input
+          type="text"
+          class="mt-2 w-full rounded-lg border border-border px-4 py-2 focus:border-accent focus:outline-none"
+        />
+      </label>
+      <label class="text-sm text-text-secondary">
+        Email
+        <input
+          type="email"
+          class="mt-2 w-full rounded-lg border border-border px-4 py-2 focus:border-accent focus:outline-none"
+        />
+      </label>
+      <label class="text-sm text-text-secondary">
+        Contraseña
+        <input
+          type="password"
+          class="mt-2 w-full rounded-lg border border-border px-4 py-2 focus:border-accent focus:outline-none"
+        />
+      </label>
+      <button class="w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-white hover:bg-accent-hover" type="submit">
+        Crear cuenta
+      </button>
+    </form>
+  </section>
+</Layout>

@@ -1,0 +1,39 @@
+<section class="rounded-2xl border border-border/70 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+  <div class="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
+    <label class="flex-1">
+      <span class="text-sm font-medium text-text-secondary">Búsqueda rápida</span>
+      <input
+        type="text"
+        placeholder="Cargo o empresa"
+        data-filter="search"
+        class="soft-input mt-2"
+      />
+    </label>
+    <label class="w-full md:w-48">
+      <span class="text-sm font-medium text-text-secondary">Tipo de jornada</span>
+      <select
+        data-filter="jornada"
+        class="soft-input mt-2"
+      >
+        <option>Todos</option>
+        <option>Full-time</option>
+        <option>Part-time</option>
+        <option>Freelance</option>
+        <option>Práctica</option>
+      </select>
+    </label>
+    <label class="w-full md:w-52">
+      <span class="text-sm font-medium text-text-secondary">Comuna</span>
+      <select
+        data-filter="comuna"
+        class="soft-input mt-2"
+      >
+        <option>Todas</option>
+        <option>Santiago</option>
+        <option>Providencia</option>
+        <option>Ñuñoa</option>
+        <option>Las Condes</option>
+      </select>
+    </label>
+  </div>
+</section>
