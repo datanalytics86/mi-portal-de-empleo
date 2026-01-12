@@ -12,19 +12,28 @@ const { title = 'Mi Portal de Empleo' } = Astro.props;
     <title>{title}</title>
   </head>
   <body class="min-h-screen">
-    <header class="border-b border-border bg-white">
-      <div class="container-shell flex items-center justify-between py-6">
+    <header class="border-b border-border/80 bg-white/80 backdrop-blur">
+      <div class="container-shell flex flex-col gap-4 py-6 md:flex-row md:items-center md:justify-between">
         <div>
           <p class="text-sm uppercase tracking-[0.2em] text-text-secondary">Empleos Chile</p>
           <h1 class="text-2xl font-semibold text-text-primary">Mi portal de empleo</h1>
+          <p class="mt-2 max-w-md text-sm text-text-secondary">
+            Conecta talento y oportunidades en un flujo simple y directo.
+          </p>
         </div>
         <nav class="text-sm text-text-secondary">
-          <a class="hover:text-text-primary" href="/empleador/login">Soy empleador →</a>
+          <a
+            class="inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-text-primary transition hover:border-accent/50 hover:text-accent"
+            href="/empleador/login"
+          >
+            Soy empleador
+            <span aria-hidden="true">→</span>
+          </a>
         </nav>
       </div>
     </header>
 
-    <main class="container-shell py-10">
+    <main class="container-shell py-12">
       <slot />
     </main>
 

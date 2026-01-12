@@ -8,11 +8,19 @@ import { ofertas } from '../lib/ofertas';
 
 <Layout title="Mi portal de empleo">
   <section class="grid gap-10">
-    <div class="space-y-4">
-      <h2 class="text-3xl font-semibold text-text-primary">Encuentra tu próxima oportunidad sin fricción</h2>
+    <div class="space-y-4 rounded-3xl border border-border/60 bg-white/90 p-8 shadow-[0_20px_45px_rgba(15,23,42,0.08)]">
+      <div class="inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
+        Sin registros · Postulación express
+      </div>
+      <h2 class="text-3xl font-semibold text-text-primary md:text-4xl">Encuentra tu próxima oportunidad sin fricción</h2>
       <p class="max-w-2xl text-text-secondary">
         Explora ofertas activas en el mapa. Postula sin registrarte: solo sube tu CV y listo.
       </p>
+      <div class="flex flex-wrap gap-3 text-sm text-text-secondary">
+        <span class="rounded-full border border-border px-3 py-1">+100 ofertas activas</span>
+        <span class="rounded-full border border-border px-3 py-1">Respuesta rápida</span>
+        <span class="rounded-full border border-border px-3 py-1">Privacidad primero</span>
+      </div>
     </div>
 
     <FiltrosBusqueda />

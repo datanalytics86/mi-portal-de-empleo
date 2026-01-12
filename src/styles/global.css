@@ -9,6 +9,7 @@
 
 body {
   @apply bg-background text-text-primary antialiased;
+  background-image: radial-gradient(circle at top, rgba(66, 153, 225, 0.08), transparent 45%);
 }
 
 ::selection {
@@ -17,4 +18,8 @@ body {
 
 .container-shell {
   @apply mx-auto w-full max-w-6xl px-4 md:px-8;
+}
+
+.soft-card {
+  @apply rounded-2xl border border-border bg-white shadow-[0_12px_30px_rgba(15,23,42,0.06)];
 }
