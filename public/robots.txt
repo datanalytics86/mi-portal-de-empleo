@@ -5,5 +5,3 @@ Allow: /
 Disallow: /empleador/dashboard
 Disallow: /empleador/oferta/
 Disallow: /api/
-
-Sitemap: /sitemap.xml

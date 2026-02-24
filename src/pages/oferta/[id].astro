@@ -1,12 +1,13 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { supabase } from '../../lib/supabase';
+import { createServiceClient } from '../../lib/supabase';
 
 const { id } = Astro.params;
 
-// Consultar sin filtrar activa/expira_en para distinguir "no existe" de "expirada"
+// Usa service role para leer sin restricciones RLS y poder distinguir
+// "no existe" de "expirada" (la policy pública filtra activa+expira_en)
 const { data: ofertaRaw, error } = id
-  ? await supabase.from('ofertas').select('*').eq('id', id).single()
+  ? await createServiceClient().from('ofertas').select('*').eq('id', id).single()
   : { data: null, error: true };
 
 const isExpired = ofertaRaw && (!ofertaRaw.activa || ofertaRaw.expira_en < new Date().toISOString());
