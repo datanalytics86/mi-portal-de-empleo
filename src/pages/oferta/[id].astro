@@ -3,17 +3,20 @@ import Layout from '../../layouts/Layout.astro';
 import { supabase } from '../../lib/supabase';
 
 const { id } = Astro.params;
-if (!id) return Astro.redirect('/');
 
-const { data: oferta, error } = await supabase
-  .from('ofertas')
-  .select('*')
-  .eq('id', id)
-  .eq('activa', true)
-  .gte('expira_en', new Date().toISOString())
-  .single();
+// Consultar sin filtrar activa/expira_en para distinguir "no existe" de "expirada"
+const { data: ofertaRaw, error } = id
+  ? await supabase.from('ofertas').select('*').eq('id', id).single()
+  : { data: null, error: true };
 
-if (error || !oferta) return Astro.redirect('/');
+const isExpired = ofertaRaw && (!ofertaRaw.activa || ofertaRaw.expira_en < new Date().toISOString());
+const notFound = !ofertaRaw || !!error;
+
+if (notFound) Astro.response.status = 404;
+if (isExpired) Astro.response.status = 410;
+
+// Solo continúa al renderizado normal si la oferta es válida
+const oferta = !notFound && !isExpired ? ofertaRaw : null;
 
 const TIPOS: Record<string, string> = {
   'full-time': 'Full-time',
@@ -25,7 +28,33 @@ const TIPOS: Record<string, string> = {
 const exito = Astro.url.searchParams.get('exito') === '1';
 ---
 
-<Layout title={oferta.titulo} leaflet={true}>
+{(notFound || isExpired) && (
+  <Layout title="Oferta no disponible">
+    <div class="max-w-lg mx-auto px-4 py-24 text-center">
+      {isExpired ? (
+        <>
+          <p class="text-5xl mb-4">📋</p>
+          <h1 class="text-2xl font-semibold text-gray-900 mb-2">Esta oferta ya no está disponible</h1>
+          <p class="text-gray-500 mb-8">El plazo de postulación venció o el empleador la desactivó.</p>
+        </>
+      ) : (
+        <>
+          <p class="text-6xl font-bold text-brand-600 mb-4">404</p>
+          <h1 class="text-2xl font-semibold text-gray-900 mb-2">Oferta no encontrada</h1>
+          <p class="text-gray-500 mb-8">El enlace puede estar desactualizado o la oferta fue eliminada.</p>
+        </>
+      )}
+      <a
+        href="/"
+        class="inline-block bg-brand-600 text-white px-6 py-2.5 rounded font-medium hover:bg-brand-700 transition-colors"
+      >
+        Ver otras ofertas
+      </a>
+    </div>
+  </Layout>
+)}
+
+{oferta && <Layout title={oferta.titulo} leaflet={true}>
   <div class="max-w-4xl mx-auto px-4 py-8">
     <a href="/" class="text-sm text-brand-600 hover:underline mb-4 inline-block">← Volver a ofertas</a>
 
@@ -155,9 +184,9 @@ const exito = Astro.url.searchParams.get('exito') === '1';
       </div>
     </div>
   </div>
-</Layout>
+</Layout>}
 
-<script define:vars={{ ofertaLat: oferta.lat, ofertaLng: oferta.lng, ofertaTitulo: oferta.titulo }}>
+<script define:vars={{ ofertaLat: oferta?.lat ?? null, ofertaLng: oferta?.lng ?? null, ofertaTitulo: oferta?.titulo ?? '' }}>
   document.addEventListener('DOMContentLoaded', () => {
     // Mini mapa
     const miniMapaEl = document.getElementById('mini-mapa');

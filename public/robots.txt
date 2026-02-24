@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Bloquear rutas privadas del empleador
+Disallow: /empleador/dashboard
+Disallow: /empleador/oferta/
+Disallow: /api/
+
+Sitemap: /sitemap.xml

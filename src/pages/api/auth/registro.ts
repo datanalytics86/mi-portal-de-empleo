@@ -63,9 +63,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,
     });
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200, headers: { 'Content-Type': 'application/json' },
+    });
   }
 
-  return new Response(JSON.stringify({ ok: true }), {
+  // Supabase requiere confirmación de email — informar al frontend
+  return new Response(JSON.stringify({ ok: true, requiresEmailConfirmation: true }), {
     status: 200, headers: { 'Content-Type': 'application/json' },
   });
 };

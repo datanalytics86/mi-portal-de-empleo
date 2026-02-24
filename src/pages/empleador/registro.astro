@@ -82,9 +82,15 @@ if (session) return Astro.redirect('/empleador/dashboard');
     const data = await res.json();
 
     if (res.ok && data.ok) {
-      okEl.textContent = '¡Cuenta creada! Redirigiendo al panel...';
-      okEl.classList.remove('hidden');
-      setTimeout(() => { window.location.href = '/empleador/dashboard'; }, 1500);
+      if (data.requiresEmailConfirmation) {
+        okEl.textContent = 'Cuenta creada. Revisa tu bandeja de entrada y confirma tu email para poder iniciar sesión.';
+        okEl.classList.remove('hidden');
+        btn.textContent = 'Cuenta creada';
+      } else {
+        okEl.textContent = '¡Cuenta creada! Redirigiendo al panel...';
+        okEl.classList.remove('hidden');
+        setTimeout(() => { window.location.href = '/empleador/dashboard'; }, 1500);
+      }
     } else {
       errEl.textContent = data.error || 'Error al crear la cuenta.';
       errEl.classList.remove('hidden');
