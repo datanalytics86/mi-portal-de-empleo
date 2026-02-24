@@ -1,11 +1,8 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getEmpleadorSession } from '../../lib/auth';
+import { TIPOS } from '../../lib/constants';
 
-const session = await getEmpleadorSession(Astro.cookies);
-if (!session) return Astro.redirect('/empleador/login');
-
-const { client, empleador } = session;
+const { client, empleador } = Astro.locals.session!;
 
 // Obtener ofertas del empleador con conteo de postulaciones
 const { data: ofertas } = await client
@@ -16,13 +13,6 @@ const { data: ofertas } = await client
   `)
   .eq('empleador_id', empleador.id)
   .order('created_at', { ascending: false });
-
-const TIPOS: Record<string, string> = {
-  'full-time': 'Full-time',
-  'part-time': 'Part-time',
-  'freelance': 'Freelance',
-  'practica': 'Práctica',
-};
 
 const now = new Date();
 ---

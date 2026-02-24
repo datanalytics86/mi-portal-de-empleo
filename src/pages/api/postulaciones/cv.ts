@@ -1,13 +1,9 @@
 import type { APIRoute } from 'astro';
 import { createServiceClient } from '../../../lib/supabase';
-import { getEmpleadorSession } from '../../../lib/auth';
 
 // Descarga segura de CV: solo el empleador dueño de la oferta puede descargar
-export const GET: APIRoute = async ({ url, cookies }) => {
-  const session = await getEmpleadorSession(cookies);
-  if (!session) {
-    return new Response('No autorizado', { status: 401 });
-  }
+export const GET: APIRoute = async ({ url, locals }) => {
+  const session = locals.session!;
 
   const postulacionId = url.searchParams.get('id');
   if (!postulacionId) return new Response('ID requerido', { status: 400 });

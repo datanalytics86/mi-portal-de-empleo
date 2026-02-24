@@ -34,3 +34,8 @@ export async function getEmpleadorSession(cookies: AstroCookies) {
 
   return empleador ? { user, empleador, token, client } : null;
 }
+
+export type EmpleadorSession = NonNullable<Awaited<ReturnType<typeof getEmpleadorSession>>>;
+
+// Duración de la cookie alineada con el TTL del JWT de Supabase (1 hora)
+export const SESSION_MAX_AGE = 60 * 60;

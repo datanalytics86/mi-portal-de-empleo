@@ -1,14 +1,10 @@
 ---
 import Layout from '../../../../layouts/Layout.astro';
-import { getEmpleadorSession } from '../../../../lib/auth';
-
-const session = await getEmpleadorSession(Astro.cookies);
-if (!session) return Astro.redirect('/empleador/login');
 
 const { id } = Astro.params;
 if (!id) return Astro.redirect('/empleador/dashboard');
 
-const { client, empleador } = session;
+const { client, empleador } = Astro.locals.session!;
 
 // Verificar que la oferta pertenece al empleador
 const { data: oferta, error: ofertaError } = await client

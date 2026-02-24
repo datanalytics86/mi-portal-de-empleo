@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabase, createServiceClient } from '../../../lib/supabase';
-import { SESSION_COOKIE } from '../../../lib/auth';
+import { SESSION_COOKIE, SESSION_MAX_AGE } from '../../../lib/auth';
 import { z } from 'zod';
 
 const RegistroSchema = z.object({
@@ -61,7 +61,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       httpOnly: true,
       secure: true,
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: SESSION_MAX_AGE,
     });
     return new Response(JSON.stringify({ ok: true }), {
       status: 200, headers: { 'Content-Type': 'application/json' },

@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { createServiceClient } from '../../lib/supabase';
+import { TIPOS } from '../../lib/constants';
 
 const { id } = Astro.params;
 
@@ -18,13 +19,6 @@ if (isExpired) Astro.response.status = 410;
 
 // Solo continúa al renderizado normal si la oferta es válida
 const oferta = !notFound && !isExpired ? ofertaRaw : null;
-
-const TIPOS: Record<string, string> = {
-  'full-time': 'Full-time',
-  'part-time': 'Part-time',
-  'freelance': 'Freelance',
-  'practica': 'Práctica',
-};
 
 const exito = Astro.url.searchParams.get('exito') === '1';
 ---

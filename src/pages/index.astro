@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { supabase } from '../lib/supabase';
+import { TIPOS } from '../lib/constants';
 
 // Filtros desde URL
 const { searchParams } = Astro.url;
@@ -21,13 +22,6 @@ if (tipo) query = query.eq('tipo_empleo', tipo);
 if (comuna) query = query.ilike('comuna', `%${comuna}%`);
 
 const { data: ofertas = [] } = await query.limit(60);
-
-const TIPOS: Record<string, string> = {
-  'full-time': 'Full-time',
-  'part-time': 'Part-time',
-  'freelance': 'Freelance',
-  'practica': 'Práctica',
-};
 
 // Serializar datos para el mapa
 const mapaOfertas = (ofertas || []).map(o => ({

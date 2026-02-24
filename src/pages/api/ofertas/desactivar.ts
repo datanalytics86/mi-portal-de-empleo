@@ -1,12 +1,8 @@
 import type { APIRoute } from 'astro';
-import { getEmpleadorSession } from '../../../lib/auth';
 import { createServiceClient } from '../../../lib/supabase';
 
-export const POST: APIRoute = async ({ request, cookies }) => {
-  const session = await getEmpleadorSession(cookies);
-  if (!session) {
-    return new Response(null, { status: 302, headers: { Location: '/empleador/login' } });
-  }
+export const POST: APIRoute = async ({ request, locals }) => {
+  const session = locals.session!;
 
   const form = await request.formData();
   const id = form.get('id') as string;

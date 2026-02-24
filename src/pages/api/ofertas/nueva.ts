@@ -1,25 +1,20 @@
 import type { APIRoute } from 'astro';
-import { getEmpleadorSession } from '../../../lib/auth';
 import { createServiceClient } from '../../../lib/supabase';
 import { getComunaCoords } from '../../../lib/comunas';
+import { CATEGORIAS } from '../../../lib/constants';
 import { z } from 'zod';
 
 const OfertaSchema = z.object({
   titulo: z.string().min(5, 'El título es demasiado corto').max(120),
   descripcion: z.string().min(50, 'La descripción debe tener al menos 50 caracteres').max(2000),
   tipo_empleo: z.enum(['full-time', 'part-time', 'freelance', 'practica']),
-  categoria: z.string().min(1, 'Selecciona una categoría').max(50),
+  categoria: z.enum(CATEGORIAS, { errorMap: () => ({ message: 'Categoría no válida.' }) }),
   comuna: z.string().min(1, 'Selecciona una comuna').max(100),
   expira_en: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida'),
 });
 
-export const POST: APIRoute = async ({ request, cookies }) => {
-  const session = await getEmpleadorSession(cookies);
-  if (!session) {
-    return new Response(JSON.stringify({ error: 'No autorizado.' }), {
-      status: 401, headers: { 'Content-Type': 'application/json' },
-    });
-  }
+export const POST: APIRoute = async ({ request, locals }) => {
+  const session = locals.session!;
 
   const form = await request.formData();
   const parsed = OfertaSchema.safeParse({

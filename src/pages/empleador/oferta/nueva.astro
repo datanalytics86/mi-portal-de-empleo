@@ -1,10 +1,7 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-import { getEmpleadorSession } from '../../../lib/auth';
 import { COMUNAS_NOMBRES } from '../../../lib/comunas';
-
-const session = await getEmpleadorSession(Astro.cookies);
-if (!session) return Astro.redirect('/empleador/login');
+import { CATEGORIAS } from '../../../lib/constants';
 
 // Fecha mínima (hoy) y máxima (6 meses) para expiración
 const hoy = new Date().toISOString().split('T')[0];
@@ -12,10 +9,6 @@ const maxFecha = new Date();
 maxFecha.setMonth(maxFecha.getMonth() + 6);
 const maxFechaStr = maxFecha.toISOString().split('T')[0];
 
-const CATEGORIAS = [
-  'Tecnología', 'Ventas', 'Marketing', 'Finanzas', 'Administración',
-  'Salud', 'Educación', 'Operaciones', 'Diseño', 'Legal', 'Otro',
-];
 ---
 
 <Layout title="Nueva oferta">

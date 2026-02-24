@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabase } from '../../../lib/supabase';
-import { SESSION_COOKIE } from '../../../lib/auth';
+import { SESSION_COOKIE, SESSION_MAX_AGE } from '../../../lib/auth';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const form = await request.formData();
@@ -26,7 +26,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     httpOnly: true,
     secure: true,
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7, // 7 días
+    maxAge: SESSION_MAX_AGE,
   });
 
   return new Response(JSON.stringify({ ok: true }), {
