@@ -16,6 +16,15 @@ function isRateLimited(ip: string): boolean {
   if (timestamps.length >= RATE_LIMIT_MAX) return true;
   timestamps.push(now);
   rateLimitMap.set(ip, timestamps);
+
+  // Limpiar entradas expiradas cada 100 llamadas para evitar memory leak
+  if (rateLimitMap.size > 100) {
+    for (const [key, ts] of rateLimitMap) {
+      const active = ts.filter(t => now - t < RATE_LIMIT_WINDOW_MS);
+      if (active.length === 0) rateLimitMap.delete(key);
+    }
+  }
+
   return false;
 }
 

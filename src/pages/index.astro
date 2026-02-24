@@ -145,15 +145,21 @@ const mapaOfertas = (ofertas || []).map(o => ({
       maxZoom: 18,
     }).addTo(map);
 
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
     mapaOfertas.forEach((oferta) => {
       if (!oferta.lat || !oferta.lng) return;
       const marker = L.marker([oferta.lat, oferta.lng]);
       marker.bindPopup(`
         <div style="min-width:160px">
-          <strong>${oferta.titulo}</strong><br>
-          <span style="color:#555">${oferta.empresa}</span><br>
-          <span style="color:#888;font-size:12px">${oferta.comuna}</span><br>
-          <a href="/oferta/${oferta.id}" style="color:#2563eb;font-size:13px">Ver oferta →</a>
+          <strong>${esc(oferta.titulo)}</strong><br>
+          <span style="color:#555">${esc(oferta.empresa)}</span><br>
+          <span style="color:#888;font-size:12px">${esc(oferta.comuna)}</span><br>
+          <a href="/oferta/${encodeURIComponent(oferta.id)}" style="color:#2563eb;font-size:13px">Ver oferta →</a>
         </div>
       `);
       marker.addTo(map);

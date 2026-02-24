@@ -17,13 +17,3 @@ export function createServiceClient() {
   if (!serviceKey) throw new Error('Falta SUPABASE_SERVICE_ROLE_KEY');
   return createClient<Database>(supabaseUrl, serviceKey);
 }
-
-// Crea un cliente con la cookie de sesión del usuario
-export function createServerClient(authToken?: string) {
-  const client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-    },
-  });
-  return client;
-}
