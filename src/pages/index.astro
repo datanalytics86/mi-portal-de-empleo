@@ -54,7 +54,8 @@ function buildCatUrl(cat: string | null) {
         <span class="bg-gradient-to-r from-white to-indigo-200 bg-clip-text text-transparent">empleo en Chile</span>
       </h1>
       <p class="text-brand-100 text-lg mb-8">
-        {ofertas?.length ?? 0} oportunidad{(ofertas?.length ?? 0) !== 1 ? 'es' : ''} activa{(ofertas?.length ?? 0) !== 1 ? 's' : ''} en todo el país
+        <span id="hero-count" data-target={ofertas?.length ?? 0}>0</span>
+        {' '}oportunidad{(ofertas?.length ?? 0) !== 1 ? 'es' : ''} activa{(ofertas?.length ?? 0) !== 1 ? 's' : ''} en todo el país
       </p>
 
       <!-- Barra de búsqueda integrada -->
@@ -68,7 +69,7 @@ function buildCatUrl(cat: string | null) {
             type="text"
             name="q"
             value={q}
-            placeholder="Cargo, empresa..."
+            placeholder="Cargo, empresa... (pulsa /)"
             class="flex-1 py-2.5 text-gray-900 placeholder-gray-400 focus:outline-none text-sm bg-transparent"
           />
         </div>
@@ -296,6 +297,29 @@ function buildCatUrl(cat: string | null) {
       `);
       marker.addTo(map);
     });
+  });
+</script>
+
+<script>
+  // Animated counter: cuenta desde 0 hasta el target en ~700ms
+  function animateCounter(el: HTMLElement) {
+    const target = parseInt(el.dataset.target || '0', 10);
+    if (target === 0) { el.textContent = '0'; return; }
+    const duration = 700;
+    const start = performance.now();
+    const step = (now: number) => {
+      const elapsed = Math.min((now - start) / duration, 1);
+      // easeOutCubic
+      const eased = 1 - Math.pow(1 - elapsed, 3);
+      el.textContent = String(Math.round(eased * target));
+      if (elapsed < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    const el = document.getElementById('hero-count');
+    if (el) animateCounter(el);
   });
 </script>
 

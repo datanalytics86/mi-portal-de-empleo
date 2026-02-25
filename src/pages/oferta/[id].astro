@@ -322,10 +322,45 @@ const barraWidth = 'width: ' + pctTranscurrido + '%';
       </div>
     </div>
   </div>
+
+  <!-- Sticky CTA móvil: visible en sm y abajo, se oculta cuando el form es visible -->
+  {!exito && (
+    <div
+      id="sticky-cta"
+      class="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-gray-200 px-4 py-3 shadow-2xl translate-y-0 transition-transform duration-300"
+    >
+      <button
+        type="button"
+        id="sticky-btn"
+        class="w-full bg-brand-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-brand-700 transition-colors shadow-sm"
+      >
+        Postular a esta oferta
+      </button>
+    </div>
+  )}
 </Layout>}
 
 <script define:vars={{ ofertaLat: oferta?.lat ?? null, ofertaLng: oferta?.lng ?? null, ofertaTitulo: oferta?.titulo ?? '', ofertaEmpresa: oferta?.empresa ?? '' }}>
   document.addEventListener('DOMContentLoaded', () => {
+    // Sticky CTA móvil: scroll suave al form, se oculta cuando el form es visible
+    const stickyCta = document.getElementById('sticky-cta');
+    const stickyBtn = document.getElementById('sticky-btn');
+    const formPostulacion = document.getElementById('form-postulacion');
+
+    stickyBtn?.addEventListener('click', () => {
+      formPostulacion?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    if (stickyCta && formPostulacion) {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          stickyCta.style.transform = entry.isIntersecting ? 'translateY(100%)' : 'translateY(0)';
+        },
+        { threshold: 0.2 }
+      );
+      observer.observe(formPostulacion);
+    }
+
     // Compartir oferta
     const btnCompartir = document.getElementById('btn-compartir');
     const shareTxt = document.getElementById('share-txt');
