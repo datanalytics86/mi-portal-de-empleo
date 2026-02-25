@@ -1,0 +1,104 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { TIPOS } from '../../lib/constants';
+
+const { client, empleador } = Astro.locals.session!;
+
+// Obtener ofertas del empleador con conteo de postulaciones
+const { data: ofertas } = await client
+  .from('ofertas')
+  .select(`
+    id, titulo, tipo_empleo, comuna, activa, expira_en, created_at,
+    postulaciones(count)
+  `)
+  .eq('empleador_id', empleador.id)
+  .order('created_at', { ascending: false });
+
+const now = new Date();
+---
+
+<Layout title="Panel de empleador">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+    <!-- Cabecera -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-xl font-bold text-gray-900">{empleador.empresa}</h1>
+        <p class="text-sm text-gray-500">{session.user.email}</p>
+      </div>
+      <div class="flex gap-3">
+        <a
+          href="/empleador/oferta/nueva"
+          class="bg-brand-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-brand-700 transition-colors"
+        >
+          + Nueva oferta
+        </a>
+        <form action="/api/auth/logout" method="post">
+          <button
+            type="submit"
+            class="text-sm text-gray-600 border border-gray-300 px-3 py-2 rounded hover:bg-gray-50 transition-colors"
+          >
+            Cerrar sesión
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Listado de ofertas -->
+    {!ofertas || ofertas.length === 0 ? (
+      <div class="text-center py-20 bg-white border border-gray-200 rounded-lg">
+        <p class="text-gray-500 mb-4">Aún no tienes ofertas publicadas.</p>
+        <a href="/empleador/oferta/nueva" class="bg-brand-600 text-white px-4 py-2 rounded text-sm hover:bg-brand-700">
+          Publicar primera oferta
+        </a>
+      </div>
+    ) : (
+      <div class="space-y-3">
+        {ofertas.map((oferta) => {
+          const expirada = new Date(oferta.expira_en) < now;
+          const nPost = (oferta.postulaciones as { count: number }[])?.[0]?.count ?? 0;
+          const estado = !oferta.activa ? 'Inactiva' : expirada ? 'Expirada' : 'Activa';
+          const estadoColor = estado === 'Activa' ? 'text-green-700 bg-green-50' : 'text-gray-500 bg-gray-100';
+          return (
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h2 class="font-semibold text-gray-900">{oferta.titulo}</h2>
+                    <span class={`text-xs px-2 py-0.5 rounded-full font-medium ${estadoColor}`}>
+                      {estado}
+                    </span>
+                  </div>
+                  <p class="text-sm text-gray-500 mt-0.5">
+                    {oferta.comuna} · {TIPOS[oferta.tipo_empleo] || oferta.tipo_empleo}
+                    · Vence {new Date(oferta.expira_en).toLocaleDateString('es-CL')}
+                  </p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span class="text-sm text-gray-500">
+                    {nPost} postulaci{nPost === 1 ? 'ón' : 'ones'}
+                  </span>
+                  <a
+                    href={`/empleador/oferta/${oferta.id}/postulaciones`}
+                    class="text-sm text-brand-600 border border-brand-300 px-3 py-1.5 rounded hover:bg-brand-50 transition-colors"
+                  >
+                    Ver CVs
+                  </a>
+                  <form action="/api/ofertas/desactivar" method="post" class="inline">
+                    <input type="hidden" name="id" value={oferta.id} />
+                    <button
+                      type="submit"
+                      class="text-sm text-gray-500 border border-gray-200 px-3 py-1.5 rounded hover:bg-gray-50 transition-colors"
+                      onclick="return confirm('¿Desactivar esta oferta?')"
+                    >
+                      {oferta.activa ? 'Desactivar' : 'Activar'}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </div>
+</Layout>

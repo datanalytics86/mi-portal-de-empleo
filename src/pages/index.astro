@@ -1,0 +1,162 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { supabase } from '../lib/supabase';
+import { TIPOS } from '../lib/constants';
+
+// Filtros desde URL
+const { searchParams } = Astro.url;
+const q = searchParams.get('q') || '';
+const tipo = searchParams.get('tipo') || '';
+const comuna = searchParams.get('comuna') || '';
+
+// Obtener ofertas activas
+let query = supabase
+  .from('ofertas')
+  .select('id, titulo, empresa, tipo_empleo, categoria, comuna, created_at, lat, lng')
+  .eq('activa', true)
+  .gte('expira_en', new Date().toISOString())
+  .order('created_at', { ascending: false });
+
+if (q) query = query.ilike('titulo', `%${q}%`);
+if (tipo) query = query.eq('tipo_empleo', tipo);
+if (comuna) query = query.ilike('comuna', `%${comuna}%`);
+
+const { data: ofertas = [] } = await query.limit(60);
+
+// Serializar datos para el mapa
+const mapaOfertas = (ofertas || []).map(o => ({
+  id: o.id, titulo: o.titulo, empresa: o.empresa,
+  lat: o.lat, lng: o.lng, comuna: o.comuna,
+}));
+---
+
+<Layout title="Empleos en Chile" leaflet={true}>
+  <!-- Hero/Buscador -->
+  <section class="bg-white border-b border-gray-200 py-6 px-4">
+    <div class="max-w-6xl mx-auto">
+      <h1 class="text-2xl font-bold text-gray-900 mb-4">Empleos en Chile</h1>
+      <form method="get" class="flex flex-col sm:flex-row gap-2">
+        <input
+          type="text"
+          name="q"
+          value={q}
+          placeholder="Buscar por cargo o empresa..."
+          class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+        />
+        <select
+          name="tipo"
+          class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+        >
+          <option value="">Todos los tipos</option>
+          {Object.entries(TIPOS).map(([val, label]) => (
+            <option value={val} selected={tipo === val}>{label}</option>
+          ))}
+        </select>
+        <input
+          type="text"
+          name="comuna"
+          value={comuna}
+          placeholder="Comuna..."
+          class="border border-gray-300 rounded px-3 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-brand-500"
+        />
+        <button
+          type="submit"
+          class="bg-brand-600 text-white px-4 py-2 rounded text-sm hover:bg-brand-700 transition-colors"
+        >
+          Buscar
+        </button>
+        {(q || tipo || comuna) && (
+          <a href="/" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 underline self-center">
+            Limpiar
+          </a>
+        )}
+      </form>
+    </div>
+  </section>
+
+  <div class="max-w-6xl mx-auto px-4 py-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Mapa -->
+      <div class="lg:sticky lg:top-20 h-[420px] rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+        <div id="mapa" class="w-full h-full"></div>
+      </div>
+
+      <!-- Listado -->
+      <div>
+        <p class="text-sm text-gray-500 mb-4">
+          {ofertas?.length ?? 0} oferta{(ofertas?.length ?? 0) !== 1 ? 's' : ''} encontrada{(ofertas?.length ?? 0) !== 1 ? 's' : ''}
+        </p>
+
+        {!ofertas || ofertas.length === 0 ? (
+          <div class="text-center py-16 text-gray-500">
+            <p class="text-lg">No hay ofertas disponibles</p>
+            <p class="text-sm mt-1">Intenta con otros filtros</p>
+          </div>
+        ) : (
+          <div class="space-y-3">
+            {ofertas.map((oferta) => (
+              <a
+                href={`/oferta/${oferta.id}`}
+                class="block bg-white border border-gray-200 rounded-lg p-4 hover:border-brand-400 hover:shadow-sm transition-all"
+              >
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex-1 min-w-0">
+                    <h2 class="font-semibold text-gray-900 truncate">{oferta.titulo}</h2>
+                    <p class="text-sm text-gray-600 mt-0.5">{oferta.empresa}</p>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                      <span class="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                        {oferta.comuna}
+                      </span>
+                      <span class="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded">
+                        {TIPOS[oferta.tipo_empleo] || oferta.tipo_empleo}
+                      </span>
+                      {oferta.categoria && (
+                        <span class="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                          {oferta.categoria}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span class="text-xs text-gray-400 whitespace-nowrap shrink-0 mt-1">
+                    {new Date(oferta.created_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script define:vars={{ mapaOfertas }}>
+  document.addEventListener('DOMContentLoaded', () => {
+    const map = L.map('mapa').setView([-33.4569, -70.6483], 11);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 18,
+    }).addTo(map);
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    mapaOfertas.forEach((oferta) => {
+      if (!oferta.lat || !oferta.lng) return;
+      const marker = L.marker([oferta.lat, oferta.lng]);
+      marker.bindPopup(`
+        <div style="min-width:160px">
+          <strong>${esc(oferta.titulo)}</strong><br>
+          <span style="color:#555">${esc(oferta.empresa)}</span><br>
+          <span style="color:#888;font-size:12px">${esc(oferta.comuna)}</span><br>
+          <a href="/oferta/${encodeURIComponent(oferta.id)}" style="color:#2563eb;font-size:13px">Ver oferta →</a>
+        </div>
+      `);
+      marker.addTo(map);
+    });
+  });
+</script>
