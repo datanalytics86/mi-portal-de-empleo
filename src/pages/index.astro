@@ -1,18 +1,19 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { supabase } from '../lib/supabase';
-import { TIPOS } from '../lib/constants';
+import { TIPOS, CATEGORIAS, CATEGORIA_COLORS } from '../lib/constants';
 
 // Filtros desde URL
 const { searchParams } = Astro.url;
 const q = searchParams.get('q') || '';
 const tipo = searchParams.get('tipo') || '';
 const comuna = searchParams.get('comuna') || '';
+const categoria = searchParams.get('categoria') || '';
 
 // Obtener ofertas activas
 let query = supabase
   .from('ofertas')
-  .select('id, titulo, empresa, tipo_empleo, categoria, comuna, created_at, lat, lng')
+  .select('id, titulo, empresa, tipo_empleo, categoria, comuna, created_at, expira_en, lat, lng')
   .eq('activa', true)
   .gte('expira_en', new Date().toISOString())
   .order('created_at', { ascending: false });
@@ -20,6 +21,7 @@ let query = supabase
 if (q) query = query.ilike('titulo', `%${q}%`);
 if (tipo) query = query.eq('tipo_empleo', tipo);
 if (comuna) query = query.ilike('comuna', `%${comuna}%`);
+if (categoria) query = query.eq('categoria', categoria);
 
 const { data: ofertas = [] } = await query.limit(60);
 
@@ -29,7 +31,18 @@ const mapaOfertas = (ofertas || []).map(o => ({
   lat: o.lat, lng: o.lng, comuna: o.comuna,
 }));
 
-const hayFiltros = q || tipo || comuna;
+const hayFiltros = q || tipo || comuna || categoria;
+
+// Construye URL de categoría preservando otros filtros
+function buildCatUrl(cat: string | null) {
+  const p = new URLSearchParams();
+  if (cat) p.set('categoria', cat);
+  if (q) p.set('q', q);
+  if (tipo) p.set('tipo', tipo);
+  if (comuna) p.set('comuna', comuna);
+  const qs = p.toString();
+  return qs ? `/?${qs}` : '/';
+}
 ---
 
 <Layout title="Empleos en Chile" leaflet={true}>
@@ -37,7 +50,8 @@ const hayFiltros = q || tipo || comuna;
   <section class="bg-gradient-to-br from-brand-700 via-brand-600 to-indigo-700 py-14 px-4">
     <div class="max-w-6xl mx-auto text-center">
       <h1 class="text-4xl sm:text-5xl font-extrabold text-white mb-3 tracking-tight leading-tight">
-        Encuentra tu próximo<br class="hidden sm:block" /> empleo en Chile
+        Encuentra tu próximo<br class="hidden sm:block" />
+        <span class="bg-gradient-to-r from-white to-indigo-200 bg-clip-text text-transparent">empleo en Chile</span>
       </h1>
       <p class="text-brand-100 text-lg mb-8">
         {ofertas?.length ?? 0} oportunidad{(ofertas?.length ?? 0) !== 1 ? 'es' : ''} activa{(ofertas?.length ?? 0) !== 1 ? 's' : ''} en todo el país
@@ -45,6 +59,7 @@ const hayFiltros = q || tipo || comuna;
 
       <!-- Barra de búsqueda integrada -->
       <form method="get" class="bg-white rounded-2xl shadow-2xl p-2 flex flex-col sm:flex-row gap-2 max-w-3xl mx-auto">
+        <input type="hidden" name="categoria" value={categoria} />
         <div class="flex-1 flex items-center gap-2 px-3">
           <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -88,6 +103,24 @@ const hayFiltros = q || tipo || comuna;
           Buscar
         </button>
       </form>
+
+      <!-- Pills de categoría -->
+      <div class="flex flex-wrap justify-center gap-2 mt-4">
+        <a
+          href={buildCatUrl(null)}
+          class={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${!categoria ? 'bg-white text-brand-700 border-white shadow-sm' : 'bg-white/15 text-white border-white/25 hover:bg-white/25'}`}
+        >
+          Todas
+        </a>
+        {CATEGORIAS.map(cat => (
+          <a
+            href={buildCatUrl(cat)}
+            class={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${categoria === cat ? 'bg-white text-brand-700 border-white shadow-sm' : 'bg-white/15 text-white border-white/25 hover:bg-white/25'}`}
+          >
+            {cat}
+          </a>
+        ))}
+      </div>
 
       {hayFiltros && (
         <a href="/" class="mt-3 inline-block text-brand-200 hover:text-white text-sm underline transition-colors">
@@ -161,8 +194,9 @@ const hayFiltros = q || tipo || comuna;
           </div>
         ) : (
           <div class="space-y-3">
-            {ofertas.map((oferta) => {
+            {ofertas.map((oferta, i) => {
               const esNueva = (Date.now() - new Date(oferta.created_at).getTime()) < 48 * 3600 * 1000;
+              const diasRestantes = Math.ceil((new Date(oferta.expira_en).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
               const iniciales = oferta.empresa
                 .split(' ')
                 .slice(0, 2)
@@ -170,10 +204,18 @@ const hayFiltros = q || tipo || comuna;
                 .join('')
                 .toUpperCase()
                 .slice(0, 2);
+              const catColor = oferta.categoria
+                ? (CATEGORIA_COLORS[oferta.categoria] || 'bg-gray-100 text-gray-600 border-gray-200')
+                : '';
+              // Pre-computadas para evitar template literals anidados en expresiones Astro
+              const animDelay = 'animation-delay: ' + (i * 55) + 'ms';
+              const urgenciaLabel = diasRestantes <= 1 ? 'Último día' : ('Cierra en ' + diasRestantes + 'd');
+              const urgenciaClass = 'text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ' + (diasRestantes <= 1 ? 'bg-red-100 text-red-700' : diasRestantes <= 3 ? 'bg-orange-100 text-orange-700' : 'bg-yellow-100 text-yellow-700');
               return (
                 <a
                   href={`/oferta/${oferta.id}`}
-                  class="flex gap-3 bg-white border border-gray-200 rounded-xl p-4 hover:border-brand-400 hover:shadow-md transition-all group"
+                  class="card-anim flex gap-3 bg-white border border-gray-200 rounded-xl p-4 hover:border-brand-400 hover:shadow-md transition-all group"
+                  style={animDelay}
                 >
                   <!-- Avatar empresa -->
                   <div class="w-10 h-10 rounded-lg bg-brand-50 border border-brand-100 flex items-center justify-center shrink-0 text-brand-700 font-bold text-sm group-hover:bg-brand-100 transition-colors">
@@ -186,6 +228,11 @@ const hayFiltros = q || tipo || comuna;
                           <h2 class="font-semibold text-gray-900 truncate group-hover:text-brand-700 transition-colors">{oferta.titulo}</h2>
                           {esNueva && (
                             <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium shrink-0">Nueva</span>
+                          )}
+                          {diasRestantes <= 5 && (
+                            <span class={urgenciaClass}>
+                              {urgenciaLabel}
+                            </span>
                           )}
                         </div>
                         <p class="text-sm text-gray-500 mt-0.5">{oferta.empresa}</p>
@@ -205,7 +252,7 @@ const hayFiltros = q || tipo || comuna;
                         {TIPOS[oferta.tipo_empleo] || oferta.tipo_empleo}
                       </span>
                       {oferta.categoria && (
-                        <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">
+                        <span class={`text-xs border px-2 py-0.5 rounded-full font-medium ${catColor}`}>
                           {oferta.categoria}
                         </span>
                       )}
@@ -251,3 +298,13 @@ const hayFiltros = q || tipo || comuna;
     });
   });
 </script>
+
+<style>
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card-anim {
+    animation: fadeSlideUp 0.38s ease both;
+  }
+</style>
