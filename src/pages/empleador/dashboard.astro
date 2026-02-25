@@ -15,71 +15,141 @@ const { data: ofertas } = await client
   .order('created_at', { ascending: false });
 
 const now = new Date();
+
+// Métricas
+const ofertasActivas = ofertas?.filter(o => o.activa && new Date(o.expira_en) >= now).length ?? 0;
+const ofertasExpiradas = ofertas?.filter(o => !o.activa || new Date(o.expira_en) < now).length ?? 0;
+const totalPostulaciones = ofertas?.reduce((sum, o) => sum + ((o.postulaciones as { count: number }[])?.[0]?.count ?? 0), 0) ?? 0;
 ---
 
 <Layout title="Panel de empleador">
   <div class="max-w-5xl mx-auto px-4 py-8">
     <!-- Cabecera -->
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h1 class="text-xl font-bold text-gray-900">{empleador.empresa}</h1>
-        <p class="text-sm text-gray-500">{session.user.email}</p>
+    <div class="flex items-center justify-between mb-8">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-brand-100 border border-brand-200 flex items-center justify-center text-brand-700 font-bold text-lg">
+          {empleador.empresa.slice(0, 2).toUpperCase()}
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-gray-900">{empleador.empresa}</h1>
+          <p class="text-sm text-gray-500">{Astro.locals.session?.user?.email ?? ''}</p>
+        </div>
       </div>
-      <div class="flex gap-3">
+      <div class="flex gap-2">
         <a
           href="/empleador/oferta/nueva"
-          class="bg-brand-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-brand-700 transition-colors"
+          class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm flex items-center gap-1.5"
         >
-          + Nueva oferta
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+          </svg>
+          Nueva oferta
         </a>
         <form action="/api/auth/logout" method="post">
           <button
             type="submit"
-            class="text-sm text-gray-600 border border-gray-300 px-3 py-2 rounded hover:bg-gray-50 transition-colors"
+            class="text-sm text-gray-600 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            Cerrar sesión
+            Salir
           </button>
         </form>
       </div>
     </div>
 
+    <!-- Métricas -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-sm text-gray-500 font-medium">Ofertas activas</p>
+          <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-3xl font-extrabold text-gray-900">{ofertasActivas}</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-sm text-gray-500 font-medium">Total postulaciones</p>
+          <div class="w-8 h-8 bg-brand-100 rounded-lg flex items-center justify-center">
+            <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-3xl font-extrabold text-gray-900">{totalPostulaciones}</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-sm text-gray-500 font-medium">Expiradas / inactivas</p>
+          <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-3xl font-extrabold text-gray-400">{ofertasExpiradas}</p>
+      </div>
+    </div>
+
     <!-- Listado de ofertas -->
     {!ofertas || ofertas.length === 0 ? (
-      <div class="text-center py-20 bg-white border border-gray-200 rounded-lg">
-        <p class="text-gray-500 mb-4">Aún no tienes ofertas publicadas.</p>
-        <a href="/empleador/oferta/nueva" class="bg-brand-600 text-white px-4 py-2 rounded text-sm hover:bg-brand-700">
+      <div class="text-center py-20 bg-white border border-gray-200 rounded-xl shadow-sm">
+        <div class="w-16 h-16 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        </div>
+        <p class="text-gray-700 font-semibold mb-1">Aún no tienes ofertas publicadas</p>
+        <p class="text-sm text-gray-400 mb-6">Crea tu primera oferta y empieza a recibir postulantes</p>
+        <a href="/empleador/oferta/nueva" class="bg-brand-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors">
           Publicar primera oferta
         </a>
       </div>
     ) : (
       <div class="space-y-3">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Tus ofertas</h2>
         {ofertas.map((oferta) => {
           const expirada = new Date(oferta.expira_en) < now;
           const nPost = (oferta.postulaciones as { count: number }[])?.[0]?.count ?? 0;
           const estado = !oferta.activa ? 'Inactiva' : expirada ? 'Expirada' : 'Activa';
-          const estadoColor = estado === 'Activa' ? 'text-green-700 bg-green-50' : 'text-gray-500 bg-gray-100';
+          const estadoColor = estado === 'Activa'
+            ? 'text-green-700 bg-green-100 border-green-200'
+            : estado === 'Expirada'
+            ? 'text-amber-700 bg-amber-100 border-amber-200'
+            : 'text-gray-500 bg-gray-100 border-gray-200';
           return (
-            <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
               <div class="flex items-start justify-between gap-3">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
                     <h2 class="font-semibold text-gray-900">{oferta.titulo}</h2>
-                    <span class={`text-xs px-2 py-0.5 rounded-full font-medium ${estadoColor}`}>
+                    <span class={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${estadoColor}`}>
                       {estado}
                     </span>
                   </div>
-                  <p class="text-sm text-gray-500 mt-0.5">
-                    {oferta.comuna} · {TIPOS[oferta.tipo_empleo] || oferta.tipo_empleo}
-                    · Vence {new Date(oferta.expira_en).toLocaleDateString('es-CL')}
+                  <p class="text-sm text-gray-500 mt-1">
+                    <span class="inline-flex items-center gap-1">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      </svg>
+                      {oferta.comuna}
+                    </span>
+                    <span class="mx-1">·</span>
+                    {TIPOS[oferta.tipo_empleo] || oferta.tipo_empleo}
+                    <span class="mx-1">·</span>
+                    Vence {new Date(oferta.expira_en).toLocaleDateString('es-CL')}
                   </p>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                  <span class="text-sm text-gray-500">
-                    {nPost} postulaci{nPost === 1 ? 'ón' : 'ones'}
-                  </span>
+                  <div class="text-center px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
+                    <p class="text-lg font-bold text-gray-900 leading-none">{nPost}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">{nPost === 1 ? 'CV' : 'CVs'}</p>
+                  </div>
                   <a
                     href={`/empleador/oferta/${oferta.id}/postulaciones`}
-                    class="text-sm text-brand-600 border border-brand-300 px-3 py-1.5 rounded hover:bg-brand-50 transition-colors"
+                    class="text-sm text-brand-600 border border-brand-200 bg-brand-50 px-3 py-2 rounded-lg hover:bg-brand-100 transition-colors font-medium"
                   >
                     Ver CVs
                   </a>
@@ -87,7 +157,7 @@ const now = new Date();
                     <input type="hidden" name="id" value={oferta.id} />
                     <button
                       type="submit"
-                      class="text-sm text-gray-500 border border-gray-200 px-3 py-1.5 rounded hover:bg-gray-50 transition-colors"
+                      class="text-sm text-gray-500 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
                       onclick="return confirm('¿Desactivar esta oferta?')"
                     >
                       {oferta.activa ? 'Desactivar' : 'Activar'}
