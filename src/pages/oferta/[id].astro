@@ -21,6 +21,38 @@ if (isExpired) Astro.response.status = 410;
 const oferta = !notFound && !isExpired ? ofertaRaw : null;
 
 const exito = Astro.url.searchParams.get('exito') === '1';
+
+// JSON-LD JobPosting para Google Jobs
+const SCHEMA_TIPOS: Record<string, string> = {
+  'full-time': 'FULL_TIME',
+  'part-time': 'PART_TIME',
+  'freelance': 'CONTRACTOR',
+  'practica': 'INTERN',
+};
+
+const jsonLd = oferta ? JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'JobPosting',
+  title: oferta.titulo,
+  description: oferta.descripcion,
+  datePosted: oferta.created_at.split('T')[0],
+  validThrough: oferta.expira_en.split('T')[0],
+  employmentType: SCHEMA_TIPOS[oferta.tipo_empleo] || 'OTHER',
+  hiringOrganization: { '@type': 'Organization', name: oferta.empresa },
+  jobLocation: {
+    '@type': 'Place',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: oferta.comuna,
+      addressCountry: 'CL',
+    },
+  },
+  ...(oferta.categoria ? { occupationalCategory: oferta.categoria } : {}),
+}) : null;
+
+const ofertaDescription = oferta
+  ? `${oferta.empresa} busca ${oferta.titulo} en ${oferta.comuna}. ${oferta.descripcion.slice(0, 150).replace(/\n/g, ' ')}...`
+  : '';
 ---
 
 {(notFound || isExpired) && (
@@ -58,16 +90,29 @@ const exito = Astro.url.searchParams.get('exito') === '1';
   </Layout>
 )}
 
-{oferta && <Layout title={oferta.titulo} leaflet={true}>
+{oferta && <Layout title={oferta.titulo} description={ofertaDescription} ogType="article" leaflet={true}>
+  <script slot="head" type="application/ld+json" set:html={jsonLd} />
   <!-- Hero de la oferta -->
   <div class="bg-gradient-to-br from-brand-700 via-brand-600 to-indigo-700 py-10 px-4">
     <div class="max-w-4xl mx-auto">
-      <a href="/" class="inline-flex items-center gap-1.5 text-brand-200 hover:text-white text-sm mb-6 transition-colors">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Volver a ofertas
-      </a>
+      <div class="flex items-center justify-between mb-6">
+        <a href="/" class="inline-flex items-center gap-1.5 text-brand-200 hover:text-white text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Volver a ofertas
+        </a>
+        <button
+          id="btn-compartir"
+          class="inline-flex items-center gap-1.5 text-brand-200 hover:text-white text-sm transition-colors bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg px-3 py-1.5 backdrop-blur"
+          title="Compartir oferta"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          <span id="share-txt">Compartir</span>
+        </button>
+      </div>
       <div class="flex items-start gap-4">
         <div class="w-14 h-14 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-white font-bold text-xl shrink-0 border border-white/30">
           {oferta.empresa.slice(0, 2).toUpperCase()}
@@ -251,8 +296,23 @@ const exito = Astro.url.searchParams.get('exito') === '1';
   </div>
 </Layout>}
 
-<script define:vars={{ ofertaLat: oferta?.lat ?? null, ofertaLng: oferta?.lng ?? null, ofertaTitulo: oferta?.titulo ?? '' }}>
+<script define:vars={{ ofertaLat: oferta?.lat ?? null, ofertaLng: oferta?.lng ?? null, ofertaTitulo: oferta?.titulo ?? '', ofertaEmpresa: oferta?.empresa ?? '' }}>
   document.addEventListener('DOMContentLoaded', () => {
+    // Compartir oferta
+    const btnCompartir = document.getElementById('btn-compartir');
+    const shareTxt = document.getElementById('share-txt');
+    btnCompartir?.addEventListener('click', async () => {
+      const url = window.location.href;
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: ofertaTitulo, text: `${ofertaTitulo} — ${ofertaEmpresa}`, url });
+        } else {
+          await navigator.clipboard.writeText(url);
+          if (shareTxt) { shareTxt.textContent = '¡Copiado!'; setTimeout(() => { shareTxt.textContent = 'Compartir'; }, 2000); }
+        }
+      } catch {}
+    });
+
     // Mini mapa
     const miniMapaEl = document.getElementById('mini-mapa');
     if (miniMapaEl && ofertaLat && ofertaLng) {

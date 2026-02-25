@@ -1,13 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { supabase } from '../lib/supabase';
-import { TIPOS } from '../lib/constants';
+import { TIPOS, CATEGORIAS } from '../lib/constants';
 
 // Filtros desde URL
 const { searchParams } = Astro.url;
 const q = searchParams.get('q') || '';
 const tipo = searchParams.get('tipo') || '';
 const comuna = searchParams.get('comuna') || '';
+const categoria = searchParams.get('categoria') || '';
 
 // Obtener ofertas activas
 let query = supabase
@@ -20,6 +21,7 @@ let query = supabase
 if (q) query = query.ilike('titulo', `%${q}%`);
 if (tipo) query = query.eq('tipo_empleo', tipo);
 if (comuna) query = query.ilike('comuna', `%${comuna}%`);
+if (categoria) query = query.eq('categoria', categoria);
 
 const { data: ofertas = [] } = await query.limit(60);
 
@@ -29,7 +31,18 @@ const mapaOfertas = (ofertas || []).map(o => ({
   lat: o.lat, lng: o.lng, comuna: o.comuna,
 }));
 
-const hayFiltros = q || tipo || comuna;
+const hayFiltros = q || tipo || comuna || categoria;
+
+// Construye URL de categoría preservando otros filtros
+function buildCatUrl(cat: string | null) {
+  const p = new URLSearchParams();
+  if (cat) p.set('categoria', cat);
+  if (q) p.set('q', q);
+  if (tipo) p.set('tipo', tipo);
+  if (comuna) p.set('comuna', comuna);
+  const qs = p.toString();
+  return qs ? `/?${qs}` : '/';
+}
 ---
 
 <Layout title="Empleos en Chile" leaflet={true}>
@@ -45,6 +58,7 @@ const hayFiltros = q || tipo || comuna;
 
       <!-- Barra de búsqueda integrada -->
       <form method="get" class="bg-white rounded-2xl shadow-2xl p-2 flex flex-col sm:flex-row gap-2 max-w-3xl mx-auto">
+        <input type="hidden" name="categoria" value={categoria} />
         <div class="flex-1 flex items-center gap-2 px-3">
           <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -88,6 +102,24 @@ const hayFiltros = q || tipo || comuna;
           Buscar
         </button>
       </form>
+
+      <!-- Pills de categoría -->
+      <div class="flex flex-wrap justify-center gap-2 mt-4">
+        <a
+          href={buildCatUrl(null)}
+          class={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${!categoria ? 'bg-white text-brand-700 border-white shadow-sm' : 'bg-white/15 text-white border-white/25 hover:bg-white/25'}`}
+        >
+          Todas
+        </a>
+        {CATEGORIAS.map(cat => (
+          <a
+            href={buildCatUrl(cat)}
+            class={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${categoria === cat ? 'bg-white text-brand-700 border-white shadow-sm' : 'bg-white/15 text-white border-white/25 hover:bg-white/25'}`}
+          >
+            {cat}
+          </a>
+        ))}
+      </div>
 
       {hayFiltros && (
         <a href="/" class="mt-3 inline-block text-brand-200 hover:text-white text-sm underline transition-colors">
