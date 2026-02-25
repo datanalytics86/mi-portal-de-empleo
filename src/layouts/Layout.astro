@@ -93,3 +93,16 @@ const canonicalUrl = Astro.url.href;
     </footer>
   </body>
 </html>
+
+<style is:global>
+  button:not(:disabled),
+  [type="submit"]:not(:disabled) {
+    transition-property: transform, box-shadow, background-color, color, border-color, opacity;
+    transition-duration: 150ms;
+    transition-timing-function: ease;
+  }
+  button:active:not(:disabled),
+  [type="submit"]:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+</style>

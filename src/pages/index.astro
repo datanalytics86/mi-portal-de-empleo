@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { supabase } from '../lib/supabase';
-import { TIPOS, CATEGORIAS } from '../lib/constants';
+import { TIPOS, CATEGORIAS, CATEGORIA_COLORS } from '../lib/constants';
 
 // Filtros desde URL
 const { searchParams } = Astro.url;
@@ -13,7 +13,7 @@ const categoria = searchParams.get('categoria') || '';
 // Obtener ofertas activas
 let query = supabase
   .from('ofertas')
-  .select('id, titulo, empresa, tipo_empleo, categoria, comuna, created_at, lat, lng')
+  .select('id, titulo, empresa, tipo_empleo, categoria, comuna, created_at, expira_en, lat, lng')
   .eq('activa', true)
   .gte('expira_en', new Date().toISOString())
   .order('created_at', { ascending: false });
@@ -50,7 +50,8 @@ function buildCatUrl(cat: string | null) {
   <section class="bg-gradient-to-br from-brand-700 via-brand-600 to-indigo-700 py-14 px-4">
     <div class="max-w-6xl mx-auto text-center">
       <h1 class="text-4xl sm:text-5xl font-extrabold text-white mb-3 tracking-tight leading-tight">
-        Encuentra tu próximo<br class="hidden sm:block" /> empleo en Chile
+        Encuentra tu próximo<br class="hidden sm:block" />
+        <span class="bg-gradient-to-r from-white to-indigo-200 bg-clip-text text-transparent">empleo en Chile</span>
       </h1>
       <p class="text-brand-100 text-lg mb-8">
         {ofertas?.length ?? 0} oportunidad{(ofertas?.length ?? 0) !== 1 ? 'es' : ''} activa{(ofertas?.length ?? 0) !== 1 ? 's' : ''} en todo el país
@@ -193,8 +194,9 @@ function buildCatUrl(cat: string | null) {
           </div>
         ) : (
           <div class="space-y-3">
-            {ofertas.map((oferta) => {
+            {ofertas.map((oferta, i) => {
               const esNueva = (Date.now() - new Date(oferta.created_at).getTime()) < 48 * 3600 * 1000;
+              const diasRestantes = Math.ceil((new Date(oferta.expira_en).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
               const iniciales = oferta.empresa
                 .split(' ')
                 .slice(0, 2)
@@ -202,10 +204,14 @@ function buildCatUrl(cat: string | null) {
                 .join('')
                 .toUpperCase()
                 .slice(0, 2);
+              const catColor = oferta.categoria
+                ? (CATEGORIA_COLORS[oferta.categoria] || 'bg-gray-100 text-gray-600 border-gray-200')
+                : '';
               return (
                 <a
                   href={`/oferta/${oferta.id}`}
-                  class="flex gap-3 bg-white border border-gray-200 rounded-xl p-4 hover:border-brand-400 hover:shadow-md transition-all group"
+                  class="card-anim flex gap-3 bg-white border border-gray-200 rounded-xl p-4 hover:border-brand-400 hover:shadow-md transition-all group"
+                  style={`animation-delay: ${i * 55}ms`}
                 >
                   <!-- Avatar empresa -->
                   <div class="w-10 h-10 rounded-lg bg-brand-50 border border-brand-100 flex items-center justify-center shrink-0 text-brand-700 font-bold text-sm group-hover:bg-brand-100 transition-colors">
@@ -218,6 +224,11 @@ function buildCatUrl(cat: string | null) {
                           <h2 class="font-semibold text-gray-900 truncate group-hover:text-brand-700 transition-colors">{oferta.titulo}</h2>
                           {esNueva && (
                             <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium shrink-0">Nueva</span>
+                          )}
+                          {diasRestantes <= 5 && (
+                            <span class={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${diasRestantes <= 1 ? 'bg-red-100 text-red-700' : diasRestantes <= 3 ? 'bg-orange-100 text-orange-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                              {diasRestantes <= 1 ? 'Último día' : `Cierra en ${diasRestantes}d`}
+                            </span>
                           )}
                         </div>
                         <p class="text-sm text-gray-500 mt-0.5">{oferta.empresa}</p>
@@ -237,7 +248,7 @@ function buildCatUrl(cat: string | null) {
                         {TIPOS[oferta.tipo_empleo] || oferta.tipo_empleo}
                       </span>
                       {oferta.categoria && (
-                        <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">
+                        <span class={`text-xs border px-2 py-0.5 rounded-full font-medium ${catColor}`}>
                           {oferta.categoria}
                         </span>
                       )}
@@ -283,3 +294,13 @@ function buildCatUrl(cat: string | null) {
     });
   });
 </script>
+
+<style>
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card-anim {
+    animation: fadeSlideUp 0.38s ease both;
+  }
+</style>
