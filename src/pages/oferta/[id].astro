@@ -62,6 +62,10 @@ const totalDias = oferta
   ? Math.max(1, Math.ceil((new Date(oferta.expira_en).getTime() - new Date(oferta.created_at).getTime()) / (1000 * 60 * 60 * 24)))
   : 1;
 const pctTranscurrido = Math.min(100, Math.round(((totalDias - diasRestantes) / totalDias) * 100));
+// Pre-computadas para evitar template literals anidados en expresiones Astro
+const urgenciaTexto = diasRestantes <= 1 ? '⚡ Último día' : diasRestantes <= 5 ? ('⚡ Cierra en ' + diasRestantes + ' días') : (diasRestantes + ' días restantes');
+const barraColor = 'h-full rounded-full transition-all ' + (diasRestantes <= 3 ? 'bg-red-400' : diasRestantes <= 7 ? 'bg-orange-300' : 'bg-white');
+const barraWidth = 'width: ' + pctTranscurrido + '%';
 ---
 
 {(notFound || isExpired) && (
@@ -154,13 +158,13 @@ const pctTranscurrido = Math.min(100, Math.round(((totalDias - diasRestantes) / 
             <div class="flex items-center justify-between text-xs text-brand-200 mb-1.5">
               <span>Publicada</span>
               <span class={diasRestantes <= 1 ? 'text-red-300 font-semibold' : diasRestantes <= 5 ? 'text-orange-300 font-semibold' : ''}>
-                {diasRestantes <= 1 ? '⚡ Último día' : diasRestantes <= 5 ? `⚡ Cierra en ${diasRestantes} días` : `${diasRestantes} días restantes`}
+                {urgenciaTexto}
               </span>
             </div>
             <div class="bg-white/20 rounded-full h-1.5 overflow-hidden">
               <div
-                class={`h-full rounded-full transition-all ${diasRestantes <= 3 ? 'bg-red-400' : diasRestantes <= 7 ? 'bg-orange-300' : 'bg-white'}`}
-                style={`width: ${pctTranscurrido}%`}
+                class={barraColor}
+                style={barraWidth}
               ></div>
             </div>
           </div>
