@@ -71,13 +71,14 @@ CREATE POLICY "ofertas_empleador_update" ON public.ofertas
 -- TABLA: postulaciones
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.postulaciones (
-  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  oferta_id   UUID NOT NULL REFERENCES public.ofertas(id) ON DELETE CASCADE,
-  nombre      TEXT,
-  email       TEXT,
-  cv_url      TEXT NOT NULL,
-  ip_address  TEXT,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  oferta_id      UUID NOT NULL REFERENCES public.ofertas(id) ON DELETE CASCADE,
+  nombre         TEXT,
+  email          TEXT,
+  cv_url         TEXT NOT NULL,
+  ip_address     TEXT,
+  palabras_clave TEXT[] DEFAULT '{}',
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Índices

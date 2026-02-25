@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
 import { createServiceClient } from '../../lib/supabase';
+import { extractText } from '../../lib/extract-text';
+import { extractKeywords } from '../../lib/extract-keywords';
 import { z } from 'zod';
 
 const MAX_CV_SIZE = 5 * 1024 * 1024; // 5MB
@@ -119,22 +121,42 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  // Insertar postulación en la base de datos
-  const { error: dbError } = await serviceClient.from('postulaciones').insert({
-    oferta_id: parsed.data.oferta_id,
-    nombre: parsed.data.nombre || null,
-    email: parsed.data.email || null,
-    cv_url: uploadData.path,
-    ip_address: ip,
-  });
+  // Insertar postulación en la base de datos (devuelve id para actualizar keywords)
+  const { data: inserted, error: dbError } = await serviceClient
+    .from('postulaciones')
+    .insert({
+      oferta_id: parsed.data.oferta_id,
+      nombre: parsed.data.nombre || null,
+      email: parsed.data.email || null,
+      cv_url: uploadData.path,
+      ip_address: ip,
+    })
+    .select('id')
+    .single();
 
-  if (dbError) {
+  if (dbError || !inserted) {
     // Limpiar el CV subido si falla la inserción
     await serviceClient.storage.from('cvs').remove([fileName]);
     console.error('Error guardando postulación:', dbError);
     return new Response(JSON.stringify({ error: 'Error al guardar la postulación. Intenta de nuevo.' }), {
       status: 500, headers: { 'Content-Type': 'application/json' },
     });
+  }
+
+  // Extraer keywords del CV (best-effort: nunca bloquea la respuesta)
+  try {
+    const text = await extractText(cvBuffer, cv.type);
+    if (text.trim()) {
+      const palabras_clave = extractKeywords(text);
+      if (palabras_clave.length > 0) {
+        await serviceClient
+          .from('postulaciones')
+          .update({ palabras_clave })
+          .eq('id', inserted.id);
+      }
+    }
+  } catch (e) {
+    console.error('Error extrayendo keywords (no crítico):', e);
   }
 
   return new Response(JSON.stringify({ ok: true }), {

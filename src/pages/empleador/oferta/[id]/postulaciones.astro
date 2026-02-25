@@ -19,7 +19,7 @@ if (ofertaError || !oferta) return Astro.redirect('/empleador/dashboard');
 // Obtener postulaciones
 const { data: postulaciones } = await client
   .from('postulaciones')
-  .select('id, nombre, email, cv_url, created_at')
+  .select('id, nombre, email, cv_url, palabras_clave, created_at')
   .eq('oferta_id', id)
   .order('created_at', { ascending: false });
 ---
@@ -48,15 +48,27 @@ const { data: postulaciones } = await client
             <tr>
               <th class="text-left px-4 py-3 font-medium text-gray-700">Candidato</th>
               <th class="text-left px-4 py-3 font-medium text-gray-700">Email</th>
+              <th class="text-left px-4 py-3 font-medium text-gray-700">Términos del CV</th>
               <th class="text-left px-4 py-3 font-medium text-gray-700">Fecha</th>
               <th class="text-left px-4 py-3 font-medium text-gray-700">CV</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
             {postulaciones.map((p) => (
-              <tr class="hover:bg-gray-50">
+              <tr class="hover:bg-gray-50 align-top">
                 <td class="px-4 py-3 text-gray-900">{p.nombre || <span class="text-gray-400 italic">Anónimo</span>}</td>
                 <td class="px-4 py-3 text-gray-600">{p.email || <span class="text-gray-400">—</span>}</td>
+                <td class="px-4 py-3">
+                  {p.palabras_clave && p.palabras_clave.length > 0 ? (
+                    <div class="flex flex-wrap gap-1">
+                      {p.palabras_clave.slice(0, 10).map(k => (
+                        <span class="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">{k}</span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span class="text-gray-400 text-xs">—</span>
+                  )}
+                </td>
                 <td class="px-4 py-3 text-gray-500 whitespace-nowrap">
                   {new Date(p.created_at).toLocaleDateString('es-CL', {
                     year: 'numeric', month: 'short', day: 'numeric',

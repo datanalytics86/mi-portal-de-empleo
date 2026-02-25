@@ -68,6 +68,7 @@ export interface Database {
           email: string | null;
           cv_url: string;
           ip_address: string | null;
+          palabras_clave: string[] | null;
           created_at: string;
         };
         Insert: {
@@ -77,9 +78,10 @@ export interface Database {
           email?: string | null;
           cv_url: string;
           ip_address?: string | null;
+          palabras_clave?: string[] | null;
           created_at?: string;
         };
-        Update: Record<string, never>;
+        Update: { palabras_clave?: string[] | null };
       };
     };
   };
