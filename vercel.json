@@ -1,5 +1,11 @@
 {
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "framework": "astro"
+  "framework": "astro",
+  "crons": [
+    {
+      "path": "/api/cron/limpiar",
+      "schedule": "0 3 * * *"
+    }
+  ]
 }
