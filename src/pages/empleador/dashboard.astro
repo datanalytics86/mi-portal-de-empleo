@@ -20,6 +20,27 @@ const now = new Date();
 const ofertasActivas = ofertas?.filter(o => o.activa && new Date(o.expira_en) >= now).length ?? 0;
 const ofertasExpiradas = ofertas?.filter(o => !o.activa || new Date(o.expira_en) < now).length ?? 0;
 const totalPostulaciones = ofertas?.reduce((sum, o) => sum + ((o.postulaciones as { count: number }[])?.[0]?.count ?? 0), 0) ?? 0;
+
+// Pre-computar datos de display para cada oferta (mueve los <= al frontmatter)
+const ofertasDisplay = (ofertas ?? []).map((oferta) => {
+  const expirada = new Date(oferta.expira_en) < now;
+  const nPost = (oferta.postulaciones as { count: number }[])?.[0]?.count ?? 0;
+  const estado = !oferta.activa ? 'Inactiva' : expirada ? 'Expirada' : 'Activa';
+  const estadoColor = estado === 'Activa'
+    ? 'text-green-700 bg-green-100 border-green-200'
+    : estado === 'Expirada'
+    ? 'text-amber-700 bg-amber-100 border-amber-200'
+    : 'text-gray-500 bg-gray-100 border-gray-200';
+  const diasRestantes = Math.max(0, Math.ceil((new Date(oferta.expira_en).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+  const totalDias = Math.max(1, Math.ceil((new Date(oferta.expira_en).getTime() - new Date(oferta.created_at).getTime()) / (1000 * 60 * 60 * 24)));
+  const pctTranscurrido = Math.min(100, Math.round(((totalDias - diasRestantes) / totalDias) * 100));
+  const barColor = diasRestantes <= 3 ? 'bg-red-400' : diasRestantes <= 7 ? 'bg-orange-300' : 'bg-brand-400';
+  const barWidth = 'width: ' + pctTranscurrido + '%';
+  const diasLabel = diasRestantes === 0
+    ? 'Último día'
+    : diasRestantes + ' día' + (diasRestantes !== 1 ? 's' : '') + ' restante' + (diasRestantes !== 1 ? 's' : '');
+  return { ...oferta, expirada, nPost, estado, estadoColor, diasRestantes, barColor, barWidth, diasLabel };
+});
 ---
 
 <Layout title="Panel de empleador">
@@ -59,18 +80,18 @@ const totalPostulaciones = ofertas?.reduce((sum, o) => sum + ((o.postulaciones a
         </div>
       </div>
 
-      <!-- Métricas integradas en el hero -->
+      <!-- Métricas con contadores animados -->
       <div class="grid grid-cols-3 gap-3 mt-6">
         <div class="bg-white/15 border border-white/20 rounded-xl p-4 backdrop-blur text-center">
-          <p class="text-3xl font-extrabold text-white">{ofertasActivas}</p>
+          <p id="metric-activas" data-target={ofertasActivas} class="text-3xl font-extrabold text-white">0</p>
           <p class="text-xs text-brand-200 mt-1 font-medium">Activas</p>
         </div>
         <div class="bg-white/15 border border-white/20 rounded-xl p-4 backdrop-blur text-center">
-          <p class="text-3xl font-extrabold text-white">{totalPostulaciones}</p>
+          <p id="metric-postulaciones" data-target={totalPostulaciones} class="text-3xl font-extrabold text-white">0</p>
           <p class="text-xs text-brand-200 mt-1 font-medium">Postulaciones</p>
         </div>
         <div class="bg-white/15 border border-white/20 rounded-xl p-4 backdrop-blur text-center">
-          <p class="text-3xl font-extrabold text-white/50">{ofertasExpiradas}</p>
+          <p id="metric-expiradas" data-target={ofertasExpiradas} class="text-3xl font-extrabold text-white/50">0</p>
           <p class="text-xs text-brand-200 mt-1 font-medium">Expiradas</p>
         </div>
       </div>
@@ -80,7 +101,7 @@ const totalPostulaciones = ofertas?.reduce((sum, o) => sum + ((o.postulaciones a
   <div class="max-w-5xl mx-auto px-4 py-6">
 
     <!-- Listado de ofertas -->
-    {!ofertas || ofertas.length === 0 ? (
+    {ofertasDisplay.length === 0 ? (
       <div class="text-center py-20 bg-white border border-gray-200 rounded-xl shadow-sm">
         <div class="w-16 h-16 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-4">
           <svg class="w-8 h-8 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,65 +117,98 @@ const totalPostulaciones = ofertas?.reduce((sum, o) => sum + ((o.postulaciones a
     ) : (
       <div class="space-y-3">
         <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Tus ofertas</h2>
-        {ofertas.map((oferta) => {
-          const expirada = new Date(oferta.expira_en) < now;
-          const nPost = (oferta.postulaciones as { count: number }[])?.[0]?.count ?? 0;
-          const estado = !oferta.activa ? 'Inactiva' : expirada ? 'Expirada' : 'Activa';
-          const estadoColor = estado === 'Activa'
-            ? 'text-green-700 bg-green-100 border-green-200'
-            : estado === 'Expirada'
-            ? 'text-amber-700 bg-amber-100 border-amber-200'
-            : 'text-gray-500 bg-gray-100 border-gray-200';
-          return (
-            <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div class="flex items-start justify-between gap-3">
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <h2 class="font-semibold text-gray-900">{oferta.titulo}</h2>
-                    <span class={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${estadoColor}`}>
-                      {estado}
-                    </span>
-                  </div>
-                  <p class="text-sm text-gray-500 mt-1">
-                    <span class="inline-flex items-center gap-1">
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      </svg>
-                      {oferta.comuna}
-                    </span>
-                    <span class="mx-1">·</span>
-                    {TIPOS[oferta.tipo_empleo] || oferta.tipo_empleo}
-                    <span class="mx-1">·</span>
-                    Vence {new Date(oferta.expira_en).toLocaleDateString('es-CL')}
-                  </p>
+        {ofertasDisplay.map((oferta) => (
+          <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all group">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h2 class="font-semibold text-gray-900 group-hover:text-brand-700 transition-colors">{oferta.titulo}</h2>
+                  <span class={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${oferta.estadoColor}`}>
+                    {oferta.estado}
+                  </span>
                 </div>
-                <div class="flex items-center gap-2 shrink-0">
-                  <div class="text-center px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
-                    <p class="text-lg font-bold text-gray-900 leading-none">{nPost}</p>
-                    <p class="text-xs text-gray-400 mt-0.5">{nPost === 1 ? 'CV' : 'CVs'}</p>
+                <p class="text-sm text-gray-500 mt-1">
+                  <span class="inline-flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    </svg>
+                    {oferta.comuna}
+                  </span>
+                  <span class="mx-1">·</span>
+                  {TIPOS[oferta.tipo_empleo] || oferta.tipo_empleo}
+                  <span class="mx-1">·</span>
+                  Vence {new Date(oferta.expira_en).toLocaleDateString('es-CL')}
+                </p>
+                <!-- Barra de tiempo restante (solo si activa y no expirada) -->
+                {!oferta.expirada && oferta.activa && (
+                  <div class="mt-2.5 max-w-xs">
+                    <div class="bg-gray-100 rounded-full h-1 overflow-hidden">
+                      <div class={`h-full rounded-full ${oferta.barColor}`} style={oferta.barWidth}></div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-0.5">{oferta.diasLabel}</p>
                   </div>
-                  <a
-                    href={`/empleador/oferta/${oferta.id}/postulaciones`}
-                    class="text-sm text-brand-600 border border-brand-200 bg-brand-50 px-3 py-2 rounded-lg hover:bg-brand-100 transition-colors font-medium"
+                )}
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <div class="text-center px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
+                  <p class="text-lg font-bold text-gray-900 leading-none">{oferta.nPost}</p>
+                  <p class="text-xs text-gray-400 mt-0.5">{oferta.nPost === 1 ? 'CV' : 'CVs'}</p>
+                </div>
+                <a
+                  href={`/oferta/${oferta.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-gray-400 border border-gray-200 p-2 rounded-lg hover:bg-gray-50 hover:text-gray-600 transition-colors"
+                  title="Ver oferta pública"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+                <a
+                  href={`/empleador/oferta/${oferta.id}/postulaciones`}
+                  class="text-sm text-brand-600 border border-brand-200 bg-brand-50 px-3 py-2 rounded-lg hover:bg-brand-100 transition-colors font-medium"
+                >
+                  Ver CVs
+                </a>
+                <form action="/api/ofertas/desactivar" method="post" class="inline">
+                  <input type="hidden" name="id" value={oferta.id} />
+                  <button
+                    type="submit"
+                    class="text-sm text-gray-500 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    onclick="return confirm('¿Desactivar esta oferta?')"
                   >
-                    Ver CVs
-                  </a>
-                  <form action="/api/ofertas/desactivar" method="post" class="inline">
-                    <input type="hidden" name="id" value={oferta.id} />
-                    <button
-                      type="submit"
-                      class="text-sm text-gray-500 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-                      onclick="return confirm('¿Desactivar esta oferta?')"
-                    >
-                      {oferta.activa ? 'Desactivar' : 'Activar'}
-                    </button>
-                  </form>
-                </div>
+                    {oferta.activa ? 'Desactivar' : 'Activar'}
+                  </button>
+                </form>
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     )}
   </div>
 </Layout>
+
+<script>
+  function animateCounter(el: HTMLElement) {
+    const target = parseInt(el.dataset.target || '0', 10);
+    if (target === 0) { el.textContent = '0'; return; }
+    const duration = 800;
+    const start = performance.now();
+    const step = (now: number) => {
+      const elapsed = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - elapsed, 3);
+      el.textContent = String(Math.round(eased * target));
+      if (elapsed < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    ['metric-activas', 'metric-postulaciones', 'metric-expiradas'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) animateCounter(el);
+    });
+  });
+</script>

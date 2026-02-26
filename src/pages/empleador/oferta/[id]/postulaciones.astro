@@ -24,6 +24,8 @@ const { data: postulaciones } = await client
   .order('created_at', { ascending: false });
 
 const total = postulaciones?.length ?? 0;
+const emailsList = postulaciones?.filter(p => p.email).map(p => p.email) ?? [];
+const hasEmails = emailsList.length > 0;
 ---
 
 <Layout title={`Postulaciones: ${oferta.titulo}`}>
@@ -41,9 +43,35 @@ const total = postulaciones?.length ?? 0;
           <h1 class="text-xl sm:text-2xl font-bold text-white leading-tight">{oferta.titulo}</h1>
           <p class="text-brand-200 text-sm mt-1">{oferta.empresa}</p>
         </div>
-        <div class="bg-white/15 border border-white/25 rounded-xl px-4 py-2.5 text-center backdrop-blur shrink-0">
-          <p class="text-2xl font-extrabold text-white">{total}</p>
-          <p class="text-xs text-brand-200 mt-0.5">{total === 1 ? 'postulación' : 'postulaciones'}</p>
+        <div class="flex items-center gap-3 flex-wrap">
+          <!-- Exportar todos los emails -->
+          {hasEmails && (
+            <button
+              id="btn-copiar-emails"
+              data-emails={emailsList.join(', ')}
+              class="inline-flex items-center gap-1.5 text-sm font-medium bg-white/15 border border-white/25 text-white px-3 py-2 rounded-lg hover:bg-white/25 transition-colors backdrop-blur"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+              </svg>
+              <span id="copiar-emails-txt">Copiar emails ({emailsList.length})</span>
+            </button>
+          )}
+          <a
+            href={`/oferta/${oferta.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 text-sm font-medium bg-white/15 border border-white/25 text-white px-3 py-2 rounded-lg hover:bg-white/25 transition-colors backdrop-blur"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            Ver oferta
+          </a>
+          <div class="bg-white/15 border border-white/25 rounded-xl px-4 py-2.5 text-center backdrop-blur shrink-0">
+            <p class="text-2xl font-extrabold text-white">{total}</p>
+            <p class="text-xs text-brand-200 mt-0.5">{total === 1 ? 'postulación' : 'postulaciones'}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -88,12 +116,18 @@ const total = postulaciones?.length ?? 0;
             'bg-rose-100 text-rose-700',
           ];
           const color = colors[i % colors.length];
+          const animDelay = 'animation-delay: ' + (i * 60) + 'ms';
           return (
-            <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-brand-300 hover:shadow-md transition-all">
+            <div class="card-anim bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-brand-300 hover:shadow-md hover:-translate-y-0.5 transition-all" style={animDelay}>
               <div class="flex items-start gap-4">
-                <!-- Avatar -->
-                <div class={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${color}`}>
-                  {initials}
+                <!-- Avatar con badge numérico -->
+                <div class="relative shrink-0">
+                  <div class={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm ${color}`}>
+                    {initials}
+                  </div>
+                  <span class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-800 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                    {i + 1}
+                  </span>
                 </div>
 
                 <!-- Info principal -->
@@ -104,19 +138,31 @@ const total = postulaciones?.length ?? 0;
                         {p.nombre || <span class="text-gray-400 italic font-normal">Anónimo</span>}
                       </p>
                       {p.email ? (
-                        <a href={`mailto:${p.email}`} class="text-sm text-brand-600 hover:underline mt-0.5 inline-block">
-                          {p.email}
-                        </a>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                          <a href={`mailto:${p.email}`} class="text-sm text-brand-600 hover:underline">
+                            {p.email}
+                          </a>
+                          <button
+                            class="copy-email-btn text-gray-300 hover:text-gray-500 transition-colors p-0.5 rounded"
+                            data-email={p.email}
+                            title="Copiar email"
+                          >
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            </svg>
+                          </button>
+                        </div>
                       ) : (
                         <p class="text-sm text-gray-400 mt-0.5">Sin email</p>
                       )}
                     </div>
                     <div class="flex items-center gap-3 shrink-0">
-                      <span class="text-xs text-gray-400 whitespace-nowrap">
-                        {new Date(p.created_at).toLocaleDateString('es-CL', {
-                          day: 'numeric', month: 'short', year: 'numeric',
-                          hour: '2-digit', minute: '2-digit',
-                        })}
+                      <span
+                        class="relative-time text-xs text-gray-400 whitespace-nowrap"
+                        data-time={p.created_at}
+                        title={new Date(p.created_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      >
+                        {new Date(p.created_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}
                       </span>
                       <a
                         href={`/api/postulaciones/cv?id=${p.id}`}
@@ -158,3 +204,59 @@ const total = postulaciones?.length ?? 0;
     )}
   </div>
 </Layout>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    // Tiempos relativos
+    document.querySelectorAll<HTMLElement>('.relative-time').forEach(el => {
+      const iso = el.dataset.time;
+      if (!iso) return;
+      const diff = Date.now() - new Date(iso).getTime();
+      const mins = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+      if (mins < 1) el.textContent = 'Ahora';
+      else if (mins < 60) el.textContent = `hace ${mins} min`;
+      else if (hours < 24) el.textContent = `hace ${hours} h`;
+      else if (days === 1) el.textContent = 'ayer';
+      else if (days < 30) el.textContent = `hace ${days} días`;
+      else el.textContent = new Date(iso).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+    });
+
+    // Copiar email individual
+    document.querySelectorAll<HTMLButtonElement>('.copy-email-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const email = btn.dataset.email;
+        if (!email) return;
+        await navigator.clipboard.writeText(email).catch(() => {});
+        const prev = btn.innerHTML;
+        btn.innerHTML = '<svg class="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>';
+        setTimeout(() => { btn.innerHTML = prev; }, 2000);
+      });
+    });
+
+    // Copiar todos los emails
+    const btnTodos = document.getElementById('btn-copiar-emails');
+    const txtTodos = document.getElementById('copiar-emails-txt');
+    btnTodos?.addEventListener('click', async () => {
+      const emails = btnTodos.dataset.emails;
+      if (!emails) return;
+      await navigator.clipboard.writeText(emails).catch(() => {});
+      if (txtTodos) {
+        const original = txtTodos.textContent;
+        txtTodos.textContent = '¡Copiado!';
+        setTimeout(() => { if (txtTodos) txtTodos.textContent = original; }, 2000);
+      }
+    });
+  });
+</script>
+
+<style>
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card-anim {
+    animation: fadeSlideUp 0.35s ease both;
+  }
+</style>
