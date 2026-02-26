@@ -10,7 +10,7 @@ if (session) return Astro.redirect('/empleador/dashboard');
   <div class="min-h-[calc(100vh-140px)] flex items-center justify-center px-4 py-12 bg-gray-50">
     <div class="w-full max-w-md">
       <!-- Logo / branding -->
-      <div class="text-center mb-8">
+      <div class="text-center mb-8 form-enter" style="animation-delay:0ms">
         <div class="w-14 h-14 bg-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
           <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -23,7 +23,7 @@ if (session) return Astro.redirect('/empleador/dashboard');
         </p>
       </div>
 
-      <div class="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+      <div class="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm form-enter" style="animation-delay:80ms">
         <form id="form-registro" class="space-y-5">
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nombre de la empresa</label>
@@ -105,6 +105,14 @@ if (session) return Astro.redirect('/empleador/dashboard');
     </div>
   </div>
 </Layout>
+
+<style>
+  @keyframes formEnter {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .form-enter { animation: formEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+</style>
 
 <script>
   const form = document.getElementById('form-registro') as HTMLFormElement;

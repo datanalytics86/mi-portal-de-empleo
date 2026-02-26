@@ -28,7 +28,7 @@ const { data: ofertas = [] } = await query.limit(60);
 // Serializar datos para el mapa
 const mapaOfertas = (ofertas || []).map(o => ({
   id: o.id, titulo: o.titulo, empresa: o.empresa,
-  lat: o.lat, lng: o.lng, comuna: o.comuna,
+  lat: o.lat, lng: o.lng, comuna: o.comuna, categoria: o.categoria ?? '',
 }));
 
 const hayFiltros = q || tipo || comuna || categoria;
@@ -284,9 +284,23 @@ function buildCatUrl(cat: string | null) {
       return d.innerHTML;
     }
 
+    const CAT_COLORS = {
+      'Tecnología': '#4f46e5', 'Administración': '#0ea5e9', 'Salud': '#10b981',
+      'Educación': '#f59e0b', 'Ventas': '#ef4444', 'Construcción': '#f97316',
+      'Logística': '#8b5cf6', 'Gastronomía': '#ec4899', 'Finanzas': '#14b8a6',
+      'Legal': '#6366f1', 'Marketing': '#d946ef', 'RRHH': '#64748b',
+    };
+
     mapaOfertas.forEach((oferta) => {
       if (!oferta.lat || !oferta.lng) return;
-      const marker = L.marker([oferta.lat, oferta.lng]);
+      const color = CAT_COLORS[oferta.categoria] || '#4f46e5';
+      const icon = L.divIcon({
+        html: `<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`,
+        className: '',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      });
+      const marker = L.marker([oferta.lat, oferta.lng], { icon });
       marker.bindPopup(`
         <div style="min-width:160px">
           <strong>${esc(oferta.titulo)}</strong><br>

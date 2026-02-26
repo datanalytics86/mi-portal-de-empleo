@@ -26,6 +26,12 @@ const { data: postulaciones } = await client
 const total = postulaciones?.length ?? 0;
 const emailsList = postulaciones?.filter(p => p.email).map(p => p.email) ?? [];
 const hasEmails = emailsList.length > 0;
+const csvRows = (postulaciones ?? []).map(p => ({
+  nombre: p.nombre || 'Anónimo',
+  email: p.email || '',
+  fecha: new Date(p.created_at).toLocaleDateString('es-CL'),
+  keywords: (p.palabras_clave ?? []).join(' | '),
+}));
 ---
 
 <Layout title={`Postulaciones: ${oferta.titulo}`}>
@@ -55,6 +61,17 @@ const hasEmails = emailsList.length > 0;
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
               </svg>
               <span id="copiar-emails-txt">Copiar emails ({emailsList.length})</span>
+            </button>
+          )}
+          {total > 0 && (
+            <button
+              id="btn-export-csv"
+              class="inline-flex items-center gap-1.5 text-sm font-medium bg-white/15 border border-white/25 text-white px-3 py-2 rounded-lg hover:bg-white/25 transition-colors backdrop-blur"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Exportar CSV
             </button>
           )}
           <a
@@ -99,7 +116,23 @@ const hasEmails = emailsList.length > 0;
         </a>
       </div>
     ) : (
-      <div class="space-y-3">
+      <div>
+        <!-- Sort toolbar -->
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-sm text-gray-500">
+            <span class="font-semibold text-gray-900">{total}</span> candidato{total !== 1 ? 's' : ''}
+          </p>
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs text-gray-400 mr-1">Ordenar:</span>
+            <button id="sort-fecha" class="sort-btn text-xs px-2.5 py-1 rounded-lg border border-brand-200 bg-brand-50 text-brand-700 font-medium transition-colors">
+              Más reciente
+            </button>
+            <button id="sort-nombre" class="sort-btn text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-500 font-medium hover:bg-gray-50 transition-colors">
+              A-Z
+            </button>
+          </div>
+        </div>
+        <div id="candidates-list" class="space-y-3">
         {postulaciones!.map((p, i) => {
           const initials = (p.nombre || '?')
             .split(' ')
@@ -118,7 +151,13 @@ const hasEmails = emailsList.length > 0;
           const color = colors[i % colors.length];
           const animDelay = 'animation-delay: ' + (i * 60) + 'ms';
           return (
-            <div class="card-anim bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-brand-300 hover:shadow-md hover:-translate-y-0.5 transition-all" style={animDelay}>
+            <div
+              class="card-anim candidate-row bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-brand-300 hover:shadow-md hover:-translate-y-0.5 transition-all"
+              style={animDelay}
+              data-nombre={p.nombre || ''}
+              data-email={p.email || ''}
+              data-fecha={p.created_at}
+            >
               <div class="flex items-start gap-4">
                 <!-- Avatar con badge numérico -->
                 <div class="relative shrink-0">
@@ -196,10 +235,11 @@ const hasEmails = emailsList.length > 0;
           );
         })}
 
-        <!-- Footer con total -->
-        <p class="text-center text-xs text-gray-400 pt-2">
-          Mostrando {total} postulaci{total === 1 ? 'ón' : 'ones'} · Los CVs se eliminan automáticamente a los 90 días
-        </p>
+          <!-- Footer con total -->
+          <p class="text-center text-xs text-gray-400 pt-2">
+            Mostrando {total} postulaci{total === 1 ? 'ón' : 'ones'} · Los CVs se eliminan automáticamente a los 90 días
+          </p>
+        </div>
       </div>
     )}
   </div>
@@ -248,6 +288,55 @@ const hasEmails = emailsList.length > 0;
         setTimeout(() => { if (txtTodos) txtTodos.textContent = original; }, 2000);
       }
     });
+  });
+</script>
+
+<script define:vars={{ csvRows, ofertaTitulo: oferta.titulo }}>
+  document.addEventListener('astro:page-load', () => {
+    // CSV export
+    const btnCSV = document.getElementById('btn-export-csv');
+    btnCSV?.addEventListener('click', () => {
+      const header = ['Nombre', 'Email', 'Fecha', 'Palabras clave'];
+      const rows = csvRows.map((r) => [r.nombre, r.email, r.fecha, r.keywords]);
+      const csv = [header, ...rows]
+        .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+      const a = document.createElement('a');
+      a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+      a.download = `postulaciones-${ofertaTitulo.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.csv`;
+      a.click();
+    });
+
+    // Sort candidates
+    const list = document.getElementById('candidates-list');
+    const btnFecha = document.getElementById('sort-fecha');
+    const btnNombre = document.getElementById('sort-nombre');
+
+    function sortCards(by: 'fecha' | 'nombre') {
+      if (!list) return;
+      const cards = Array.from(list.querySelectorAll<HTMLElement>('.candidate-row'));
+      cards.sort((a, b) => {
+        if (by === 'nombre') {
+          return (a.dataset.nombre || '').localeCompare(b.dataset.nombre || '', 'es', { sensitivity: 'base' });
+        }
+        return new Date(b.dataset.fecha || 0).getTime() - new Date(a.dataset.fecha || 0).getTime();
+      });
+      cards.forEach(c => list.appendChild(c));
+      // Toggle active state on buttons
+      btnFecha?.classList.toggle('bg-brand-50', by === 'fecha');
+      btnFecha?.classList.toggle('text-brand-700', by === 'fecha');
+      btnFecha?.classList.toggle('border-brand-200', by === 'fecha');
+      btnFecha?.classList.toggle('text-gray-500', by !== 'fecha');
+      btnFecha?.classList.toggle('border-gray-200', by !== 'fecha');
+      btnNombre?.classList.toggle('bg-brand-50', by === 'nombre');
+      btnNombre?.classList.toggle('text-brand-700', by === 'nombre');
+      btnNombre?.classList.toggle('border-brand-200', by === 'nombre');
+      btnNombre?.classList.toggle('text-gray-500', by !== 'nombre');
+      btnNombre?.classList.toggle('border-gray-200', by !== 'nombre');
+    }
+
+    btnFecha?.addEventListener('click', () => sortCards('fecha'));
+    btnNombre?.addEventListener('click', () => sortCards('nombre'));
   });
 </script>
 
