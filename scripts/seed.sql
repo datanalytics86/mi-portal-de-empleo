@@ -82,6 +82,44 @@ INSERT INTO auth.users (
 ) ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
+-- 1b. CREAR IDENTIDADES EN auth.identities
+--     Supabase requiere un registro por usuario en esta tabla
+--     para que signInWithPassword funcione con email/password.
+-- ============================================================
+
+INSERT INTO auth.identities (
+  id,
+  user_id,
+  identity_data,
+  provider,
+  provider_id,
+  last_sign_in_at,
+  created_at,
+  updated_at
+) VALUES
+(
+  'aaaaaaaa-1111-1111-1111-000000000001',
+  'aaaaaaaa-1111-1111-1111-000000000001',
+  '{"sub": "aaaaaaaa-1111-1111-1111-000000000001", "email": "test-empresa1@test.cl"}',
+  'email',
+  'test-empresa1@test.cl',
+  NOW(),
+  NOW(),
+  NOW()
+),
+(
+  'aaaaaaaa-2222-2222-2222-000000000002',
+  'aaaaaaaa-2222-2222-2222-000000000002',
+  '{"sub": "aaaaaaaa-2222-2222-2222-000000000002", "email": "test-empresa2@test.cl"}',
+  'email',
+  'test-empresa2@test.cl',
+  NOW(),
+  NOW(),
+  NOW()
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
 -- 2. CREAR REGISTROS EN public.empleadores
 -- ============================================================
 
@@ -665,4 +703,4 @@ SELECT 'Ofertas', COUNT(*) FROM public.ofertas WHERE empleador_id IN (
   'aaaaaaaa-2222-2222-2222-000000000002'
 )
 UNION ALL
-SELECT 'Postulaciones', COUNT(*) FROM public.postulaciones WHERE oferta_id LIKE 'bbbbbbbb-%';
+SELECT 'Postulaciones', COUNT(*) FROM public.postulaciones WHERE oferta_id::text LIKE 'bbbbbbbb-%';

@@ -113,15 +113,23 @@ const error = Astro.url.searchParams.get('error');
     btn.disabled = true;
     errEl.classList.add('hidden');
 
-    const body = new FormData(form);
-    const res = await fetch('/api/auth/login', { method: 'POST', body });
-    const data = await res.json();
+    try {
+      const body = new FormData(form);
+      const res = await fetch('/api/auth/login', { method: 'POST', body });
+      const data = await res.json();
 
-    if (res.ok && data.ok) {
-      window.location.href = '/empleador/dashboard';
-    } else {
+      if (res.ok && data.ok) {
+        window.location.href = '/empleador/dashboard';
+      } else {
+        const span = errEl.querySelector('span');
+        if (span) span.textContent = data.error || 'Error al iniciar sesión.';
+        errEl.classList.remove('hidden');
+        btn.textContent = 'Ingresar';
+        btn.disabled = false;
+      }
+    } catch {
       const span = errEl.querySelector('span');
-      if (span) span.textContent = data.error || 'Error al iniciar sesión.';
+      if (span) span.textContent = 'Error de conexión. Intenta de nuevo.';
       errEl.classList.remove('hidden');
       btn.textContent = 'Ingresar';
       btn.disabled = false;
