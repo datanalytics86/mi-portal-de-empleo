@@ -66,6 +66,10 @@ const pctTranscurrido = Math.min(100, Math.round(((totalDias - diasRestantes) / 
 const urgenciaTexto = diasRestantes <= 1 ? '⚡ Último día' : diasRestantes <= 5 ? ('⚡ Cierra en ' + diasRestantes + ' días') : (diasRestantes + ' días restantes');
 const barraColor = 'h-full rounded-full transition-all ' + (diasRestantes <= 3 ? 'bg-red-400' : diasRestantes <= 7 ? 'bg-orange-300' : 'bg-white');
 const barraWidth = 'width: ' + pctTranscurrido + '%';
+// Tiempo estimado de lectura (~200 palabras/min)
+const readingTime = oferta
+  ? Math.max(1, Math.round(oferta.descripcion.split(/\s+/).filter(Boolean).length / 200))
+  : 0;
 ---
 
 {(notFound || isExpired) && (
@@ -184,6 +188,14 @@ const barraWidth = 'width: ' + pctTranscurrido + '%';
             </svg>
           </div>
           Descripción del cargo
+          {readingTime > 0 && (
+            <span class="ml-auto text-xs text-gray-400 font-normal flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              ~{readingTime} min
+            </span>
+          )}
         </h2>
         <div class="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
           {oferta.descripcion}
@@ -322,10 +334,81 @@ const barraWidth = 'width: ' + pctTranscurrido + '%';
       </div>
     </div>
   </div>
+
+  <!-- Sticky CTA móvil: visible en sm y abajo, se oculta cuando el form es visible -->
+  {!exito && (
+    <div
+      id="sticky-cta"
+      class="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-gray-200 px-4 py-3 shadow-2xl translate-y-0 transition-transform duration-300"
+    >
+      <button
+        type="button"
+        id="sticky-btn"
+        class="w-full bg-brand-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-brand-700 transition-colors shadow-sm"
+      >
+        Postular a esta oferta
+      </button>
+    </div>
+  )}
 </Layout>}
 
 <script define:vars={{ ofertaLat: oferta?.lat ?? null, ofertaLng: oferta?.lng ?? null, ofertaTitulo: oferta?.titulo ?? '', ofertaEmpresa: oferta?.empresa ?? '' }}>
   document.addEventListener('DOMContentLoaded', () => {
+    // Confetti si la postulación fue enviada con éxito
+    if (window.location.search.includes('exito=1')) {
+      (function launchConfetti() {
+        const canvas = document.createElement('canvas');
+        canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:9999';
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { canvas.remove(); return; }
+        canvas.width = innerWidth; canvas.height = innerHeight;
+        const colors = ['#4f46e5','#10b981','#f59e0b','#ef4444','#8b5cf6','#f97316','#06b6d4'];
+        const pieces = Array.from({length: 110}, () => ({
+          x: Math.random() * canvas.width,
+          y: -10 - Math.random() * 80,
+          vx: (Math.random() - 0.5) * 6,
+          vy: Math.random() * 3 + 1.5,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          w: Math.random() * 10 + 5,
+          h: Math.random() * 5 + 3,
+          rot: Math.random() * Math.PI * 2,
+          drot: (Math.random() - 0.5) * 0.15,
+        }));
+        let f = 0;
+        const draw = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          pieces.forEach(p => {
+            p.x += p.vx; p.y += p.vy; p.vy += 0.07; p.rot += p.drot;
+            ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+            ctx.fillStyle = p.color; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+            ctx.restore();
+          });
+          if (++f < 200) requestAnimationFrame(draw); else canvas.remove();
+        };
+        requestAnimationFrame(draw);
+      })();
+    }
+
+    // Sticky CTA móvil: scroll suave al form, se oculta cuando el form es visible
+    const stickyCta = document.getElementById('sticky-cta');
+    const stickyBtn = document.getElementById('sticky-btn');
+    const formPostulacion = document.getElementById('form-postulacion');
+
+    stickyBtn?.addEventListener('click', () => {
+      formPostulacion?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    if (stickyCta && formPostulacion) {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          stickyCta.style.transform = entry.isIntersecting ? 'translateY(100%)' : 'translateY(0)';
+        },
+        { threshold: 0.2 }
+      );
+      observer.observe(formPostulacion);
+    }
+
     // Compartir oferta
     const btnCompartir = document.getElementById('btn-compartir');
     const shareTxt = document.getElementById('share-txt');

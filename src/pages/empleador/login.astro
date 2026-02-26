@@ -13,7 +13,7 @@ const error = Astro.url.searchParams.get('error');
   <div class="min-h-[calc(100vh-140px)] flex items-center justify-center px-4 py-12 bg-gray-50">
     <div class="w-full max-w-md">
       <!-- Logo / branding -->
-      <div class="text-center mb-8">
+      <div class="text-center mb-8 form-enter" style="animation-delay:0ms">
         <div class="w-14 h-14 bg-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
           <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -26,7 +26,7 @@ const error = Astro.url.searchParams.get('error');
         </p>
       </div>
 
-      <div class="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+      <div class="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm form-enter" style="animation-delay:80ms">
         {error && (
           <div class="mb-5 bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-center gap-2.5 text-sm text-red-700">
             <svg class="w-4 h-4 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,6 +94,14 @@ const error = Astro.url.searchParams.get('error');
   </div>
 </Layout>
 
+<style>
+  @keyframes formEnter {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .form-enter { animation: formEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+</style>
+
 <script>
   const form = document.getElementById('form-login') as HTMLFormElement;
   const btn = document.getElementById('btn-login') as HTMLButtonElement;
@@ -105,15 +113,23 @@ const error = Astro.url.searchParams.get('error');
     btn.disabled = true;
     errEl.classList.add('hidden');
 
-    const body = new FormData(form);
-    const res = await fetch('/api/auth/login', { method: 'POST', body });
-    const data = await res.json();
+    try {
+      const body = new FormData(form);
+      const res = await fetch('/api/auth/login', { method: 'POST', body });
+      const data = await res.json();
 
-    if (res.ok && data.ok) {
-      window.location.href = '/empleador/dashboard';
-    } else {
+      if (res.ok && data.ok) {
+        window.location.href = '/empleador/dashboard';
+      } else {
+        const span = errEl.querySelector('span');
+        if (span) span.textContent = data.error || 'Error al iniciar sesión.';
+        errEl.classList.remove('hidden');
+        btn.textContent = 'Ingresar';
+        btn.disabled = false;
+      }
+    } catch {
       const span = errEl.querySelector('span');
-      if (span) span.textContent = data.error || 'Error al iniciar sesión.';
+      if (span) span.textContent = 'Error de conexión. Intenta de nuevo.';
       errEl.classList.remove('hidden');
       btn.textContent = 'Ingresar';
       btn.disabled = false;

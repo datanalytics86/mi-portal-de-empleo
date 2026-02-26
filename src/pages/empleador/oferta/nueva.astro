@@ -119,10 +119,25 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
 
         <!-- Descripción -->
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-            Descripción del cargo <span class="text-red-500">*</span>
-            <span id="char-count" class="text-gray-400 font-normal ml-1.5 text-xs">0 / 2000</span>
-          </label>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-sm font-semibold text-gray-700">
+              Descripción del cargo <span class="text-red-500">*</span>
+            </label>
+            <span id="char-count" class="text-xs text-gray-400 tabular-nums">0 / 2000</span>
+          </div>
+          <!-- Plantillas rápidas -->
+          <div class="flex flex-wrap gap-1.5 mb-2">
+            <span class="text-xs text-gray-400 flex items-center pr-1">Plantilla:</span>
+            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="general">
+              General
+            </button>
+            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="tech">
+              Tecnología
+            </button>
+            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="ventas">
+              Ventas
+            </button>
+          </div>
           <textarea
             name="descripcion"
             id="descripcion"
@@ -132,6 +147,10 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
             placeholder="Describe las responsabilidades, requisitos y condiciones del puesto..."
             class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-y"
           ></textarea>
+          <!-- Barra de progreso de caracteres -->
+          <div class="mt-1.5 bg-gray-100 rounded-full h-0.5 overflow-hidden">
+            <div id="char-bar" class="h-full rounded-full bg-brand-400 transition-all duration-150" style="width: 0%"></div>
+          </div>
         </div>
 
         <!-- Fecha de cierre -->
@@ -189,11 +208,87 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
 </Layout>
 
 <script>
-  // Contador de caracteres
+  const PLANTILLAS: Record<string, string> = {
+    general: `Buscamos [cargo] para integrarse a nuestro equipo de trabajo.
+
+Responsabilidades:
+• Gestión y seguimiento de tareas asignadas
+• Coordinación con el equipo de trabajo
+• Reporte de avances a jefatura directa
+
+Requisitos:
+• Experiencia mínima de 1 año en el área
+• Proactivo/a y orientado/a a resultados
+• Disponibilidad inmediata o a convenir
+
+Ofrecemos:
+• Buen ambiente laboral y posibilidad de crecimiento
+• Sueldo a convenir según experiencia`,
+
+    tech: `Buscamos [cargo] para desarrollar soluciones tecnológicas de alto impacto.
+
+Responsabilidades:
+• Desarrollo y mantenimiento de aplicaciones
+• Participación en revisión de código (code review)
+• Colaboración con equipos de producto y diseño
+
+Requisitos:
+• Experiencia con [tecnologías relevantes]
+• Conocimiento en buenas prácticas de desarrollo
+• Capacidad de trabajo en equipo y metodologías ágiles
+
+Ofrecemos:
+• Modalidad híbrida o remota
+• Sueldo competitivo según experiencia
+• Stack tecnológico moderno`,
+
+    ventas: `Buscamos [cargo] de Ventas para expandir nuestra cartera de clientes.
+
+Responsabilidades:
+• Prospección y captación de nuevos clientes
+• Cumplimiento de metas comerciales mensuales
+• Seguimiento postventa y fidelización
+
+Requisitos:
+• Experiencia en ventas (mínimo 1 año)
+• Alta orientación a resultados y metas
+• Excelentes habilidades de comunicación
+
+Ofrecemos:
+• Sueldo base + comisiones sin tope
+• Capacitación inicial y continua
+• Incentivos por cumplimiento de metas`,
+  };
+
+  // Contador de caracteres + barra de progreso
   const textarea = document.getElementById('descripcion') as HTMLTextAreaElement;
   const charCount = document.getElementById('char-count');
-  textarea?.addEventListener('input', () => {
-    if (charCount) charCount.textContent = `${textarea.value.length} / 2000`;
+  const charBar = document.getElementById('char-bar') as HTMLElement;
+
+  function updateCharCount() {
+    const len = textarea.value.length;
+    const max = 2000;
+    if (charCount) charCount.textContent = `${len} / ${max}`;
+    if (charBar) {
+      const pct = Math.min(100, (len / max) * 100);
+      charBar.style.width = pct + '%';
+      charBar.className = 'h-full rounded-full transition-all duration-150 ' +
+        (pct >= 90 ? 'bg-red-400' : pct >= 70 ? 'bg-orange-400' : 'bg-brand-400');
+    }
+  }
+
+  textarea?.addEventListener('input', updateCharCount);
+
+  // Plantillas rápidas
+  document.querySelectorAll<HTMLButtonElement>('.tpl-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.tpl;
+      if (!key || !PLANTILLAS[key]) return;
+      if (textarea.value && !confirm('¿Reemplazar el contenido actual con la plantilla?')) return;
+      textarea.value = PLANTILLAS[key];
+      textarea.focus();
+      updateCharCount();
+    });
   });
 
   // Envío del formulario
