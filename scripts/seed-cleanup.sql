@@ -22,7 +22,14 @@ WHERE id IN (
   'aaaaaaaa-2222-2222-2222-000000000002'
 );
 
--- 4. Eliminar usuarios de auth
+-- 4. Eliminar identidades de auth
+DELETE FROM auth.identities
+WHERE user_id IN (
+  'aaaaaaaa-1111-1111-1111-000000000001',
+  'aaaaaaaa-2222-2222-2222-000000000002'
+);
+
+-- 5. Eliminar usuarios de auth
 DELETE FROM auth.users
 WHERE id IN (
   'aaaaaaaa-1111-1111-1111-000000000001',
