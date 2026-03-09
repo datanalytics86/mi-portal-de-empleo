@@ -1,0 +1,125 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getEmpleadorSession } from '../../lib/auth';
+
+const session = await getEmpleadorSession(Astro.cookies);
+if (session) return Astro.redirect('/empleador/dashboard');
+---
+
+<Layout title="Recuperar contraseña">
+  <div class="min-h-[calc(100vh-140px)] flex items-center justify-center px-4 py-12 bg-gray-50">
+    <div class="w-full max-w-md">
+
+      <div class="text-center mb-8 form-enter" style="animation-delay:0ms">
+        <div class="w-14 h-14 bg-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+          </svg>
+        </div>
+        <h1 class="text-2xl font-extrabold text-gray-900">Recuperar contraseña</h1>
+        <p class="text-gray-500 mt-1 text-sm">Te enviaremos un enlace para restablecer tu contraseña.</p>
+      </div>
+
+      <div class="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm form-enter" style="animation-delay:80ms">
+
+        <div id="msg-ok" class="hidden mb-5 bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
+          <div class="flex items-start gap-2.5">
+            <svg class="w-4 h-4 shrink-0 mt-0.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p class="font-semibold">Revisa tu bandeja de entrada</p>
+              <p class="mt-0.5 text-green-700">Si existe una cuenta con ese email, recibirás un enlace en los próximos minutos. No olvides revisar la carpeta de spam.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="msg-err" class="hidden mb-5 bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-center gap-2.5 text-sm text-red-700">
+          <svg class="w-4 h-4 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span id="msg-err-text"></span>
+        </div>
+
+        <form id="form-recuperar" class="space-y-5">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Email de tu cuenta</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <input
+                type="email"
+                name="email"
+                required
+                autocomplete="email"
+                placeholder="empresa@correo.cl"
+                class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-shadow"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            id="btn-recuperar"
+            class="w-full bg-brand-600 text-white py-3 rounded-xl font-semibold hover:bg-brand-700 transition-colors disabled:opacity-60 shadow-sm text-sm"
+          >
+            Enviar enlace de recuperación
+          </button>
+        </form>
+
+        <div class="mt-5 text-center text-sm text-gray-500">
+          <a href="/empleador/login" class="text-brand-600 hover:text-brand-700 font-semibold">Volver al inicio de sesión</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  @keyframes formEnter {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .form-enter { animation: formEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+</style>
+
+<script>
+  const form = document.getElementById('form-recuperar') as HTMLFormElement;
+  const btn = document.getElementById('btn-recuperar') as HTMLButtonElement;
+  const msgOk = document.getElementById('msg-ok') as HTMLDivElement;
+  const msgErr = document.getElementById('msg-err') as HTMLDivElement;
+  const msgErrText = document.getElementById('msg-err-text') as HTMLSpanElement;
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.textContent = 'Enviando...';
+    btn.disabled = true;
+    msgOk.classList.add('hidden');
+    msgErr.classList.add('hidden');
+
+    try {
+      const body = new FormData(form);
+      const res = await fetch('/api/auth/recuperar', { method: 'POST', body });
+      const data = await res.json();
+
+      if (res.ok && data.ok) {
+        msgOk.classList.remove('hidden');
+        form.reset();
+        btn.textContent = 'Enlace enviado';
+      } else {
+        msgErrText.textContent = data.error || 'Error al enviar. Intenta de nuevo.';
+        msgErr.classList.remove('hidden');
+        btn.textContent = 'Enviar enlace de recuperación';
+        btn.disabled = false;
+      }
+    } catch {
+      msgErrText.textContent = 'Error de conexión. Intenta de nuevo.';
+      msgErr.classList.remove('hidden');
+      btn.textContent = 'Enviar enlace de recuperación';
+      btn.disabled = false;
+    }
+  });
+</script>

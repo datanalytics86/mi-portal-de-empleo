@@ -1,0 +1,196 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getEmpleadorSession } from '../../lib/auth';
+
+const session = await getEmpleadorSession(Astro.cookies);
+if (session) return Astro.redirect('/empleador/dashboard');
+---
+
+<Layout title="Nueva contraseña">
+  <div class="min-h-[calc(100vh-140px)] flex items-center justify-center px-4 py-12 bg-gray-50">
+    <div class="w-full max-w-md">
+
+      <div class="text-center mb-8 form-enter" style="animation-delay:0ms">
+        <div class="w-14 h-14 bg-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <h1 class="text-2xl font-extrabold text-gray-900">Nueva contraseña</h1>
+        <p class="text-gray-500 mt-1 text-sm">Elige una contraseña segura para tu cuenta.</p>
+      </div>
+
+      <!-- Estado: enlace inválido -->
+      <div id="state-invalid" class="hidden bg-white border border-gray-200 rounded-2xl p-8 shadow-sm form-enter text-center" style="animation-delay:80ms">
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
+        <p class="text-gray-800 font-semibold mb-1">Enlace inválido o expirado</p>
+        <p class="text-gray-500 text-sm mb-5">Este enlace ya fue usado o ha caducado. Solicita uno nuevo.</p>
+        <a href="/empleador/recuperar" class="inline-block bg-brand-600 text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-brand-700 transition-colors">
+          Solicitar nuevo enlace
+        </a>
+      </div>
+
+      <!-- Estado: formulario -->
+      <div id="state-form" class="hidden bg-white border border-gray-200 rounded-2xl p-8 shadow-sm form-enter" style="animation-delay:80ms">
+
+        <div id="msg-err" class="hidden mb-5 bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-center gap-2.5 text-sm text-red-700">
+          <svg class="w-4 h-4 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span id="msg-err-text"></span>
+        </div>
+
+        <form id="form-nueva" class="space-y-5">
+          <input type="hidden" id="field-access-token" name="access_token" />
+          <input type="hidden" id="field-refresh-token" name="refresh_token" />
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nueva contraseña</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <input
+                type="password"
+                name="password"
+                id="field-password"
+                required
+                minlength="8"
+                autocomplete="new-password"
+                placeholder="Mínimo 8 caracteres"
+                class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-shadow"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Confirmar contraseña</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <input
+                type="password"
+                id="field-confirm"
+                required
+                minlength="8"
+                autocomplete="new-password"
+                placeholder="Repite la contraseña"
+                class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-shadow"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            id="btn-nueva"
+            class="w-full bg-brand-600 text-white py-3 rounded-xl font-semibold hover:bg-brand-700 transition-colors disabled:opacity-60 shadow-sm text-sm"
+          >
+            Guardar nueva contraseña
+          </button>
+        </form>
+      </div>
+
+      <!-- Estado: éxito -->
+      <div id="state-ok" class="hidden bg-white border border-gray-200 rounded-2xl p-8 shadow-sm form-enter text-center" style="animation-delay:80ms">
+        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <p class="text-gray-800 font-semibold mb-1">¡Contraseña actualizada!</p>
+        <p class="text-gray-500 text-sm mb-5">Tu contraseña ha sido cambiada. Ahora puedes iniciar sesión.</p>
+        <a href="/empleador/login" class="inline-block bg-brand-600 text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-brand-700 transition-colors">
+          Iniciar sesión
+        </a>
+      </div>
+
+    </div>
+  </div>
+</Layout>
+
+<style>
+  @keyframes formEnter {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .form-enter { animation: formEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+</style>
+
+<script>
+  var stateInvalid = document.getElementById('state-invalid');
+  var stateForm = document.getElementById('state-form');
+  var stateOk = document.getElementById('state-ok');
+  var form = document.getElementById('form-nueva') as HTMLFormElement;
+  var btn = document.getElementById('btn-nueva') as HTMLButtonElement;
+  var msgErr = document.getElementById('msg-err') as HTMLDivElement;
+  var msgErrText = document.getElementById('msg-err-text') as HTMLSpanElement;
+  var fieldAccessToken = document.getElementById('field-access-token') as HTMLInputElement;
+  var fieldRefreshToken = document.getElementById('field-refresh-token') as HTMLInputElement;
+  var fieldPassword = document.getElementById('field-password') as HTMLInputElement;
+  var fieldConfirm = document.getElementById('field-confirm') as HTMLInputElement;
+
+  /* Parsear hash params de la URL (Supabase los pone en el fragmento) */
+  function parseHash() {
+    var hash = window.location.hash.replace('#', '');
+    var params = new URLSearchParams(hash);
+    return {
+      accessToken: params.get('access_token') || '',
+      refreshToken: params.get('refresh_token') || '',
+      type: params.get('type') || '',
+    };
+  }
+
+  var tokens = parseHash();
+
+  if (!tokens.accessToken || tokens.type !== 'recovery') {
+    stateInvalid && stateInvalid.classList.remove('hidden');
+  } else {
+    fieldAccessToken.value = tokens.accessToken;
+    fieldRefreshToken.value = tokens.refreshToken;
+    stateForm && stateForm.classList.remove('hidden');
+  }
+
+  form?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    msgErr.classList.add('hidden');
+
+    if (fieldPassword.value !== fieldConfirm.value) {
+      msgErrText.textContent = 'Las contraseñas no coinciden.';
+      msgErr.classList.remove('hidden');
+      return;
+    }
+
+    btn.textContent = 'Guardando...';
+    btn.disabled = true;
+
+    try {
+      var body = new FormData(form);
+      var res = await fetch('/api/auth/nueva-contrasena', { method: 'POST', body: body });
+      var data = await res.json();
+
+      if (res.ok && data.ok) {
+        stateForm && stateForm.classList.add('hidden');
+        stateOk && stateOk.classList.remove('hidden');
+      } else {
+        msgErrText.textContent = data.error || 'Error al guardar. Intenta de nuevo.';
+        msgErr.classList.remove('hidden');
+        btn.textContent = 'Guardar nueva contraseña';
+        btn.disabled = false;
+      }
+    } catch(err) {
+      msgErrText.textContent = 'Error de conexión. Intenta de nuevo.';
+      msgErr.classList.remove('hidden');
+      btn.textContent = 'Guardar nueva contraseña';
+      btn.disabled = false;
+    }
+  });
+</script>

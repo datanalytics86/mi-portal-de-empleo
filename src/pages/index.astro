@@ -9,42 +9,78 @@ const q = searchParams.get('q') || '';
 const tipo = searchParams.get('tipo') || '';
 const comuna = searchParams.get('comuna') || '';
 const categoria = searchParams.get('categoria') || '';
+const PAGE_SIZE = 20;
+const pagina = Math.max(1, parseInt(searchParams.get('pagina') || '1', 10));
+const desde = (pagina - 1) * PAGE_SIZE;
+const hasta = desde + PAGE_SIZE - 1;
 
-// Obtener ofertas activas
-let query = supabase
+const now = new Date().toISOString();
+
+// 1. Query para el mapa: solo campos ligeros, hasta 500 registros
+let mapaQuery = supabase
+  .from('ofertas')
+  .select('id, titulo, empresa, lat, lng, comuna, categoria')
+  .eq('activa', true)
+  .gte('expira_en', now);
+if (q) mapaQuery = mapaQuery.ilike('titulo', `%${q}%`);
+if (tipo) mapaQuery = mapaQuery.eq('tipo_empleo', tipo);
+if (comuna) mapaQuery = mapaQuery.ilike('comuna', `%${comuna}%`);
+if (categoria) mapaQuery = mapaQuery.eq('categoria', categoria);
+
+// 2. Query para el total (count)
+let countQuery = supabase
+  .from('ofertas')
+  .select('id', { count: 'exact', head: true })
+  .eq('activa', true)
+  .gte('expira_en', now);
+if (q) countQuery = countQuery.ilike('titulo', `%${q}%`);
+if (tipo) countQuery = countQuery.eq('tipo_empleo', tipo);
+if (comuna) countQuery = countQuery.ilike('comuna', `%${comuna}%`);
+if (categoria) countQuery = countQuery.eq('categoria', categoria);
+
+// 3. Query paginada para las cards
+let cardsQuery = supabase
   .from('ofertas')
   .select('id, titulo, empresa, tipo_empleo, categoria, comuna, created_at, expira_en, lat, lng')
   .eq('activa', true)
-  .gte('expira_en', new Date().toISOString())
-  .order('created_at', { ascending: false });
+  .gte('expira_en', now)
+  .order('created_at', { ascending: false })
+  .range(desde, hasta);
+if (q) cardsQuery = cardsQuery.ilike('titulo', `%${q}%`);
+if (tipo) cardsQuery = cardsQuery.eq('tipo_empleo', tipo);
+if (comuna) cardsQuery = cardsQuery.ilike('comuna', `%${comuna}%`);
+if (categoria) cardsQuery = cardsQuery.eq('categoria', categoria);
 
-if (q) query = query.ilike('titulo', `%${q}%`);
-if (tipo) query = query.eq('tipo_empleo', tipo);
-if (comuna) query = query.ilike('comuna', `%${comuna}%`);
-if (categoria) query = query.eq('categoria', categoria);
+// Ejecutar las tres queries en paralelo
+const [mapaRes, countRes, cardsRes] = await Promise.all([
+  mapaQuery.limit(500),
+  countQuery,
+  cardsQuery,
+]);
 
-const PAGE_SIZE = 20;
-const { data: ofertas = [] } = await query.limit(200);
-
-// Serializar datos para el mapa
-const mapaOfertas = (ofertas || []).map(o => ({
+const mapaOfertas = (mapaRes.data || []).map(o => ({
   id: o.id, titulo: o.titulo, empresa: o.empresa,
   lat: o.lat, lng: o.lng, comuna: o.comuna, categoria: o.categoria ?? '',
 }));
+const totalOfertas = countRes.count ?? 0;
+const ofertas = cardsRes.data || [];
+const totalPaginas = Math.ceil(totalOfertas / PAGE_SIZE);
 
 const hayFiltros = q || tipo || comuna || categoria;
-const totalOfertas = ofertas?.length ?? 0;
-const hayMasOfertas = totalOfertas > PAGE_SIZE;
 
-// Construye URL de categoría preservando otros filtros
-function buildCatUrl(cat: string | null) {
+// Construye URL preservando filtros (y opcionalmente la página)
+function buildUrl(params: Record<string, string | number | null>) {
   const p = new URLSearchParams();
-  if (cat) p.set('categoria', cat);
-  if (q) p.set('q', q);
-  if (tipo) p.set('tipo', tipo);
-  if (comuna) p.set('comuna', comuna);
+  const merged = { q, tipo, comuna, categoria, ...params };
+  for (const [k, v] of Object.entries(merged)) {
+    if (v && v !== '' && !(k === 'pagina' && v === 1)) p.set(k, String(v));
+  }
   const qs = p.toString();
   return qs ? `/?${qs}` : '/';
+}
+
+function buildCatUrl(cat: string | null) {
+  return buildUrl({ categoria: cat || '', pagina: 1 });
 }
 ---
 
@@ -57,8 +93,8 @@ function buildCatUrl(cat: string | null) {
         <span class="bg-gradient-to-r from-white to-indigo-200 bg-clip-text text-transparent">empleo en Chile</span>
       </h1>
       <p class="text-brand-100 text-lg mb-8">
-        <span id="hero-count" data-target={ofertas?.length ?? 0}>0</span>
-        {' '}oportunidad{(ofertas?.length ?? 0) !== 1 ? 'es' : ''} activa{(ofertas?.length ?? 0) !== 1 ? 's' : ''} en todo el país
+        <span id="hero-count" data-target={totalOfertas}>0</span>
+        {' '}oportunidad{totalOfertas !== 1 ? 'es' : ''} activa{totalOfertas !== 1 ? 's' : ''} en todo el país
       </p>
 
       <!-- Barra de búsqueda integrada -->
@@ -177,8 +213,9 @@ function buildCatUrl(cat: string | null) {
       <!-- Listado -->
       <div>
         <p class="text-sm text-gray-500 mb-4 font-medium">
-          <span class="text-gray-900 font-semibold">{ofertas?.length ?? 0}</span> oferta{(ofertas?.length ?? 0) !== 1 ? 's' : ''} encontrada{(ofertas?.length ?? 0) !== 1 ? 's' : ''}
+          <span class="text-gray-900 font-semibold">{totalOfertas}</span> oferta{totalOfertas !== 1 ? 's' : ''} encontrada{totalOfertas !== 1 ? 's' : ''}
           {hayFiltros && <span class="ml-1 text-brand-600">(filtrado)</span>}
+          {totalPaginas > 1 && <span class="ml-1 text-gray-400">— página {pagina} de {totalPaginas}</span>}
         </p>
 
         {!ofertas || ofertas.length === 0 ? (
@@ -212,15 +249,13 @@ function buildCatUrl(cat: string | null) {
               const catColor = oferta.categoria
                 ? (CATEGORIA_COLORS[oferta.categoria] || 'bg-gray-100 text-gray-600 border-gray-200')
                 : '';
-              // Pre-computadas para evitar template literals anidados en expresiones Astro
               const animDelay = 'animation-delay: ' + (i * 55) + 'ms';
               const urgenciaLabel = diasRestantes <= 1 ? 'Último día' : ('Cierra en ' + diasRestantes + 'd');
               const urgenciaClass = 'text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ' + (diasRestantes <= 1 ? 'bg-red-100 text-red-700' : diasRestantes <= 3 ? 'bg-orange-100 text-orange-700' : 'bg-yellow-100 text-yellow-700');
-              const cardClass = 'card-anim oferta-card flex gap-3 bg-white border border-gray-200 rounded-xl p-4 hover:border-brand-400 hover:shadow-md transition-all group' + (i >= PAGE_SIZE ? ' hidden' : '');
               return (
                 <a
                   href={`/oferta/${oferta.id}`}
-                  class={cardClass}
+                  class="card-anim flex gap-3 bg-white border border-gray-200 rounded-xl p-4 hover:border-brand-400 hover:shadow-md transition-all group"
                   style={animDelay}
                 >
                   <!-- Avatar empresa -->
@@ -268,18 +303,52 @@ function buildCatUrl(cat: string | null) {
               );
             })}
           </div>
-          {hayMasOfertas && (
-            <div id="load-more-wrap" class="text-center mt-6">
-              <button
-                id="btn-load-more"
-                class="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 hover:border-brand-300 transition-colors shadow-sm"
-              >
-                Cargar más ofertas
-              </button>
-              <p id="load-more-count" class="text-xs text-gray-400 mt-2">
-                Mostrando {PAGE_SIZE} de {totalOfertas}
-              </p>
-            </div>
+
+          {/* Paginación server-side */}
+          {totalPaginas > 1 && (
+            <nav class="flex items-center justify-between mt-6 gap-2">
+              {pagina > 1 ? (
+                <a
+                  href={buildUrl({ pagina: pagina - 1 })}
+                  class="flex items-center gap-1.5 bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 hover:border-brand-300 transition-colors shadow-sm"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Anterior
+                </a>
+              ) : (
+                <span class="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-300 px-4 py-2.5 rounded-xl text-sm font-semibold cursor-not-allowed shadow-sm">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Anterior
+                </span>
+              )}
+
+              <span class="text-sm text-gray-500 font-medium">
+                {pagina} / {totalPaginas}
+              </span>
+
+              {pagina < totalPaginas ? (
+                <a
+                  href={buildUrl({ pagina: pagina + 1 })}
+                  class="flex items-center gap-1.5 bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 hover:border-brand-300 transition-colors shadow-sm"
+                >
+                  Siguiente
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              ) : (
+                <span class="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-300 px-4 py-2.5 rounded-xl text-sm font-semibold cursor-not-allowed shadow-sm">
+                  Siguiente
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+              )}
+            </nav>
           )}
           </>
         )}
@@ -384,22 +453,6 @@ function buildCatUrl(cat: string | null) {
   document.addEventListener('astro:page-load', () => {
     const el = document.getElementById('hero-count');
     if (el) animateCounter(el);
-
-    const btnMore = document.getElementById('btn-load-more');
-    const countEl = document.getElementById('load-more-count');
-    const wrapEl = document.getElementById('load-more-wrap');
-    if (btnMore) {
-      const PAGE = 20;
-      let shown = PAGE;
-      btnMore.addEventListener('click', () => {
-        const cards = document.querySelectorAll<HTMLElement>('.oferta-card');
-        const next = shown + PAGE;
-        cards.forEach((card, i) => { if (i < next) card.classList.remove('hidden'); });
-        shown = next;
-        if (countEl) countEl.textContent = 'Mostrando ' + Math.min(shown, cards.length) + ' de ' + cards.length;
-        if (shown >= cards.length && wrapEl) wrapEl.remove();
-      });
-    }
   });
 </script>
 
