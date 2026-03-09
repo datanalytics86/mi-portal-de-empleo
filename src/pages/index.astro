@@ -23,7 +23,8 @@ if (tipo) query = query.eq('tipo_empleo', tipo);
 if (comuna) query = query.ilike('comuna', `%${comuna}%`);
 if (categoria) query = query.eq('categoria', categoria);
 
-const { data: ofertas = [] } = await query.limit(60);
+const PAGE_SIZE = 20;
+const { data: ofertas = [] } = await query.limit(200);
 
 // Serializar datos para el mapa
 const mapaOfertas = (ofertas || []).map(o => ({
@@ -32,6 +33,8 @@ const mapaOfertas = (ofertas || []).map(o => ({
 }));
 
 const hayFiltros = q || tipo || comuna || categoria;
+const totalOfertas = ofertas?.length ?? 0;
+const hayMasOfertas = totalOfertas > PAGE_SIZE;
 
 // Construye URL de categoría preservando otros filtros
 function buildCatUrl(cat: string | null) {
@@ -194,7 +197,8 @@ function buildCatUrl(cat: string | null) {
             )}
           </div>
         ) : (
-          <div class="space-y-3">
+          <>
+          <div id="ofertas-list" class="space-y-3">
             {ofertas.map((oferta, i) => {
               const esNueva = (Date.now() - new Date(oferta.created_at).getTime()) < 48 * 3600 * 1000;
               const diasRestantes = Math.ceil((new Date(oferta.expira_en).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -212,10 +216,11 @@ function buildCatUrl(cat: string | null) {
               const animDelay = 'animation-delay: ' + (i * 55) + 'ms';
               const urgenciaLabel = diasRestantes <= 1 ? 'Último día' : ('Cierra en ' + diasRestantes + 'd');
               const urgenciaClass = 'text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ' + (diasRestantes <= 1 ? 'bg-red-100 text-red-700' : diasRestantes <= 3 ? 'bg-orange-100 text-orange-700' : 'bg-yellow-100 text-yellow-700');
+              const cardClass = 'card-anim oferta-card flex gap-3 bg-white border border-gray-200 rounded-xl p-4 hover:border-brand-400 hover:shadow-md transition-all group' + (i >= PAGE_SIZE ? ' hidden' : '');
               return (
                 <a
                   href={`/oferta/${oferta.id}`}
-                  class="card-anim flex gap-3 bg-white border border-gray-200 rounded-xl p-4 hover:border-brand-400 hover:shadow-md transition-all group"
+                  class={cardClass}
                   style={animDelay}
                 >
                   <!-- Avatar empresa -->
@@ -263,6 +268,20 @@ function buildCatUrl(cat: string | null) {
               );
             })}
           </div>
+          {hayMasOfertas && (
+            <div id="load-more-wrap" class="text-center mt-6">
+              <button
+                id="btn-load-more"
+                class="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 hover:border-brand-300 transition-colors shadow-sm"
+              >
+                Cargar más ofertas
+              </button>
+              <p id="load-more-count" class="text-xs text-gray-400 mt-2">
+                Mostrando {PAGE_SIZE} de {totalOfertas}
+              </p>
+            </div>
+          )}
+          </>
         )}
       </div>
     </div>
@@ -291,25 +310,56 @@ function buildCatUrl(cat: string | null) {
       'Legal': '#6366f1', 'Marketing': '#d946ef', 'RRHH': '#64748b',
     };
 
-    mapaOfertas.forEach((oferta) => {
+    /* Group nearby offers by coordinates for clustering */
+    var groups = {};
+    mapaOfertas.forEach(function(oferta) {
       if (!oferta.lat || !oferta.lng) return;
-      const color = CAT_COLORS[oferta.categoria] || '#4f46e5';
-      const icon = L.divIcon({
-        html: `<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`,
-        className: '',
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
-      });
-      const marker = L.marker([oferta.lat, oferta.lng], { icon });
-      marker.bindPopup(`
-        <div style="min-width:160px">
-          <strong>${esc(oferta.titulo)}</strong><br>
-          <span style="color:#555">${esc(oferta.empresa)}</span><br>
-          <span style="color:#888;font-size:12px">${esc(oferta.comuna)}</span><br>
-          <a href="/oferta/${encodeURIComponent(oferta.id)}" style="color:#2563eb;font-size:13px">Ver oferta →</a>
-        </div>
-      `);
-      marker.addTo(map);
+      var key = oferta.lat.toFixed(4) + ',' + oferta.lng.toFixed(4);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(oferta);
+    });
+
+    Object.values(groups).forEach(function(group) {
+      var first = group[0];
+      if (group.length === 1) {
+        var color = CAT_COLORS[first.categoria] || '#4f46e5';
+        var icon = L.divIcon({
+          html: '<div style="width:14px;height:14px;background:' + color + ';border-radius:50%;border:2.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>',
+          className: '',
+          iconSize: [14, 14],
+          iconAnchor: [7, 7],
+        });
+        var marker = L.marker([first.lat, first.lng], { icon: icon });
+        marker.bindPopup(
+          '<div style="min-width:160px">' +
+          '<strong>' + esc(first.titulo) + '</strong><br>' +
+          '<span style="color:#555">' + esc(first.empresa) + '</span><br>' +
+          '<span style="color:#888;font-size:12px">' + esc(first.comuna) + '</span><br>' +
+          '<a href="/oferta/' + encodeURIComponent(first.id) + '" style="color:#2563eb;font-size:13px">Ver oferta &rarr;</a>' +
+          '</div>'
+        );
+        marker.addTo(map);
+      } else {
+        var count = group.length;
+        var size = count > 10 ? 40 : count > 5 ? 34 : 28;
+        var fontSize = size > 34 ? 14 : 12;
+        var clusterIcon = L.divIcon({
+          html: '<div style="width:' + size + 'px;height:' + size + 'px;background:#2563eb;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:' + fontSize + 'px">' + count + '</div>',
+          className: '',
+          iconSize: [size, size],
+          iconAnchor: [size / 2, size / 2],
+        });
+        var cMarker = L.marker([first.lat, first.lng], { icon: clusterIcon });
+        var popupHtml = '<div style="min-width:200px;max-height:200px;overflow-y:auto">' +
+          '<strong>' + count + ' ofertas en ' + esc(first.comuna) + '</strong><hr style="margin:6px 0">';
+        group.slice(0, 8).forEach(function(o) {
+          popupHtml += '<div style="margin-bottom:4px"><a href="/oferta/' + encodeURIComponent(o.id) + '" style="color:#2563eb;font-size:13px;text-decoration:none">' + esc(o.titulo) + '</a><br><span style="color:#888;font-size:11px">' + esc(o.empresa) + '</span></div>';
+        });
+        if (count > 8) popupHtml += '<p style="color:#888;font-size:12px;margin-top:4px">y ' + (count - 8) + ' m&aacute;s...</p>';
+        popupHtml += '</div>';
+        cMarker.bindPopup(popupHtml);
+        cMarker.addTo(map);
+      }
     });
   });
 </script>
@@ -334,6 +384,22 @@ function buildCatUrl(cat: string | null) {
   document.addEventListener('astro:page-load', () => {
     const el = document.getElementById('hero-count');
     if (el) animateCounter(el);
+
+    const btnMore = document.getElementById('btn-load-more');
+    const countEl = document.getElementById('load-more-count');
+    const wrapEl = document.getElementById('load-more-wrap');
+    if (btnMore) {
+      const PAGE = 20;
+      let shown = PAGE;
+      btnMore.addEventListener('click', () => {
+        const cards = document.querySelectorAll<HTMLElement>('.oferta-card');
+        const next = shown + PAGE;
+        cards.forEach((card, i) => { if (i < next) card.classList.remove('hidden'); });
+        shown = next;
+        if (countEl) countEl.textContent = 'Mostrando ' + Math.min(shown, cards.length) + ' de ' + cards.length;
+        if (shown >= cards.length && wrapEl) wrapEl.remove();
+      });
+    }
   });
 </script>
 

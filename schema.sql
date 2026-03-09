@@ -41,8 +41,22 @@ CREATE TABLE IF NOT EXISTS public.ofertas (
   activa       BOOLEAN NOT NULL DEFAULT TRUE,
   expira_en    TIMESTAMPTZ NOT NULL,
   empleador_id UUID NOT NULL REFERENCES public.empleadores(id) ON DELETE CASCADE,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Auto-update updated_at on row change
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_ofertas_updated_at
+  BEFORE UPDATE ON public.ofertas
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- Índices
 CREATE INDEX IF NOT EXISTS idx_ofertas_activa_expira ON public.ofertas (activa, expira_en);

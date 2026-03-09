@@ -290,14 +290,39 @@ const readingTime = oferta
                   CV <span class="text-red-500">*</span>
                   <span class="text-gray-400 font-normal">&nbsp;PDF o Word, máx. 5MB</span>
                 </label>
-                <div class="border-2 border-dashed border-gray-200 rounded-xl p-4 hover:border-brand-300 transition-colors">
+                <div
+                  id="drop-zone"
+                  class="border-2 border-dashed border-gray-200 rounded-xl p-6 hover:border-brand-300 transition-colors text-center cursor-pointer relative"
+                >
                   <input
                     type="file"
                     name="cv"
+                    id="cv-input"
                     accept=".pdf,.doc,.docx"
                     required
-                    class="w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer"
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
+                  <div id="drop-placeholder">
+                    <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p class="text-sm text-gray-500 font-medium">Arrastra tu CV aquí</p>
+                    <p class="text-xs text-gray-400 mt-1">o haz clic para seleccionar</p>
+                  </div>
+                  <div id="drop-preview" class="hidden flex items-center gap-3 justify-center">
+                    <svg class="w-6 h-6 text-brand-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <div class="text-left">
+                      <p id="file-name" class="text-sm font-medium text-gray-900 truncate max-w-[200px]"></p>
+                      <p id="file-size" class="text-xs text-gray-400"></p>
+                    </div>
+                    <button type="button" id="file-remove" class="text-gray-400 hover:text-red-500 transition-colors p-1 z-20 relative">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -310,7 +335,7 @@ const readingTime = oferta
                   class="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                 />
                 <label for="privacidad" class="text-xs text-gray-500 leading-relaxed">
-                  Acepto que mis datos y CV sean tratados para esta postulación y eliminados a los 90 días.
+                  Acepto la <a href="/privacidad" target="_blank" class="text-brand-600 underline hover:text-brand-700">política de privacidad</a> y que mis datos y CV sean tratados para esta postulación y eliminados a los 90 días.
                 </label>
               </div>
 
@@ -433,6 +458,76 @@ const readingTime = oferta
         maxZoom: 18,
       }).addTo(miniMap);
       L.marker([ofertaLat, ofertaLng]).addTo(miniMap).bindPopup(ofertaTitulo).openPopup();
+    }
+
+    // Drag & drop CV
+    const dropZone = document.getElementById('drop-zone');
+    const cvInput = document.getElementById('cv-input');
+    const placeholder = document.getElementById('drop-placeholder');
+    const preview = document.getElementById('drop-preview');
+    const fileNameEl = document.getElementById('file-name');
+    const fileSizeEl = document.getElementById('file-size');
+    const fileRemove = document.getElementById('file-remove');
+
+    function showFilePreview(file) {
+      if (!file || !placeholder || !preview || !fileNameEl || !fileSizeEl) return;
+      placeholder.classList.add('hidden');
+      preview.classList.remove('hidden');
+      fileNameEl.textContent = file.name;
+      const kb = (file.size / 1024).toFixed(0);
+      fileSizeEl.textContent = file.size > 1024 * 1024
+        ? (file.size / (1024 * 1024)).toFixed(1) + ' MB'
+        : kb + ' KB';
+      if (dropZone) {
+        dropZone.classList.remove('border-gray-200');
+        dropZone.classList.add('border-brand-300', 'bg-brand-50/30');
+      }
+    }
+
+    function clearFilePreview() {
+      if (placeholder) placeholder.classList.remove('hidden');
+      if (preview) preview.classList.add('hidden');
+      if (cvInput) cvInput.value = '';
+      if (dropZone) {
+        dropZone.classList.add('border-gray-200');
+        dropZone.classList.remove('border-brand-300', 'bg-brand-50/30');
+      }
+    }
+
+    cvInput?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) showFilePreview(file);
+    });
+
+    fileRemove?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearFilePreview();
+    });
+
+    if (dropZone) {
+      ['dragenter', 'dragover'].forEach(evt => {
+        dropZone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          dropZone.classList.add('border-brand-400', 'bg-brand-50/50');
+        });
+      });
+      ['dragleave', 'drop'].forEach(evt => {
+        dropZone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('border-brand-400', 'bg-brand-50/50');
+        });
+      });
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer?.files?.[0];
+        if (file && cvInput) {
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          cvInput.files = dt.files;
+          showFilePreview(file);
+        }
+      });
     }
 
     // Formulario con feedback

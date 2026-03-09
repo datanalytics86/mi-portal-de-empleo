@@ -12,6 +12,7 @@ export const GET: APIRoute = async ({ url }) => {
 
   const staticUrls = [
     `<url><loc>${base}/</loc><changefreq>hourly</changefreq><priority>1.0</priority></url>`,
+    `<url><loc>${base}/privacidad</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>`,
     `<url><loc>${base}/empleador/login</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>`,
     `<url><loc>${base}/empleador/registro</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>`,
   ];

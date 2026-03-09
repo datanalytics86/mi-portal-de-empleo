@@ -1,0 +1,99 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Política de Privacidad" description="Política de privacidad y tratamiento de datos personales del Portal de Empleos Chile.">
+  <div class="max-w-3xl mx-auto px-4 py-12">
+    <h1 class="text-2xl font-extrabold text-gray-900 mb-6">Política de Privacidad</h1>
+    <p class="text-sm text-gray-400 mb-8">Última actualización: marzo 2026</p>
+
+    <div class="prose prose-sm prose-gray max-w-none space-y-6 text-gray-700 leading-relaxed">
+      <section>
+        <h2 class="text-lg font-bold text-gray-900 mb-2">1. Responsable del tratamiento</h2>
+        <p>
+          Portal de Empleos Chile es una plataforma que conecta candidatos con ofertas laborales en Chile.
+          Los datos recopilados se procesan exclusivamente para facilitar el proceso de postulación laboral.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-gray-900 mb-2">2. Datos que recopilamos</h2>
+        <h3 class="font-semibold text-gray-800 mt-3">Para candidatos (postulantes):</h3>
+        <ul class="list-disc pl-5 space-y-1">
+          <li><strong>Nombre</strong> (opcional): proporcionado voluntariamente al postular.</li>
+          <li><strong>Email</strong> (opcional): proporcionado voluntariamente al postular.</li>
+          <li><strong>Curriculum Vitae (CV)</strong>: archivo PDF o Word subido al postular.</li>
+          <li><strong>Dirección IP</strong>: recopilada automáticamente para prevenir abuso y spam.</li>
+        </ul>
+        <h3 class="font-semibold text-gray-800 mt-3">Para empleadores:</h3>
+        <ul class="list-disc pl-5 space-y-1">
+          <li><strong>Email</strong>: requerido para registro y autenticación.</li>
+          <li><strong>Nombre de la empresa</strong>: requerido para identificar al empleador.</li>
+          <li><strong>Contraseña</strong>: almacenada de forma cifrada por Supabase Auth.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-gray-900 mb-2">3. Finalidad del tratamiento</h2>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>Facilitar el proceso de postulación laboral entre candidatos y empleadores.</li>
+          <li>Permitir a los empleadores revisar CVs y datos de contacto de los postulantes.</li>
+          <li>Prevenir abuso del sistema mediante limitación de postulaciones por IP.</li>
+          <li>Generar palabras clave del CV para facilitar la revisión por parte del empleador.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-gray-900 mb-2">4. Retención y eliminación de datos</h2>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>Los CVs y postulaciones se <strong>eliminan automáticamente a los 90 días</strong> de su creación.</li>
+          <li>Los archivos de CV se eliminan del almacenamiento de forma definitiva.</li>
+          <li>Las ofertas de empleo expiradas se desactivan automáticamente.</li>
+          <li>Los empleadores pueden solicitar la eliminación de su cuenta contactándonos.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-gray-900 mb-2">5. Compartición de datos</h2>
+        <p>
+          Los datos de los candidatos (nombre, email, CV) son compartidos <strong>únicamente</strong> con el empleador
+          que publicó la oferta a la que postularon. No vendemos, alquilamos ni compartimos datos con terceros
+          para fines publicitarios o de marketing.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-gray-900 mb-2">6. Seguridad</h2>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>Toda la comunicación se realiza a través de HTTPS.</li>
+          <li>Los CVs se almacenan en buckets privados con URLs firmadas de acceso temporal.</li>
+          <li>Las contraseñas se cifran mediante los mecanismos de Supabase Auth.</li>
+          <li>Se aplican políticas de seguridad a nivel de fila (RLS) en la base de datos.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-gray-900 mb-2">7. Derechos del usuario</h2>
+        <p>De acuerdo con la legislación chilena (Ley 19.628 sobre Protección de la Vida Privada), tienes derecho a:</p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>Acceder a los datos personales que almacenamos sobre ti.</li>
+          <li>Solicitar la rectificación de datos incorrectos.</li>
+          <li>Solicitar la eliminación de tus datos personales.</li>
+          <li>Revocar el consentimiento dado para el tratamiento de tus datos.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-gray-900 mb-2">8. Consentimiento</h2>
+        <p>
+          Al postular a una oferta de empleo, el candidato acepta explícitamente (mediante checkbox obligatorio)
+          que sus datos y CV sean tratados para la postulación y eliminados automáticamente a los 90 días.
+        </p>
+      </section>
+    </div>
+
+    <div class="mt-10 pt-6 border-t border-gray-200">
+      <a href="/" class="text-sm text-brand-600 font-semibold hover:underline">← Volver a ofertas</a>
+    </div>
+  </div>
+</Layout>
