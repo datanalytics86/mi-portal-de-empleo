@@ -1,170 +1,181 @@
-# Architecture Overview
-This document serves as a critical, living template designed to equip agents with a rapid and comprehensive understanding of the codebase's architecture, enabling efficient navigation and effective contribution from day one. Update this document as the codebase evolves.
+# Architecture — Mi Portal de Empleo
 
 ## 1. Project Structure
-This section provides a high-level overview of the project's directory and file structure, categorised by architectural layer or major functional area. It is essential for quickly navigating the codebase, locating relevant files, and understanding the overall organization and separation of concerns.
 
+```
+mi-portal-de-empleo/
+├── src/
+│   ├── layouts/Layout.astro        # Base HTML layout (header, footer, global scripts)
+│   ├── middleware.ts               # Route protection for employer pages and API
+│   ├── lib/
+│   │   ├── supabase.ts             # Supabase clients (public + service role)
+│   │   ├── auth.ts                 # Cookie-based session management
+│   │   ├── constants.ts            # TIPOS, CATEGORIAS, CATEGORIA_COLORS
+│   │   ├── comunas.ts              # Chilean comunas with lat/lng coordinates
+│   │   ├── extract-text.ts         # PDF/DOCX text extraction (pdf-parse, mammoth)
+│   │   └── extract-keywords.ts     # Keyword extraction from CV text
+│   ├── types/database.ts           # Supabase Database type definitions
+│   └── pages/
+│       ├── index.astro             # Homepage (search, map, offer list)
+│       ├── oferta/[id].astro       # Offer detail + application form
+│       ├── privacidad.astro        # Privacy policy
+│       ├── 404.astro               # Not found
+│       ├── sitemap.xml.ts          # Dynamic XML sitemap
+│       ├── robots.txt.ts           # robots.txt
+│       ├── empleador/              # Employer-authenticated pages
+│       │   ├── login.astro
+│       │   ├── registro.astro
+│       │   ├── dashboard.astro
+│       │   └── oferta/
+│       │       ├── nueva.astro
+│       │       ├── [id]/editar.astro
+│       │       └── [id]/postulaciones.astro
+│       └── api/                    # Server API routes
+│           ├── auth/{login,registro,logout}.ts
+│           ├── ofertas/{nueva,editar,desactivar}.ts
+│           ├── postulaciones.ts
+│           ├── postulaciones/cv.ts
+│           └── cron/limpiar.ts
+├── public/                         # Static assets (favicon.svg)
+├── schema.sql                      # Supabase database schema
+├── SPECIFICATIONS.md               # Original product spec
+├── CLAUDE.md                       # AI agent context (read this first)
+├── astro.config.mjs                # Astro config (SSR + Vercel + Tailwind)
+├── tailwind.config.mjs             # Tailwind config (brand colors, Inter font)
+└── package.json                    # Node 22.x, Astro 5, Supabase, Zod
+```
 
-[Project Root]/
-├── backend/              # Contains all server-side code and APIs
-│   ├── src/              # Main source code for backend services
-│   │   ├── api/          # API endpoints and controllers
-│   │   ├── client/       # Business logic and service implementations
-│   │   ├── models/       # Database models/schemas
-│   │   └── utils/        # Backend utility functions
-│   ├── config/           # Backend configuration files
-│   ├── tests/            # Backend unit and integration tests
-│   └── Dockerfile        # Dockerfile for backend deployment
-├── frontend/             # Contains all client-side code for user interfaces
-│   ├── src/              # Main source code for frontend applications
-│   │   ├── components/   # Reusable UI components
-│   │   ├── pages/        # Application pages/views
-│   │   ├── assets/       # Images, fonts, and other static assets
-│   │   ├── services/     # Frontend services for API interaction
-│   │   └── store/        # State management (e.g., Redux, Vuex, Context API)
-│   ├── public/           # Publicly accessible assets (e.g., index.html)
-│   ├── tests/            # Frontend unit and E2E tests
-│   └── package.json      # Frontend dependencies and scripts
-├── common/               # Shared code, types, and utilities used by both frontend and backend
-│   ├── types/            # Shared TypeScript/interface definitions
-│   └── utils/            # General utility functions
-├── docs/                 # Project documentation (e.g., API docs, setup guides)
-├── scripts/              # Automation scripts (e.g., deployment, data seeding)
-├── .github/              # GitHub Actions or other CI/CD configurations
-├── .gitignore            # Specifies intentionally untracked files to ignore
-├── README.md             # Project overview and quick start guide
-└── ARCHITECTURE.md       # This document
+## 2. System Diagram
 
-
-
-## 2. High-Level System Diagram
-Provide a simple block diagram (e.g., a C4 Model Level 1: System Context diagram, or a basic component diagram) or a clear text-based description of the major components and their interactions. Focus on how data flows, services communicate, and key architectural boundaries.
-
-[User] <--> [Frontend Application] <--> [Backend Service 1] <--> [Database 1]
-                                    |
-                                    +--> [Backend Service 2] <--> [External API]
+```
+[Candidate Browser]                    [Employer Browser]
+        │                                      │
+        ▼                                      ▼
+┌──────────────────────────────────────────────────┐
+│              Vercel (SSR)                        │
+│  ┌─────────────────────────────────────────────┐ │
+│  │ Astro 5 Server                              │ │
+│  │  ├── Pages (SSR on each request)            │ │
+│  │  ├── API Routes (/api/*)                    │ │
+│  │  ├── Middleware (auth guard)                 │ │
+│  │  └── Leaflet map (CDN, client-side)         │ │
+│  └─────────────────────────────────────────────┘ │
+└──────────────┬────────────────┬──────────────────┘
+               │                │
+               ▼                ▼
+┌──────────────────┐  ┌──────────────────┐
+│ Supabase Auth    │  │ Supabase Storage │
+│ (email+password) │  │ (bucket: cvs)    │
+└──────────────────┘  └──────────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│ Supabase PostgreSQL          │
+│  ├── empleadores (employers) │
+│  ├── ofertas (job offers)    │
+│  └── postulaciones (apps)    │
+│  RLS policies enforced       │
+└──────────────────────────────┘
+```
 
 ## 3. Core Components
-(List and briefly describe the main components of the system. For each, include its primary responsibility and key technologies used.)
 
-### 3.1. Frontend
+### 3.1. Frontend (Astro 5 SSR)
 
-Name: [e.g., Web App, Mobile App]
+- **Framework**: Astro 5 with `output: 'server'` — every page is server-rendered
+- **Styling**: Tailwind CSS 3 with custom `brand` color palette (blue-based, defined in tailwind.config.mjs)
+- **Font**: Inter via Google Fonts
+- **Maps**: Leaflet 1.9.4 loaded via CDN `<script>` tag (NOT npm). Used in `<script define:vars>` blocks
+- **Navigation**: Astro ViewTransitions for SPA-like page transitions
+- **Adapter**: `@astrojs/vercel` for Vercel serverless deployment
 
-Description: Briefly describe its primary purpose, key functionalities, and how users or other systems interact with it. E.g., 'The main user interface for interacting with the system, allowing users to manage their profiles, view data dashboards, and initiate workflows.'
+### 3.2. Authentication
 
-Technologies: [e.g., React, Next.js, Vue.js, Swift/Kotlin, HTML/CSS/JS]
+- Supabase Auth with email+password
+- Cookie-based sessions: JWT stored in `sb-session` cookie (httpOnly, 1hr TTL)
+- `src/lib/auth.ts`: `getEmpleadorSession()` validates token and returns user+employer data
+- `src/middleware.ts`: guards `/empleador/*` pages (redirect to login) and `/api/ofertas/*` routes (401)
 
-Deployment: [e.g., Vercel, Netlify, S3/CloudFront]
+### 3.3. API Routes
 
-### 3.2. Backend Services
+All under `src/pages/api/`. Key patterns:
+- **Public**: `POST /api/postulaciones` (rate-limited by IP, 3/hour)
+- **Authenticated**: `POST /api/ofertas/*` (checked by middleware + ownership validation)
+- **Service role**: Server-side operations use `createServiceClient()` to bypass RLS
+- **Validation**: Zod schemas for all form inputs
 
-(Repeat for each significant backend service. Add more as needed.)
+### 3.4. Data Access
 
-#### 3.2.1. [Service Name 1]
-
-Name: [e.g., User Management Service, Data Processing API]
-
-Description: [Briefly describe its purpose, e.g., "Handles user authentication and profile management."]
-
-Technologies: [e.g., Node.js (Express), Python (Django/Flask), Java (Spring Boot), Go]
-
-Deployment: [e.g., AWS EC2, Kubernetes, Serverless (Lambda/Cloud Functions)]
-
-#### 3.2.2. [Service Name 2]
-
-Name: [e.g., Analytics Service, Notification Service]
-
-Description: [Briefly describe its purpose.]
-
-Technologies: [e.g., Python, Kafka, Redis]
-
-Deployment: [e.g., AWS ECS, Google Cloud Run]
+Two Supabase clients in `src/lib/supabase.ts`:
+1. `supabase` — public anon client for reading active offers
+2. `createServiceClient()` — service role client for mutations (inserts, updates, storage)
 
 ## 4. Data Stores
 
-(List and describe the databases and other persistent storage solutions used.)
+### 4.1. PostgreSQL (via Supabase)
 
-### 4.1. [Data Store Type 1]
+**Tables** (see `schema.sql` for full DDL):
 
-Name: [e.g., Primary User Database, Analytics Data Warehouse]
+| Table | Purpose | RLS |
+|-------|---------|-----|
+| `empleadores` | Employer profiles (linked to auth.users) | Own data only |
+| `ofertas` | Job offers with geo-coordinates | Public read (active), employer CRUD |
+| `postulaciones` | Applications with CV reference | Employer read (own offers), public insert |
 
-Type: [e.g., PostgreSQL, MongoDB, Redis, S3, Firestore]
+**Key indexes**: `(activa, expira_en)`, `(empleador_id)`, `(tipo_empleo)`, `(oferta_id)`, `(created_at)`
 
-Purpose: [Briefly describe what data it stores and why.]
+**Triggers**: `trg_ofertas_updated_at` auto-updates `updated_at` on row changes.
 
-Key Schemas/Collections: [List important tables/collections, e.g., users, products, orders (no need for full schema, just names)]
+### 4.2. Supabase Storage
 
-### 4.2. [Data Store Type 2]
+- Bucket: `cvs` (private)
+- CVs uploaded server-side via service role
+- Downloaded via signed URLs (employer must own the associated offer)
 
-Name: [e.g., Cache, Message Queue]
+## 5. External Integrations
 
-Type: [e.g., Redis, Kafka, RabbitMQ]
-
-Purpose: [Briefly describe its purpose, e.g., "Used for caching frequently accessed data" or "Inter-service communication."]
-
-## 5. External Integrations / APIs
-
-(List any third-party services or external APIs the system interacts with.)
-
-Service Name 1: [e.g., Stripe, SendGrid, Google Maps API]
-
-Purpose: [Briefly describe its function, e.g., "Payment processing."]
-
-Integration Method: [e.g., REST API, SDK]
+| Service | Purpose | Method |
+|---------|---------|--------|
+| Supabase | Database, Auth, Storage | JS SDK (`@supabase/supabase-js`) |
+| OpenStreetMap | Map tiles | Leaflet tile layer (CDN) |
+| Google Fonts | Inter typeface | CSS link in Layout.astro |
 
 ## 6. Deployment & Infrastructure
 
-Cloud Provider: [e.g., AWS, GCP, Azure, On-premise]
+- **Host**: Vercel (serverless functions via `@astrojs/vercel`)
+- **Backend**: Supabase Cloud (managed PostgreSQL + Auth + Storage)
+- **CI/CD**: Git push to branch → Vercel Preview → promote to Production
+- **Environment**: Variables set in Vercel dashboard (`PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`)
 
-Key Services Used: [e.g., EC2, Lambda, S3, RDS, Kubernetes, Cloud Functions, App Engine]
+## 7. Security
 
-CI/CD Pipeline: [e.g., GitHub Actions, GitLab CI, Jenkins, CircleCI]
+- **Auth**: Supabase Auth (email+password), JWT in httpOnly cookie
+- **Authorization**: RLS policies on all tables + middleware route guards + API ownership checks
+- **Rate limiting**: 3 applications per IP per hour (checked server-side)
+- **File validation**: Type (PDF/DOCX only), size (5MB max), server-side re-validation
+- **Data retention**: 90-day auto-cleanup via `/api/cron/limpiar`
+- **Privacy**: Consent checkbox required, privacy policy page, Chilean Ley 19.628 compliance
 
-Monitoring & Logging: [e.g., Prometheus, Grafana, CloudWatch, Stackdriver, ELK Stack]
+## 8. Development
 
-## 7. Security Considerations
+```bash
+npm install          # Install dependencies
+npm run dev          # Dev server at localhost:4321
+npm run build        # Production build (verifies compilation)
+```
 
-(Highlight any critical security aspects, authentication mechanisms, or data encryption practices.)
+No test framework configured. Verify with `npm run build`.
 
-Authentication: [e.g., OAuth2, JWT, API Keys]
+## 9. Key Design Patterns
 
-Authorization: [e.g., RBAC, ACLs]
-
-Data Encryption: [e.g., TLS in transit, AES-256 at rest]
-
-Key Security Tools/Practices: [e.g., WAF, regular security audits]
-
-## 8. Development & Testing Environment
-
-Local Setup Instructions: [Link to CONTRIBUTING.md or brief steps]
-
-Testing Frameworks: [e.g., Jest, Pytest, JUnit]
-
-Code Quality Tools: [e.g., ESLint, Black, SonarQube]
-
-## 9. Future Considerations / Roadmap
-
-(Briefly note any known architectural debts, planned major changes, or significant future features that might impact the architecture.)
-
-[e.g., "Migrate from monolith to microservices."]
-
-[e.g., "Implement event-driven architecture for real-time updates."]
+- **Self-contained pages**: No shared components directory; all UI is inline in `.astro` pages
+- **Pre-computed values**: Complex expressions are computed in `.map()` callback bodies to avoid Astro template literal issues
+- **define:vars scripts**: Use `/* */` comments, `var` declarations, and `function()` syntax (see CLAUDE.md for details)
+- **Service client pattern**: Public reads use anon client; mutations use service role client to bypass RLS while still validating ownership in application code
 
 ## 10. Project Identification
 
-Project Name: [Insert Project Name]
-
-Repository URL: [Insert Repository URL]
-
-Primary Contact/Team: [Insert Lead Developer/Team Name]
-
-Date of Last Update: [YYYY-MM-DD]
-
-## 11. Glossary / Acronyms
-
-Define any project-specific terms or acronyms.)
-
-[Acronym]: [Full Definition]
-
-[Term]: [Explanation]
+- **Project**: Mi Portal de Empleo
+- **Repository**: datanalytics86/mi-portal-de-empleo
+- **Stack**: Astro 5 + Supabase + Tailwind + Leaflet + Vercel
+- **Last Updated**: 2026-03-09
