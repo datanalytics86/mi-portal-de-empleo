@@ -125,17 +125,20 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
             </label>
             <span id="char-count" class="text-xs text-gray-400 tabular-nums">0 / 2000</span>
           </div>
-          <!-- Plantillas rápidas -->
+          <!-- Plantillas rápidas (rellenan descripción + categoría/tipo) -->
           <div class="flex flex-wrap gap-1.5 mb-2">
             <span class="text-xs text-gray-400 flex items-center pr-1">Plantilla:</span>
-            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="general">
-              General
-            </button>
             <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="tech">
               Tecnología
             </button>
             <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="ventas">
               Ventas
+            </button>
+            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="admin">
+              Admin
+            </button>
+            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="practica">
+              Práctica
             </button>
           </div>
           <textarea
@@ -208,41 +211,40 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
 </Layout>
 
 <script>
-  const PLANTILLAS: Record<string, string> = {
-    general: `Buscamos [cargo] para integrarse a nuestro equipo de trabajo.
+  type Plantilla = {
+    titulo: string;
+    categoria: string;
+    tipo_empleo: string;
+    descripcion: string;
+  };
+
+  const PLANTILLAS: Record<string, Plantilla> = {
+    tech: {
+      titulo: 'Desarrollador/a Full Stack',
+      categoria: 'Tecnología',
+      tipo_empleo: 'full-time',
+      descripcion: `Buscamos un/a Desarrollador/a Full Stack para construir y mantener productos digitales de alto impacto.
 
 Responsabilidades:
-• Gestión y seguimiento de tareas asignadas
-• Coordinación con el equipo de trabajo
-• Reporte de avances a jefatura directa
+• Desarrollar y mantener aplicaciones web (frontend y/o backend)
+• Participar en code reviews y buenas prácticas
+• Colaborar con producto, diseño y otros equipos
 
 Requisitos:
-• Experiencia mínima de 1 año en el área
-• Proactivo/a y orientado/a a resultados
-• Disponibilidad inmediata o a convenir
+• Experiencia con JavaScript/TypeScript, React o similar
+• Conocimiento de APIs REST y bases de datos (SQL)
+• Trabajo en equipo y metodologías ágiles (Scrum/Kanban)
 
 Ofrecemos:
-• Buen ambiente laboral y posibilidad de crecimiento
-• Sueldo a convenir según experiencia`,
-
-    tech: `Buscamos [cargo] para desarrollar soluciones tecnológicas de alto impacto.
-
-Responsabilidades:
-• Desarrollo y mantenimiento de aplicaciones
-• Participación en revisión de código (code review)
-• Colaboración con equipos de producto y diseño
-
-Requisitos:
-• Experiencia con [tecnologías relevantes]
-• Conocimiento en buenas prácticas de desarrollo
-• Capacidad de trabajo en equipo y metodologías ágiles
-
-Ofrecemos:
-• Modalidad híbrida o remota
+• Modalidad híbrida o remota (según acuerdo)
 • Sueldo competitivo según experiencia
-• Stack tecnológico moderno`,
-
-    ventas: `Buscamos [cargo] de Ventas para expandir nuestra cartera de clientes.
+• Stack moderno y aprendizaje continuo`,
+    },
+    ventas: {
+      titulo: 'Ejecutivo/a de Ventas',
+      categoria: 'Ventas',
+      tipo_empleo: 'full-time',
+      descripcion: `Buscamos un/a Ejecutivo/a de Ventas para expandir nuestra cartera de clientes en Chile.
 
 Responsabilidades:
 • Prospección y captación de nuevos clientes
@@ -252,18 +254,63 @@ Responsabilidades:
 Requisitos:
 • Experiencia en ventas (mínimo 1 año)
 • Alta orientación a resultados y metas
-• Excelentes habilidades de comunicación
+• Excelentes habilidades de comunicación y negociación
 
 Ofrecemos:
-• Sueldo base + comisiones sin tope
+• Sueldo base + comisiones
 • Capacitación inicial y continua
 • Incentivos por cumplimiento de metas`,
+    },
+    admin: {
+      titulo: 'Asistente Administrativo/a',
+      categoria: 'Administración',
+      tipo_empleo: 'full-time',
+      descripcion: `Buscamos un/a Asistente Administrativo/a para apoyar la operación diaria del equipo.
+
+Responsabilidades:
+• Gestión de documentos, agenda y correspondencia
+• Apoyo en facturación, compras y control de gastos
+• Atención a proveedores y coordinación interna
+
+Requisitos:
+• Manejo avanzado de Excel y herramientas Office
+• Organización, proactividad y atención al detalle
+• Experiencia previa en roles administrativos (deseable)
+
+Ofrecemos:
+• Buen ambiente laboral
+• Horario full-time
+• Sueldo a convenir según experiencia`,
+    },
+    practica: {
+      titulo: 'Practicante',
+      categoria: 'Otro',
+      tipo_empleo: 'practica',
+      descripcion: `Abrimos cupo de práctica profesional / laboral para estudiantes o egresados recientes.
+
+Responsabilidades:
+• Apoyar al equipo en tareas del día a día del área
+• Participar en proyectos reales con supervisión
+• Aprender herramientas y procesos de la industria
+
+Requisitos:
+• Estudiante de últimos años o egresado/a reciente
+• Ganas de aprender, responsabilidad y proactividad
+• Disponibilidad de [X] horas semanales
+
+Ofrecemos:
+• Tutoría y feedback continuo
+• Experiencia real en el rubro
+• Posibilidad de continuidad según desempeño
+• (Indicar si es con o sin remuneración)`,
+    },
   };
 
   // Contador de caracteres + barra de progreso
   const textarea = document.getElementById('descripcion') as HTMLTextAreaElement;
   const charCount = document.getElementById('char-count');
   const charBar = document.getElementById('char-bar') as HTMLElement;
+  const formEl = document.getElementById('form-nueva') as HTMLFormElement;
 
   function updateCharCount() {
     const len = textarea.value.length;
@@ -279,15 +326,25 @@ Ofrecemos:
 
   textarea?.addEventListener('input', updateCharCount);
 
-  // Plantillas rápidas
+  // Plantillas rápidas: descripción + categoría + tipo (+ título si vacío)
   document.querySelectorAll<HTMLButtonElement>('.tpl-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const key = btn.dataset.tpl;
-      if (!key || !PLANTILLAS[key]) return;
-      if (textarea.value && !confirm('¿Reemplazar el contenido actual con la plantilla?')) return;
-      textarea.value = PLANTILLAS[key];
-      textarea.focus();
+      const tpl = key ? PLANTILLAS[key] : undefined;
+      if (!tpl) return;
+      if (textarea.value && !confirm('¿Reemplazar la descripción actual con la plantilla?')) return;
+
+      textarea.value = tpl.descripcion;
       updateCharCount();
+
+      const cat = formEl?.querySelector<HTMLSelectElement>('[name="categoria"]');
+      const tipo = formEl?.querySelector<HTMLSelectElement>('[name="tipo_empleo"]');
+      const titulo = formEl?.querySelector<HTMLInputElement>('[name="titulo"]');
+      if (cat) cat.value = tpl.categoria;
+      if (tipo) tipo.value = tpl.tipo_empleo;
+      if (titulo && !titulo.value.trim()) titulo.value = tpl.titulo;
+
+      textarea.focus();
     });
   });
 

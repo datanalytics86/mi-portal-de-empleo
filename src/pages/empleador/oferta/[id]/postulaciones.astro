@@ -16,22 +16,52 @@ const { data: oferta, error: ofertaError } = await client
 
 if (ofertaError || !oferta) return Astro.redirect('/empleador/dashboard');
 
-// Obtener postulaciones
-const { data: postulaciones } = await client
+// Obtener postulaciones — default: mejor match primero, luego más recientes
+const { data: postulacionesRaw } = await client
   .from('postulaciones')
-  .select('id, nombre, email, cv_url, palabras_clave, created_at')
+  .select('id, nombre, email, cv_url, palabras_clave, keywords, cv_parsed, parse_status, parsed_at, match_score, created_at')
   .eq('oferta_id', id)
   .order('created_at', { ascending: false });
 
-const total = postulaciones?.length ?? 0;
-const emailsList = postulaciones?.filter(p => p.email).map(p => p.email) ?? [];
+// Sort en servidor: match_score DESC (nulls al final), luego fecha
+const postulaciones = [...(postulacionesRaw ?? [])].sort((a, b) => {
+  const sa = a.match_score ?? -1;
+  const sb = b.match_score ?? -1;
+  if (sb !== sa) return sb - sa;
+  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+});
+
+const total = postulaciones.length;
+const emailsList = postulaciones.filter(p => p.email).map(p => p.email);
 const hasEmails = emailsList.length > 0;
-const csvRows = (postulaciones ?? []).map(p => ({
-  nombre: p.nombre || 'Anónimo',
-  email: p.email || '',
-  fecha: new Date(p.created_at).toLocaleDateString('es-CL'),
-  keywords: (p.palabras_clave ?? []).join(' | '),
-}));
+const csvRows = postulaciones.map(p => {
+  const parsed = p.cv_parsed as {
+    titulo_profesional?: string | null;
+    resumen?: string | null;
+    telefono?: string | null;
+    anos_experiencia?: number | null;
+    ubicacion?: string | null;
+  } | null;
+  const kws = (p.keywords?.length ? p.keywords : p.palabras_clave) ?? [];
+  return {
+    nombre: p.nombre || parsed?.titulo_profesional || 'Anónimo',
+    email: p.email || '',
+    telefono: parsed?.telefono || '',
+    fecha: new Date(p.created_at).toLocaleDateString('es-CL'),
+    keywords: kws.join(' | '),
+    match_score: p.match_score ?? '',
+    titulo: parsed?.titulo_profesional || '',
+    anos: parsed?.anos_experiencia ?? '',
+    ubicacion: parsed?.ubicacion || '',
+  };
+});
+
+function scoreClasses(score: number | null | undefined): string {
+  if (score == null) return 'bg-gray-100 text-gray-500 border-gray-200';
+  if (score >= 70) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+  if (score >= 40) return 'bg-amber-50 text-amber-700 border-amber-200';
+  return 'bg-rose-50 text-rose-700 border-rose-200';
+}
 ---
 
 <Layout title={`Postulaciones: ${oferta.titulo}`}>
@@ -117,14 +147,32 @@ const csvRows = (postulaciones ?? []).map(p => ({
       </div>
     ) : (
       <div>
-        <!-- Sort toolbar -->
-        <div class="flex items-center justify-between mb-4">
-          <p class="text-sm text-gray-500">
-            <span class="font-semibold text-gray-900">{total}</span> candidato{total !== 1 ? 's' : ''}
-          </p>
-          <div class="flex items-center gap-1.5">
+        <!-- Toolbar: filtro + sort -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-3 flex-wrap">
+            <p class="text-sm text-gray-500">
+              <span id="visible-count" class="font-semibold text-gray-900">{total}</span>
+              <span id="visible-label">candidato{total !== 1 ? 's' : ''}</span>
+            </p>
+            <div class="relative">
+              <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="search"
+                id="filter-kw"
+                placeholder="Filtrar por skill…"
+                autocomplete="off"
+                class="text-xs border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 w-44 sm:w-52 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-gray-400"
+              />
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 flex-wrap">
             <span class="text-xs text-gray-400 mr-1">Ordenar:</span>
-            <button id="sort-fecha" class="sort-btn text-xs px-2.5 py-1 rounded-lg border border-brand-200 bg-brand-50 text-brand-700 font-medium transition-colors">
+            <button id="sort-match" class="sort-btn text-xs px-2.5 py-1 rounded-lg border border-brand-200 bg-brand-50 text-brand-700 font-medium transition-colors">
+              Mejor match
+            </button>
+            <button id="sort-fecha" class="sort-btn text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-500 font-medium hover:bg-gray-50 transition-colors">
               Más reciente
             </button>
             <button id="sort-nombre" class="sort-btn text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-500 font-medium hover:bg-gray-50 transition-colors">
@@ -132,9 +180,47 @@ const csvRows = (postulaciones ?? []).map(p => ({
             </button>
           </div>
         </div>
+        <p id="filter-empty" class="hidden text-center text-sm text-gray-500 py-10 bg-white border border-gray-200 rounded-2xl mb-3">
+          Ningún candidato coincide con ese filtro.
+        </p>
         <div id="candidates-list" class="space-y-3">
-        {postulaciones!.map((p, i) => {
-          const initials = (p.nombre || '?')
+        {postulaciones.map((p, i) => {
+          const cv = p.cv_parsed as {
+            nombre_completo?: string | null;
+            telefono?: string | null;
+            titulo_profesional?: string | null;
+            resumen?: string | null;
+            skills_tecnicas?: string[];
+            skills_blandas?: string[];
+            keywords?: string[];
+            anos_experiencia?: number | null;
+            ubicacion?: string | null;
+            idiomas?: Array<{ idioma: string; nivel: string | null }>;
+            experiencia?: Array<{ empresa: string | null; cargo: string | null }>;
+            parse_method?: string;
+            used_ocr?: boolean;
+            ocr_engine?: string | null;
+          } | null;
+          const displayName = p.nombre || cv?.nombre_completo || null;
+          // Preferir keywords canónicas; fallback legacy palabras_clave
+          const keywords = (p.keywords?.length ? p.keywords : p.palabras_clave) ?? [];
+          // Chips: unir skills técnicas + keywords (sin duplicados, case-insensitive)
+          const techTags: string[] = (() => {
+            const seen = new Set<string>();
+            const out: string[] = [];
+            for (const t of [...(cv?.skills_tecnicas ?? []), ...keywords]) {
+              const k = t.trim();
+              if (!k) continue;
+              const n = k.toLowerCase();
+              if (seen.has(n)) continue;
+              seen.add(n);
+              out.push(k);
+            }
+            return out;
+          })();
+          const hasKeywords = techTags.length > 0 || (cv?.skills_blandas?.length ?? 0) > 0;
+          const showResumen = Boolean(cv?.resumen);
+          const initials = (displayName || '?')
             .split(' ')
             .slice(0, 2)
             .map((w: string) => w[0] || '')
@@ -150,13 +236,18 @@ const csvRows = (postulaciones ?? []).map(p => ({
           ];
           const color = colors[i % colors.length];
           const animDelay = 'animation-delay: ' + (i * 60) + 'ms';
+          const score = p.match_score as number | null;
+          const parseOk = p.parse_status === 'success';
+          const parsePending = p.parse_status === 'pending';
           return (
             <div
               class="card-anim candidate-row bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-brand-300 hover:shadow-md hover:-translate-y-0.5 transition-all"
               style={animDelay}
-              data-nombre={p.nombre || ''}
+              data-nombre={displayName || ''}
               data-email={p.email || ''}
               data-fecha={p.created_at}
+              data-match={score != null ? String(score) : '-1'}
+              data-keywords={[...keywords, ...(cv?.skills_tecnicas || []), ...(cv?.skills_blandas || []), cv?.titulo_profesional || '', displayName || ''].join(' ').toLowerCase()}
             >
               <div class="flex items-start gap-4">
                 <!-- Avatar con badge numérico -->
@@ -173,27 +264,65 @@ const csvRows = (postulaciones ?? []).map(p => ({
                 <div class="flex-1 min-w-0">
                   <div class="flex items-start justify-between gap-3 flex-wrap">
                     <div>
-                      <p class="font-semibold text-gray-900">
-                        {p.nombre || <span class="text-gray-400 italic font-normal">Anónimo</span>}
-                      </p>
-                      {p.email ? (
-                        <div class="flex items-center gap-1.5 mt-0.5">
-                          <a href={`mailto:${p.email}`} class="text-sm text-brand-600 hover:underline">
-                            {p.email}
-                          </a>
-                          <button
-                            class="copy-email-btn text-gray-300 hover:text-gray-500 transition-colors p-0.5 rounded"
-                            data-email={p.email}
-                            title="Copiar email"
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <p class="font-semibold text-gray-900">
+                          {displayName || <span class="text-gray-400 italic font-normal">Anónimo</span>}
+                        </p>
+                        {score != null && (
+                          <span
+                            class={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border ${scoreClasses(score)}`}
+                            title="Afinidad estimada según skills del CV vs. la oferta (heurística, no es IA perfecta)"
                           >
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                            </svg>
-                          </button>
-                        </div>
-                      ) : (
-                        <p class="text-sm text-gray-400 mt-0.5">Sin email</p>
+                            {score}% match
+                          </span>
+                        )}
+                        {parsePending && (
+                          <span class="text-[11px] text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">
+                            Analizando CV…
+                          </span>
+                        )}
+                        {p.parse_status === 'failed' && (
+                          <span class="text-[11px] text-gray-500 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-full" title="El CV se guardó; el análisis automático no pudo completarse">
+                            Sin análisis
+                          </span>
+                        )}
+                        {cv?.used_ocr && (
+                          <span
+                            class="text-[11px] text-violet-700 bg-violet-50 border border-violet-100 px-2 py-0.5 rounded-full"
+                            title={cv.ocr_engine ? `OCR: ${cv.ocr_engine}` : 'Texto extraído por OCR (PDF escaneado)'}
+                          >
+                            OCR
+                          </span>
+                        )}
+                      </div>
+                      {cv?.titulo_profesional && (
+                        <p class="text-sm text-gray-600 mt-0.5 font-medium">{cv.titulo_profesional}</p>
                       )}
+                      <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-sm text-gray-500">
+                        {p.email ? (
+                          <span class="inline-flex items-center gap-1">
+                            <a href={`mailto:${p.email}`} class="text-brand-600 hover:underline">
+                              {p.email}
+                            </a>
+                            <button
+                              class="copy-email-btn text-gray-300 hover:text-gray-500 transition-colors p-0.5 rounded"
+                              data-email={p.email}
+                              title="Copiar email"
+                            >
+                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                              </svg>
+                            </button>
+                          </span>
+                        ) : (
+                          <span class="text-gray-400">Sin email</span>
+                        )}
+                        {cv?.telefono && <span>· {cv.telefono}</span>}
+                        {cv?.ubicacion && <span>· 📍 {cv.ubicacion}</span>}
+                        {cv?.anos_experiencia != null && (
+                          <span>· {cv.anos_experiencia} año{cv.anos_experiencia === 1 ? '' : 's'} exp.</span>
+                        )}
+                      </div>
                     </div>
                     <div class="flex items-center gap-3 shrink-0">
                       <span
@@ -216,18 +345,59 @@ const csvRows = (postulaciones ?? []).map(p => ({
                     </div>
                   </div>
 
-                  <!-- Palabras clave -->
-                  {p.palabras_clave && p.palabras_clave.length > 0 && (
-                    <div class="flex flex-wrap gap-1.5 mt-3">
-                      {p.palabras_clave.slice(0, 12).map((k: string) => (
-                        <span class="text-xs bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-0.5 rounded-full font-medium">
-                          {k}
+                  <!-- Resumen del CV (desde cv_parsed) -->
+                  {showResumen && (
+                    <p class="mt-3 text-sm text-gray-600 leading-relaxed line-clamp-3 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">
+                      {cv!.resumen}
+                    </p>
+                  )}
+
+                  <!-- Últimas experiencias (compacto) -->
+                  {cv?.experiencia && cv.experiencia.length > 0 && (
+                    <div class="mt-2.5 flex flex-wrap gap-1.5">
+                      {cv.experiencia.slice(0, 3).map((exp) => (
+                        <span class="text-[11px] text-gray-600 bg-white border border-gray-200 px-2 py-0.5 rounded-lg">
+                          {[exp.cargo, exp.empresa].filter(Boolean).join(' · ') || 'Experiencia'}
                         </span>
                       ))}
-                      {p.palabras_clave.length > 12 && (
-                        <span class="text-xs text-gray-400 px-1 py-0.5">+{p.palabras_clave.length - 12} más</span>
-                      )}
                     </div>
+                  )}
+
+                  <!-- Keywords / skills como chips -->
+                  {hasKeywords ? (
+                    <>
+                      {techTags.length > 0 && (
+                        <div class="flex flex-wrap gap-1.5 mt-3" aria-label="Palabras clave del CV">
+                          {techTags.slice(0, 14).map((k: string) => (
+                            <span class="text-xs bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-0.5 rounded-full font-medium">
+                              {k}
+                            </span>
+                          ))}
+                          {techTags.length > 14 && (
+                            <span class="text-xs text-gray-400 px-1 py-0.5">+{techTags.length - 14} más</span>
+                          )}
+                        </div>
+                      )}
+                      {cv?.skills_blandas && cv.skills_blandas.length > 0 && (
+                        <div class="flex flex-wrap gap-1.5 mt-1.5" aria-label="Skills blandas">
+                          {cv.skills_blandas.slice(0, 6).map((k: string) => (
+                            <span class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full">
+                              {k}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    !parsePending && (
+                      <p class="mt-3 text-xs text-gray-400 italic">
+                        {p.parse_status === 'failed' || p.parse_status === 'skipped'
+                          ? 'No se pudieron extraer palabras clave de este CV.'
+                          : parseOk
+                            ? 'Sin palabras clave detectadas.'
+                            : ''}
+                      </p>
+                    )
                   )}
                 </div>
               </div>
@@ -296,8 +466,8 @@ const csvRows = (postulaciones ?? []).map(p => ({
     // CSV export
     const btnCSV = document.getElementById('btn-export-csv');
     btnCSV?.addEventListener('click', () => {
-      const header = ['Nombre', 'Email', 'Fecha', 'Palabras clave'];
-      const rows = csvRows.map((r) => [r.nombre, r.email, r.fecha, r.keywords]);
+      const header = ['Nombre', 'Email', 'Teléfono', 'Título', 'Años exp.', 'Ubicación', 'Match %', 'Fecha', 'Keywords'];
+      const rows = csvRows.map((r) => [r.nombre, r.email, r.telefono, r.titulo, r.anos, r.ubicacion, r.match_score, r.fecha, r.keywords]);
       const csv = [header, ...rows]
         .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
         .join('\n');
@@ -311,32 +481,67 @@ const csvRows = (postulaciones ?? []).map(p => ({
     const list = document.getElementById('candidates-list');
     const btnFecha = document.getElementById('sort-fecha');
     const btnNombre = document.getElementById('sort-nombre');
+    const btnMatch = document.getElementById('sort-match');
+    const sortBtns = [btnFecha, btnNombre, btnMatch];
 
-    function sortCards(by: 'fecha' | 'nombre') {
+    function setActive(active: HTMLElement | null) {
+      sortBtns.forEach((b) => {
+        if (!b) return;
+        const on = b === active;
+        b.classList.toggle('bg-brand-50', on);
+        b.classList.toggle('text-brand-700', on);
+        b.classList.toggle('border-brand-200', on);
+        b.classList.toggle('text-gray-500', !on);
+        b.classList.toggle('border-gray-200', !on);
+      });
+    }
+
+    function sortCards(by: 'fecha' | 'nombre' | 'match') {
       if (!list) return;
       const cards = Array.from(list.querySelectorAll<HTMLElement>('.candidate-row'));
       cards.sort((a, b) => {
         if (by === 'nombre') {
           return (a.dataset.nombre || '').localeCompare(b.dataset.nombre || '', 'es', { sensitivity: 'base' });
         }
+        if (by === 'match') {
+          return Number(b.dataset.match || -1) - Number(a.dataset.match || -1);
+        }
         return new Date(b.dataset.fecha || 0).getTime() - new Date(a.dataset.fecha || 0).getTime();
       });
       cards.forEach(c => list.appendChild(c));
-      // Toggle active state on buttons
-      btnFecha?.classList.toggle('bg-brand-50', by === 'fecha');
-      btnFecha?.classList.toggle('text-brand-700', by === 'fecha');
-      btnFecha?.classList.toggle('border-brand-200', by === 'fecha');
-      btnFecha?.classList.toggle('text-gray-500', by !== 'fecha');
-      btnFecha?.classList.toggle('border-gray-200', by !== 'fecha');
-      btnNombre?.classList.toggle('bg-brand-50', by === 'nombre');
-      btnNombre?.classList.toggle('text-brand-700', by === 'nombre');
-      btnNombre?.classList.toggle('border-brand-200', by === 'nombre');
-      btnNombre?.classList.toggle('text-gray-500', by !== 'nombre');
-      btnNombre?.classList.toggle('border-gray-200', by !== 'nombre');
+      setActive(by === 'fecha' ? btnFecha : by === 'match' ? btnMatch : btnNombre);
     }
+
+    // Filtro por keyword / skill
+    const filterInput = document.getElementById('filter-kw') as HTMLInputElement | null;
+    const filterEmpty = document.getElementById('filter-empty');
+    const visibleCount = document.getElementById('visible-count');
+    const visibleLabel = document.getElementById('visible-label');
+
+    function applyFilter() {
+      if (!list) return;
+      const q = (filterInput?.value || '').trim().toLowerCase().normalize('NFD').replace(/\p{Mn}/gu, '');
+      const cards = Array.from(list.querySelectorAll<HTMLElement>('.candidate-row'));
+      let shown = 0;
+      cards.forEach((card) => {
+        const hay = (card.dataset.keywords || '').normalize('NFD').replace(/\p{Mn}/gu, '');
+        const ok = !q || hay.includes(q);
+        card.style.display = ok ? '' : 'none';
+        if (ok) shown++;
+      });
+      if (visibleCount) visibleCount.textContent = String(shown);
+      if (visibleLabel) visibleLabel.textContent = shown === 1 ? 'candidato' : 'candidatos';
+      if (filterEmpty) filterEmpty.classList.toggle('hidden', shown > 0 || !q);
+    }
+
+    filterInput?.addEventListener('input', applyFilter);
 
     btnFecha?.addEventListener('click', () => sortCards('fecha'));
     btnNombre?.addEventListener('click', () => sortCards('nombre'));
+    btnMatch?.addEventListener('click', () => sortCards('match'));
+
+    // Default ya es match (servidor); re-aplicar para estado de botones
+    setActive(btnMatch);
   });
 </script>
 

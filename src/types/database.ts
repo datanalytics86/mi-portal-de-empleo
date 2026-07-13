@@ -1,5 +1,40 @@
 export type TipoEmpleo = 'full-time' | 'part-time' | 'freelance' | 'practica';
 
+export type ParseStatus = 'pending' | 'success' | 'failed' | 'skipped';
+
+/** Estructura de cv_parsed (jsonb) — ver src/lib/cv-parser/types.ts */
+export interface CvParsedJson {
+  nombre_completo: string | null;
+  email: string | null;
+  telefono: string | null;
+  titulo_profesional: string | null;
+  resumen: string | null;
+  experiencia: Array<{
+    empresa: string | null;
+    cargo: string | null;
+    fecha_inicio: string | null;
+    fecha_fin: string | null;
+    descripcion: string | null;
+  }>;
+  educacion: Array<{
+    institucion: string | null;
+    titulo: string | null;
+    fecha: string | null;
+    descripcion: string | null;
+  }>;
+  skills_tecnicas: string[];
+  skills_blandas: string[];
+  keywords: string[];
+  idiomas: Array<{ idioma: string; nivel: string | null }>;
+  anos_experiencia: number | null;
+  ubicacion: string | null;
+  parse_method: 'rule' | 'llm' | 'hybrid' | 'ocr';
+  used_ocr?: boolean;
+  ocr_engine?: 'ocr_space' | 'tesseract' | 'none' | null;
+  raw_text_length: number;
+  warnings: string[];
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -69,6 +104,11 @@ export interface Database {
           cv_url: string;
           ip_address: string | null;
           palabras_clave: string[] | null;
+          keywords: string[] | null;
+          cv_parsed: CvParsedJson | null;
+          parse_status: ParseStatus | null;
+          parsed_at: string | null;
+          match_score: number | null;
           created_at: string;
         };
         Insert: {
@@ -79,9 +119,23 @@ export interface Database {
           cv_url: string;
           ip_address?: string | null;
           palabras_clave?: string[] | null;
+          keywords?: string[] | null;
+          cv_parsed?: CvParsedJson | null;
+          parse_status?: ParseStatus | null;
+          parsed_at?: string | null;
+          match_score?: number | null;
           created_at?: string;
         };
-        Update: { palabras_clave?: string[] | null };
+        Update: {
+          nombre?: string | null;
+          email?: string | null;
+          palabras_clave?: string[] | null;
+          keywords?: string[] | null;
+          cv_parsed?: CvParsedJson | null;
+          parse_status?: ParseStatus | null;
+          parsed_at?: string | null;
+          match_score?: number | null;
+        };
       };
     };
   };

@@ -1,0 +1,6 @@
+# Config mínima para Edge Functions (Supabase CLI)
+# https://supabase.com/docs/guides/cli/config
+
+[functions.parse-cv]
+# Validamos service role manualmente en el handler
+verify_jwt = false

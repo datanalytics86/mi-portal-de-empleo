@@ -51,8 +51,12 @@ const jsonLd = oferta ? JSON.stringify({
 }) : null;
 
 const ofertaDescription = oferta
-  ? `${oferta.empresa} busca ${oferta.titulo} en ${oferta.comuna}. ${oferta.descripcion.slice(0, 150).replace(/\n/g, ' ')}...`
-  : '';
+  ? `${oferta.empresa} busca ${oferta.titulo} en ${oferta.comuna}, Chile. ${oferta.descripcion.slice(0, 140).replace(/\n/g, ' ').trim()}${oferta.descripcion.length > 140 ? '…' : ''} · Postula gratis sin registro.`
+  : 'Oferta laboral en Chile. Postula con tu CV en segundos.';
+
+const ofertaOgTitle = oferta
+  ? `${oferta.titulo} — ${oferta.empresa} · ${oferta.comuna}`
+  : 'Oferta no disponible';
 
 // Barra de progreso del tiempo
 const diasRestantes = oferta
@@ -107,28 +111,42 @@ const readingTime = oferta
   </Layout>
 )}
 
-{oferta && <Layout title={oferta.titulo} description={ofertaDescription} ogType="article" leaflet={true}>
+{oferta && <Layout title={ofertaOgTitle} description={ofertaDescription} ogType="article" leaflet={true}>
   <script slot="head" type="application/ld+json" set:html={jsonLd} />
   <!-- Hero de la oferta -->
   <div class="bg-gradient-to-br from-brand-700 via-brand-600 to-indigo-700 py-10 px-4">
     <div class="max-w-4xl mx-auto">
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center justify-between mb-6 gap-2 flex-wrap">
         <a href="/" class="inline-flex items-center gap-1.5 text-brand-200 hover:text-white text-sm transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
           Volver a ofertas
         </a>
-        <button
-          id="btn-compartir"
-          class="inline-flex items-center gap-1.5 text-brand-200 hover:text-white text-sm transition-colors bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg px-3 py-1.5 backdrop-blur"
-          title="Compartir oferta"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-          </svg>
-          <span id="share-txt">Compartir</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            id="btn-copiar-link"
+            type="button"
+            class="inline-flex items-center gap-1.5 text-brand-200 hover:text-white text-sm transition-colors bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg px-3 py-1.5 backdrop-blur"
+            title="Copiar link de la oferta"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+            <span id="copy-link-txt">Copiar link</span>
+          </button>
+          <button
+            id="btn-compartir"
+            type="button"
+            class="inline-flex items-center gap-1.5 text-brand-200 hover:text-white text-sm transition-colors bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg px-3 py-1.5 backdrop-blur"
+            title="Compartir oferta"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+            <span id="share-txt">Compartir</span>
+          </button>
+        </div>
       </div>
       <div class="flex items-start gap-4">
         <div class="w-14 h-14 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-white font-bold text-xl shrink-0 border border-white/30">
@@ -238,7 +256,10 @@ const readingTime = oferta
                 </svg>
               </div>
               <p class="text-green-800 font-semibold">¡Postulación enviada!</p>
-              <p class="text-sm text-green-700 mt-1">Tu CV fue recibido correctamente.</p>
+              <p class="text-sm text-green-700 mt-1">
+                Recibimos tu CV. El empleador verá un resumen y keywords automáticamente.
+              </p>
+              <p class="text-xs text-green-600/80 mt-2">CV privado · se elimina a los 90 días</p>
               <a href="/" class="mt-4 inline-block text-sm text-brand-600 font-semibold hover:underline">Ver más ofertas →</a>
             </div>
           ) : (
@@ -290,15 +311,42 @@ const readingTime = oferta
                   CV <span class="text-red-500">*</span>
                   <span class="text-gray-400 font-normal">&nbsp;PDF o Word, máx. 5MB</span>
                 </label>
-                <div class="border-2 border-dashed border-gray-200 rounded-xl p-4 hover:border-brand-300 transition-colors">
+                <!-- Drop zone -->
+                <div
+                  id="cv-dropzone"
+                  class="border-2 border-dashed border-gray-200 rounded-xl p-4 hover:border-brand-300 transition-colors cursor-pointer bg-gray-50/50"
+                >
                   <input
                     type="file"
                     name="cv"
-                    accept=".pdf,.doc,.docx"
+                    id="cv-input"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     required
-                    class="w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer"
+                    class="sr-only"
                   />
+                  <div id="cv-placeholder" class="text-center py-2">
+                    <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p class="text-sm text-gray-600 font-medium">Arrastra tu CV aquí</p>
+                    <p class="text-xs text-gray-400 mt-0.5">o toca para elegir · PDF / Word</p>
+                  </div>
+                  <div id="cv-preview" class="hidden flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center shrink-0">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p id="cv-name" class="text-sm font-medium text-gray-900 truncate"></p>
+                      <p id="cv-size" class="text-xs text-gray-400"></p>
+                    </div>
+                    <button type="button" id="cv-clear" class="text-xs text-gray-400 hover:text-red-500 font-medium shrink-0 px-2 py-1">
+                      Quitar
+                    </button>
+                  </div>
                 </div>
+                <p class="text-[11px] text-gray-400 mt-1.5">Máx. 3 postulaciones por hora · sin registro</p>
               </div>
 
               <div class="flex items-start gap-2.5">
@@ -409,9 +457,22 @@ const readingTime = oferta
       observer.observe(formPostulacion);
     }
 
-    // Compartir oferta
+    // Compartir / copiar link
     const btnCompartir = document.getElementById('btn-compartir');
     const shareTxt = document.getElementById('share-txt');
+    const btnCopiarLink = document.getElementById('btn-copiar-link');
+    const copyLinkTxt = document.getElementById('copy-link-txt');
+
+    btnCopiarLink?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        if (copyLinkTxt) {
+          copyLinkTxt.textContent = '¡Copiado!';
+          setTimeout(() => { if (copyLinkTxt) copyLinkTxt.textContent = 'Copiar link'; }, 2000);
+        }
+      } catch {}
+    });
+
     btnCompartir?.addEventListener('click', async () => {
       const url = window.location.href;
       try {
@@ -435,49 +496,146 @@ const readingTime = oferta
       L.marker([ofertaLat, ofertaLng]).addTo(miniMap).bindPopup(ofertaTitulo).openPopup();
     }
 
-    // Formulario con feedback
-    const form = document.getElementById('form-postulacion');
+    // ── CV dropzone + validación cliente ──
+    const MAX_CV = 5 * 1024 * 1024;
+    const ALLOWED_EXT = ['.pdf', '.doc', '.docx'];
+    const ALLOWED_MIME = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+
+    const form = document.getElementById('form-postulacion') as HTMLFormElement | null;
     const btn = document.getElementById('btn-postular');
     const errorMsg = document.getElementById('error-msg');
+    const cvInput = document.getElementById('cv-input') as HTMLInputElement | null;
+    const dropzone = document.getElementById('cv-dropzone');
+    const cvPlaceholder = document.getElementById('cv-placeholder');
+    const cvPreview = document.getElementById('cv-preview');
+    const cvName = document.getElementById('cv-name');
+    const cvSize = document.getElementById('cv-size');
+    const cvClear = document.getElementById('cv-clear');
 
+    function showError(msg: string) {
+      const span = errorMsg?.querySelector('span');
+      if (span) span.textContent = msg;
+      if (errorMsg) errorMsg.classList.remove('hidden');
+    }
+    function hideError() {
+      if (errorMsg) errorMsg.classList.add('hidden');
+    }
+
+    function validateCvFile(file: File): string | null {
+      if (!file || file.size === 0) return 'Debes adjuntar tu CV.';
+      if (file.size > MAX_CV) return 'El archivo supera los 5MB.';
+      const name = file.name.toLowerCase();
+      const okExt = ALLOWED_EXT.some((e) => name.endsWith(e));
+      const okMime = !file.type || ALLOWED_MIME.includes(file.type) || file.type === 'application/octet-stream';
+      if (!okExt && !okMime) return 'Solo se aceptan PDF o Word (.pdf, .docx, .doc).';
+      if (!okExt) return 'La extensión del archivo debe ser .pdf, .docx o .doc.';
+      return null;
+    }
+
+    function formatSize(bytes: number): string {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function setCvFile(file: File | null) {
+      if (!cvInput) return;
+      if (!file) {
+        cvInput.value = '';
+        cvPlaceholder?.classList.remove('hidden');
+        cvPreview?.classList.add('hidden');
+        dropzone?.classList.remove('border-brand-400', 'bg-brand-50/40');
+        return;
+      }
+      const err = validateCvFile(file);
+      if (err) {
+        showError(err);
+        setCvFile(null);
+        return;
+      }
+      hideError();
+      // Asignar al input via DataTransfer
+      try {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        cvInput.files = dt.files;
+      } catch {
+        /* algunos browsers antiguos no soportan DataTransfer; el input change maneja */
+      }
+      if (cvName) cvName.textContent = file.name;
+      if (cvSize) cvSize.textContent = formatSize(file.size);
+      cvPlaceholder?.classList.add('hidden');
+      cvPreview?.classList.remove('hidden');
+      dropzone?.classList.add('border-brand-400', 'bg-brand-50/40');
+    }
+
+    dropzone?.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('#cv-clear')) return;
+      cvInput?.click();
+    });
+
+    cvInput?.addEventListener('change', () => {
+      const f = cvInput.files?.[0] || null;
+      if (f) setCvFile(f);
+    });
+
+    cvClear?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setCvFile(null);
+    });
+
+    ['dragenter', 'dragover'].forEach((ev) => {
+      dropzone?.addEventListener(ev, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add('border-brand-500', 'bg-brand-50');
+      });
+    });
+    ['dragleave', 'drop'].forEach((ev) => {
+      dropzone?.addEventListener(ev, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove('border-brand-500', 'bg-brand-50');
+      });
+    });
+    dropzone?.addEventListener('drop', (e) => {
+      const de = e as DragEvent;
+      const f = de.dataTransfer?.files?.[0];
+      if (f) setCvFile(f);
+    });
+
+    // Formulario con feedback (parse es async en servidor → respuesta rápida)
     if (form) {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        if (btn) { btn.textContent = 'Enviando...'; btn.setAttribute('disabled', ''); }
-        if (errorMsg) errorMsg.classList.add('hidden');
+        hideError();
 
-        const formData = new FormData(form);
-        const cv = formData.get('cv');
-        if (!cv || !(cv instanceof File) || cv.size === 0) {
-          const span = errorMsg?.querySelector('span');
-          if (span) span.textContent = 'Debes adjuntar tu CV.';
-          if (errorMsg) errorMsg.classList.remove('hidden');
-          if (btn) { btn.textContent = 'Enviar postulación'; btn.removeAttribute('disabled'); }
+        const cv = cvInput?.files?.[0];
+        const clientErr = validateCvFile(cv as File);
+        if (clientErr) {
+          showError(clientErr);
           return;
         }
-        if (cv.size > 5 * 1024 * 1024) {
-          const span = errorMsg?.querySelector('span');
-          if (span) span.textContent = 'El archivo supera los 5MB.';
-          if (errorMsg) errorMsg.classList.remove('hidden');
-          if (btn) { btn.textContent = 'Enviar postulación'; btn.removeAttribute('disabled'); }
-          return;
-        }
+
+        if (btn) { btn.textContent = 'Enviando…'; btn.setAttribute('disabled', ''); }
 
         try {
+          const formData = new FormData(form);
           const res = await fetch('/api/postulaciones', { method: 'POST', body: formData });
           const data = await res.json();
           if (res.ok && data.ok) {
+            if (btn) btn.textContent = '¡Listo!';
             window.location.href = window.location.pathname + '?exito=1';
           } else {
-            const span = errorMsg?.querySelector('span');
-            if (span) span.textContent = data.error || 'Error al enviar. Intenta de nuevo.';
-            if (errorMsg) errorMsg.classList.remove('hidden');
+            showError(data.error || 'Error al enviar. Intenta de nuevo.');
             if (btn) { btn.textContent = 'Enviar postulación'; btn.removeAttribute('disabled'); }
           }
         } catch {
-          const span = errorMsg?.querySelector('span');
-          if (span) span.textContent = 'Error de conexión. Intenta de nuevo.';
-          if (errorMsg) errorMsg.classList.remove('hidden');
+          showError('Error de conexión. Intenta de nuevo.');
           if (btn) { btn.textContent = 'Enviar postulación'; btn.removeAttribute('disabled'); }
         }
       });

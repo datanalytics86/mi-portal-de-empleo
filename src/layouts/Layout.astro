@@ -9,9 +9,19 @@ interface Props {
   ogType?: string;
 }
 
-const { title, description = 'Portal de empleos en Chile', leaflet = false, ogImage, ogType = 'website' } = Astro.props;
-const fullTitle = `${title} | Portal de Empleos Chile`;
-const canonicalUrl = Astro.url.href;
+const {
+  title,
+  description = 'Portal de empleos en Chile. Postula con tu CV sin registro.',
+  leaflet = false,
+  ogImage,
+  ogType = 'website',
+} = Astro.props;
+const fullTitle = title.includes('Portal de Empleos') ? title : `${title} | Portal de Empleos Chile`;
+const canonicalUrl = new URL(Astro.url.pathname + Astro.url.search, Astro.site || Astro.url.origin).href;
+const defaultOgImage = new URL('/favicon.svg', Astro.site || Astro.url.origin).href;
+const resolvedOgImage = ogImage || defaultOgImage;
+// WhatsApp / redes: descripción limpia ≤ 200 chars
+const ogDescription = description.length > 200 ? description.slice(0, 197) + '…' : description;
 ---
 
 <!doctype html>
@@ -19,21 +29,22 @@ const canonicalUrl = Astro.url.href;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content={description} />
+    <meta name="description" content={ogDescription} />
+    <meta name="theme-color" content="#4f46e5" />
     <link rel="canonical" href={canonicalUrl} />
-    <!-- Open Graph -->
+    <!-- Open Graph (WhatsApp, LinkedIn, Facebook) -->
     <meta property="og:title" content={fullTitle} />
-    <meta property="og:description" content={description} />
+    <meta property="og:description" content={ogDescription} />
     <meta property="og:type" content={ogType} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:site_name" content="Portal de Empleos Chile" />
     <meta property="og:locale" content="es_CL" />
-    {ogImage && <meta property="og:image" content={ogImage} />}
-    <!-- Twitter Card -->
+    <meta property="og:image" content={resolvedOgImage} />
+    <!-- Twitter / X Card -->
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content={fullTitle} />
-    <meta name="twitter:description" content={description} />
-    {ogImage && <meta name="twitter:image" content={ogImage} />}
+    <meta name="twitter:description" content={ogDescription} />
+    <meta name="twitter:image" content={resolvedOgImage} />
     <title>{fullTitle}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

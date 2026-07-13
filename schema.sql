@@ -77,13 +77,25 @@ CREATE TABLE IF NOT EXISTS public.postulaciones (
   email          TEXT,
   cv_url         TEXT NOT NULL,
   ip_address     TEXT,
+  -- Keywords (legacy + canónico)
   palabras_clave TEXT[] DEFAULT '{}',
+  keywords       TEXT[] DEFAULT '{}',
+  -- Parsing estructurado del CV (Tier 1)
+  cv_parsed      JSONB,
+  parse_status   TEXT DEFAULT 'pending'
+                   CHECK (parse_status IS NULL OR parse_status IN ('pending', 'success', 'failed', 'skipped')),
+  parsed_at      TIMESTAMPTZ,
+  match_score    SMALLINT CHECK (match_score IS NULL OR (match_score >= 0 AND match_score <= 100)),
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Índices
 CREATE INDEX IF NOT EXISTS idx_postulaciones_oferta ON public.postulaciones (oferta_id);
 CREATE INDEX IF NOT EXISTS idx_postulaciones_created ON public.postulaciones (created_at);
+CREATE INDEX IF NOT EXISTS idx_postulaciones_parse_status ON public.postulaciones (parse_status);
+CREATE INDEX IF NOT EXISTS idx_postulaciones_match_score ON public.postulaciones (oferta_id, match_score DESC NULLS LAST);
+CREATE INDEX IF NOT EXISTS idx_postulaciones_keywords_gin ON public.postulaciones USING GIN (keywords);
+CREATE INDEX IF NOT EXISTS idx_postulaciones_cv_parsed_gin ON public.postulaciones USING GIN (cv_parsed jsonb_path_ops);
 
 ALTER TABLE public.postulaciones ENABLE ROW LEVEL SECURITY;
 
