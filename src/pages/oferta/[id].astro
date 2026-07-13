@@ -114,10 +114,11 @@ const readingTime = oferta
 {oferta && <Layout title={ofertaOgTitle} description={ofertaDescription} ogType="article" leaflet={true}>
   <script slot="head" type="application/ld+json" set:html={jsonLd} />
   <!-- Hero de la oferta -->
-  <div class="bg-gradient-to-br from-brand-700 via-brand-600 to-indigo-700 py-10 px-4">
-    <div class="max-w-4xl mx-auto">
+  <div class="relative overflow-hidden bg-gradient-to-br from-brand-800 via-brand-600 to-indigo-600 py-10 sm:py-12 px-4">
+    <div class="pointer-events-none absolute inset-0 bg-hero-mesh opacity-80" aria-hidden="true"></div>
+    <div class="relative max-w-4xl mx-auto">
       <div class="flex items-center justify-between mb-6 gap-2 flex-wrap">
-        <a href="/" class="inline-flex items-center gap-1.5 text-brand-200 hover:text-white text-sm transition-colors">
+        <a href="/" class="inline-flex items-center gap-1.5 text-brand-100 hover:text-white text-sm font-medium transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
@@ -149,12 +150,12 @@ const readingTime = oferta
         </div>
       </div>
       <div class="flex items-start gap-4">
-        <div class="w-14 h-14 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-white font-bold text-xl shrink-0 border border-white/30">
+        <div class="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center text-white font-bold text-xl shrink-0 border border-white/25 shadow-glow">
           {oferta.empresa.slice(0, 2).toUpperCase()}
         </div>
         <div>
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">{oferta.titulo}</h1>
-          <p class="text-brand-100 text-lg mt-1">{oferta.empresa}</p>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight tracking-tight">{oferta.titulo}</h1>
+          <p class="text-brand-100 text-lg mt-1 font-medium">{oferta.empresa}</p>
           <div class="flex flex-wrap gap-2 mt-3">
             <span class="text-xs bg-white/20 text-white px-3 py-1 rounded-full font-medium border border-white/20 backdrop-blur">
               {TIPOS[oferta.tipo_empleo] || oferta.tipo_empleo}
@@ -198,7 +199,7 @@ const readingTime = oferta
   <div class="max-w-4xl mx-auto px-4 py-8">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Descripción -->
-      <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+      <div class="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-card ring-1 ring-slate-900/5">
         <h2 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
           <div class="w-6 h-6 bg-brand-100 rounded-lg flex items-center justify-center">
             <svg class="w-3.5 h-3.5 text-brand-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,7 +225,7 @@ const readingTime = oferta
       <div class="space-y-6">
         <!-- Mini mapa -->
         {oferta.lat && oferta.lng && (
-          <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+          <div class="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-card ring-1 ring-slate-900/5">
             <h2 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
               <div class="w-6 h-6 bg-brand-100 rounded-lg flex items-center justify-center">
                 <svg class="w-3.5 h-3.5 text-brand-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -238,7 +239,7 @@ const readingTime = oferta
         )}
 
         <!-- Formulario de postulación -->
-        <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+        <div class="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-card ring-1 ring-slate-900/5">
           <h2 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
             <div class="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
               <svg class="w-3.5 h-3.5 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
