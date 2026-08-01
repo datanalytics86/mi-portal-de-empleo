@@ -78,6 +78,21 @@ Ver `.env.example` completo.
 2. **Proyecto existente (solo columnas de parse):** ejecutar `scripts/migration-cv-parse.sql`.  
 3. Crear bucket Storage `cvs` (privado) si no existe (también en `schema.sql`).
 
+### Datos de prueba (seed)
+
+```text
+Supabase → SQL Editor
+  1. (opcional) scripts/seed-cleanup.sql   # limpia datos de prueba previos
+  2. scripts/seed.sql                      # 2 empleadores · 12 ofertas · ~28 postulaciones
+```
+
+| Cuenta | Password | Empresa |
+|--------|----------|---------|
+| `test-empresa1@test.cl` | `TestPass123!` | TechCorp Chile |
+| `test-empresa2@test.cl` | `TestPass123!` | Salud Conecta |
+
+Las postulaciones incluyen `keywords`, `cv_parsed`, `parse_status` y `match_score` para probar el dashboard Tier 1.
+
 ---
 
 ## Parsing de CVs (resumen)

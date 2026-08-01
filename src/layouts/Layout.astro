@@ -284,6 +284,54 @@ const isEmpleadorArea = Astro.url.pathname.startsWith('/empleador/');
     @apply text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center gap-2;
   }
 
+  /* Spinner reutilizable (mismo look que Spinner.astro) */
+  .spinner {
+    @apply inline-block w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0;
+  }
+  .spinner-dark {
+    @apply inline-block w-4 h-4 rounded-full border-2 border-brand-200 border-t-brand-600 animate-spin shrink-0;
+  }
+
+  /* Badges / chips */
+  .badge {
+    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold border;
+  }
+  .badge-brand {
+    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold border bg-brand-50 text-brand-700 border-brand-100;
+  }
+  .badge-success {
+    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold border bg-emerald-50 text-emerald-700 border-emerald-100;
+  }
+  .badge-warning {
+    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold border bg-amber-50 text-amber-800 border-amber-100;
+  }
+  .badge-danger {
+    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold border bg-red-50 text-red-700 border-red-100;
+  }
+  .badge-muted {
+    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold border bg-slate-50 text-slate-600 border-slate-100;
+  }
+  .chip-skill {
+    @apply text-xs bg-indigo-50 text-indigo-800 border border-indigo-100 px-2.5 py-0.5 rounded-full font-medium;
+  }
+  .chip-soft {
+    @apply text-xs bg-emerald-50 text-emerald-800 border border-emerald-100 px-2.5 py-0.5 rounded-full;
+  }
+
+  /* Card de oferta (listado público) — añade también class "group" en el markup */
+  .job-card {
+    @apply flex gap-3.5 bg-white border border-slate-200/90 rounded-2xl p-4 shadow-soft hover:border-brand-300 hover:shadow-card-hover hover:-translate-y-0.5 transition-all;
+  }
+  .job-card:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+  }
+
+  /* Success panel premium (postulación, registro) */
+  .success-panel {
+    @apply rounded-2xl border border-emerald-200 bg-gradient-to-b from-emerald-50 to-white p-6 text-center shadow-soft;
+  }
+
   button:not(:disabled),
   [type='submit']:not(:disabled),
   a.btn-primary,
@@ -306,6 +354,21 @@ const isEmpleadorArea = Astro.url.pathname.startsWith('/empleador/');
   select,
   textarea {
     transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+  }
+
+  /* Contraste: placeholders y focus en inputs del design system */
+  .input-field:focus-visible,
+  .input-field-icon:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 1px;
+  }
+
+  /* Safe area para sticky CTA iOS */
+  .sticky-cta-safe {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 
   .leaflet-popup-content-wrapper {

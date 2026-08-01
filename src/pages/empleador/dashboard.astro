@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import EmptyState from '../../components/ui/EmptyState.astro';
 import { TIPOS } from '../../lib/constants';
 
 const { client, empleador } = Astro.locals.session!;
@@ -102,50 +103,31 @@ const email = Astro.locals.session?.user?.email ?? '';
 
   <div class="max-w-5xl mx-auto px-4 py-8">
     {ofertasDisplay.length === 0 ? (
-      <!-- Empty state editorial -->
-      <div class="relative overflow-hidden text-center py-16 sm:py-20 px-6 card rounded-3xl">
-        <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand-50/50 to-transparent" aria-hidden="true"></div>
-        <div class="relative">
-          <!-- Illustration light SVG -->
-          <div class="mx-auto mb-6 w-28 h-28 rounded-3xl bg-gradient-to-br from-brand-50 to-indigo-50 border border-brand-100 flex items-center justify-center shadow-soft">
-            <svg class="w-14 h-14 text-brand-400" fill="none" viewBox="0 0 64 64" aria-hidden="true">
-              <rect x="12" y="14" width="40" height="36" rx="6" stroke="currentColor" stroke-width="2" class="text-brand-300"/>
-              <path d="M22 28h20M22 36h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="text-brand-400"/>
-              <circle cx="44" cy="42" r="10" fill="#eef2ff" stroke="#818cf8" stroke-width="2"/>
-              <path d="M44 37v10M39 42h10" stroke="#4f46e5" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <p class="text-slate-900 font-extrabold text-xl tracking-tight mb-2">Tu tablero está listo</p>
-          <p class="text-sm text-slate-500 max-w-md mx-auto leading-relaxed mb-8">
-            Publica tu primera oferta en menos de 2 minutos. Los candidatos postulan con su CV
-            y verás keywords automáticas aquí.
-          </p>
-          <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a href="/empleador/oferta/nueva" class="btn-gradient !px-6 !py-3">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-              </svg>
-              Publicar primera oferta
-            </a>
-            <a href="/" class="text-sm font-medium text-slate-500 hover:text-brand-700 transition-colors">
-              Ver cómo se ven las ofertas →
-            </a>
-          </div>
-          <!-- Mini tips -->
-          <div class="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-3 text-left max-w-lg mx-auto">
-            {[
-              { t: 'Plantillas', d: 'Tech, ventas, admin…' },
-              { t: 'Keywords', d: 'Del CV al instante' },
-              { t: 'Gratis', d: 'Sin tarjeta ni plan' },
-            ].map((tip) => (
-              <div class="rounded-xl bg-slate-50 border border-slate-100 px-3 py-2.5">
-                <p class="text-xs font-bold text-slate-800">{tip.t}</p>
-                <p class="text-[11px] text-slate-500 mt-0.5">{tip.d}</p>
-              </div>
-            ))}
-          </div>
+      <EmptyState
+        title="Tu tablero está listo"
+        description="Publica tu primera oferta en menos de 2 minutos. Los candidatos postulan solo con su CV y aquí verás keywords y match automático."
+        secondaryHref="/"
+        secondaryLabel="Ver cómo se ven las ofertas →"
+      >
+        <a slot="actions" href="/empleador/oferta/nueva" class="btn-gradient !px-6 !py-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+          </svg>
+          Publicar primera oferta
+        </a>
+        <div slot="footer" class="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-3 text-left max-w-lg mx-auto">
+          {[
+            { t: 'Plantillas listas', d: 'Tech, ventas, admin…' },
+            { t: 'Keywords del CV', d: 'En segundos, sin excel' },
+            { t: '100% gratis', d: 'Sin tarjeta ni plan' },
+          ].map((tip) => (
+            <div class="rounded-xl bg-slate-50 border border-slate-100 px-3 py-2.5">
+              <p class="text-xs font-bold text-slate-800">{tip.t}</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">{tip.d}</p>
+            </div>
+          ))}
         </div>
-      </div>
+      </EmptyState>
     ) : (
       <div>
         <div class="flex items-end justify-between gap-3 mb-5">

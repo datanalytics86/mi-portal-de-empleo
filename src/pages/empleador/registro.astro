@@ -106,11 +106,18 @@ if (session) return Astro.redirect('/empleador/dashboard');
             </svg>
             <span></span>
           </div>
-          <div id="registro-ok" class="hidden alert-success" role="status" aria-live="polite">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span></span>
+          <div id="registro-ok" class="hidden success-panel !p-4 text-left" role="status" aria-live="polite">
+            <div class="flex items-start gap-3">
+              <div class="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-bold text-emerald-900">Cuenta lista</p>
+                <p class="text-sm text-emerald-800/90 mt-0.5 leading-relaxed"><span id="registro-ok-txt"></span></p>
+              </div>
+            </div>
           </div>
 
           <button type="submit" id="btn-registro" class="btn-primary w-full py-3">
@@ -157,7 +164,7 @@ if (session) return Astro.redirect('/empleador/dashboard');
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!btn || !btnTxt || !errEl || !okEl) return;
-      btnTxt.innerHTML = '<span class="inline-block w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin"></span> Creando cuenta…';
+      btnTxt.innerHTML = '<span class="spinner" aria-hidden="true"></span> Creando cuenta…';
       btn.disabled = true;
       btn.setAttribute('aria-busy', 'true');
       errEl.classList.add('hidden');
@@ -168,21 +175,20 @@ if (session) return Astro.redirect('/empleador/dashboard');
         const res = await fetch('/api/auth/registro', { method: 'POST', body });
         const data = await res.json();
 
+        const okTxt = document.getElementById('registro-ok-txt');
         if (res.ok && data.ok) {
           if (data.requiresEmailConfirmation) {
-            const span = okEl.querySelector('span');
-            if (span) span.textContent = 'Cuenta creada. Revisa tu bandeja de entrada y confirma tu email para poder iniciar sesión.';
+            if (okTxt) okTxt.textContent = 'Revisa tu bandeja y confirma el email para poder iniciar sesión.';
             okEl.classList.remove('hidden');
             btnTxt.textContent = 'Cuenta creada';
           } else {
-            const span = okEl.querySelector('span');
-            if (span) span.textContent = '¡Cuenta creada! Redirigiendo al panel...';
+            if (okTxt) okTxt.textContent = '¡Listo! Te llevamos al panel de empleador…';
             okEl.classList.remove('hidden');
             setTimeout(() => { window.location.href = '/empleador/dashboard'; }, 1500);
           }
         } else {
           const span = errEl.querySelector('span');
-          if (span) span.textContent = data.error || 'Error al crear la cuenta.';
+          if (span) span.textContent = data.error || 'No pudimos crear la cuenta. Intenta de nuevo.';
           errEl.classList.remove('hidden');
           btnTxt.textContent = 'Crear cuenta gratis';
           btn.disabled = false;
@@ -190,7 +196,7 @@ if (session) return Astro.redirect('/empleador/dashboard');
         }
       } catch {
         const span = errEl.querySelector('span');
-        if (span) span.textContent = 'Error de conexión. Intenta de nuevo.';
+        if (span) span.textContent = 'Sin conexión. Revisa tu internet e intenta otra vez.';
         errEl.classList.remove('hidden');
         btnTxt.textContent = 'Crear cuenta gratis';
         btn.disabled = false;

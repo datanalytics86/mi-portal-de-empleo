@@ -367,7 +367,7 @@ Ofrecemos:
       e.preventDefault();
       if (!btn || !errEl) return;
       if (btnTxt) {
-        btnTxt.innerHTML = '<span class="inline-block w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin"></span> Publicando…';
+        btnTxt.innerHTML = '<span class="spinner" aria-hidden="true"></span> Publicando oferta…';
       }
       btn.disabled = true;
       btn.setAttribute('aria-busy', 'true');

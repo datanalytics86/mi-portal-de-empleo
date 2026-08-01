@@ -141,7 +141,7 @@ const error = Astro.url.searchParams.get('error');
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!btn || !btnTxt || !errEl) return;
-      btnTxt.innerHTML = '<span class="inline-block w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin"></span> Ingresando…';
+      btnTxt.innerHTML = '<span class="spinner" aria-hidden="true"></span> Ingresando…';
       btn.disabled = true;
       btn.setAttribute('aria-busy', 'true');
       errEl.classList.add('hidden');

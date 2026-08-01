@@ -3,17 +3,21 @@
 -- ============================================================
 -- Ejecutar en: Supabase Dashboard > SQL Editor
 -- Elimina TODOS los datos insertados por seed.sql
+-- (incluye ofertas nuevas aaaa/bbbb/cccc y postulaciones 0a/0b/0c)
+--
+-- Orden: postulaciones → ofertas → empleadores → identities → users
+-- (respeta FKs: postulaciones → ofertas → empleadores)
 -- ============================================================
 
 BEGIN;
 
--- 1. Eliminar postulaciones de prueba
+-- 1. Eliminar postulaciones de prueba (UUID cast a text para LIKE)
 DELETE FROM public.postulaciones
-WHERE id LIKE 'cccccccc-%';
+WHERE id::text LIKE 'cccccccc-%';
 
--- 2. Eliminar ofertas de prueba
+-- 2. Eliminar ofertas de prueba (incluye bbbbbbbb-aaaa/bbbb/cccc-...)
 DELETE FROM public.ofertas
-WHERE id LIKE 'bbbbbbbb-%';
+WHERE id::text LIKE 'bbbbbbbb-%';
 
 -- 3. Eliminar empleadores de prueba
 DELETE FROM public.empleadores
@@ -48,8 +52,8 @@ WHERE id IN (
 UNION ALL
 SELECT 'Ofertas restantes', COUNT(*)
 FROM public.ofertas
-WHERE id LIKE 'bbbbbbbb-%'
+WHERE id::text LIKE 'bbbbbbbb-%'
 UNION ALL
 SELECT 'Postulaciones restantes', COUNT(*)
 FROM public.postulaciones
-WHERE id LIKE 'cccccccc-%';
+WHERE id::text LIKE 'cccccccc-%';

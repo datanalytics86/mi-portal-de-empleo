@@ -247,17 +247,27 @@ function buildCatUrl(cat: string | null) {
         </div>
 
         {!ofertas || ofertas.length === 0 ? (
-          <div class="text-center py-16 card">
-            <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100">
+          <div class="text-center py-14 sm:py-16 card px-6">
+            <div class="w-16 h-16 bg-gradient-to-br from-slate-50 to-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100 shadow-soft">
               <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <p class="text-slate-800 font-semibold">No hay ofertas con esos filtros</p>
-            <p class="text-sm text-slate-400 mt-1">Prueba otra comuna o limpia la búsqueda</p>
-            {hayFiltros && (
-              <a href="/" class="btn-primary mt-5">
+            <p class="text-slate-900 font-extrabold tracking-tight">
+              {hayFiltros ? 'Sin resultados con esos filtros' : 'Aún no hay ofertas publicadas'}
+            </p>
+            <p class="text-sm text-slate-500 mt-1.5 max-w-xs mx-auto leading-relaxed">
+              {hayFiltros
+                ? 'Prueba otra comuna, tipo de empleo o limpia la búsqueda.'
+                : 'Vuelve pronto: las empresas publican oportunidades a diario.'}
+            </p>
+            {hayFiltros ? (
+              <a href="/" class="btn-primary mt-6">
                 Ver todas las ofertas
+              </a>
+            ) : (
+              <a href="/empleador/login" class="btn-secondary mt-6">
+                ¿Eres empresa? Publica gratis
               </a>
             )}
           </div>
@@ -278,30 +288,29 @@ function buildCatUrl(cat: string | null) {
                 : '';
               const animDelay = 'animation-delay: ' + (i * 50) + 'ms';
               const urgenciaLabel = diasRestantes <= 1 ? 'Último día' : ('Cierra en ' + diasRestantes + 'd');
-              const urgenciaClass = 'text-[11px] px-2 py-0.5 rounded-full font-semibold shrink-0 ' + (diasRestantes <= 1 ? 'bg-red-50 text-red-700 border border-red-100' : diasRestantes <= 3 ? 'bg-orange-50 text-orange-700 border border-orange-100' : 'bg-amber-50 text-amber-700 border border-amber-100');
+              const urgenciaBadge =
+                diasRestantes <= 1 ? 'badge-danger' : diasRestantes <= 3 ? 'badge-warning' : 'badge-warning';
               return (
                 <a
                   href={`/oferta/${oferta.id}`}
-                  class="card-anim flex gap-3.5 bg-white border border-slate-200/90 rounded-2xl p-4 shadow-soft hover:border-brand-300 hover:shadow-card-hover hover:-translate-y-0.5 transition-all group"
+                  class="card-anim job-card group"
                   style={animDelay}
                 >
-                  <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-50 to-brand-100 border border-brand-100/80 flex items-center justify-center shrink-0 text-brand-700 font-bold text-sm group-hover:from-brand-100 group-hover:to-brand-200 transition-colors">
+                  <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-50 to-brand-100 border border-brand-100/80 flex items-center justify-center shrink-0 text-brand-700 font-bold text-sm group-hover:from-brand-100 group-hover:to-brand-200 transition-colors shadow-soft">
                     {iniciales}
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-start justify-between gap-2">
                       <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
-                          <h2 class="font-semibold text-slate-900 truncate group-hover:text-brand-700 transition-colors tracking-tight">
+                          <h2 class="font-semibold text-slate-900 truncate group-hover:text-brand-700 transition-colors tracking-tight text-[15px] sm:text-base">
                             {oferta.titulo}
                           </h2>
                           {esNueva && (
-                            <span class="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full font-semibold shrink-0">
-                              Nueva
-                            </span>
+                            <span class="badge-success shrink-0">Nueva</span>
                           )}
                           {diasRestantes <= 5 && (
-                            <span class={urgenciaClass}>{urgenciaLabel}</span>
+                            <span class={`${urgenciaBadge} shrink-0`}>{urgenciaLabel}</span>
                           )}
                         </div>
                         <p class="text-sm text-slate-500 mt-0.5 font-medium">{oferta.empresa}</p>
@@ -311,13 +320,13 @@ function buildCatUrl(cat: string | null) {
                       </span>
                     </div>
                     <div class="flex flex-wrap gap-1.5 mt-2.5">
-                      <span class="text-[11px] bg-slate-50 text-slate-600 border border-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1 font-medium">
+                      <span class="badge-muted">
                         <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         </svg>
                         {oferta.comuna}
                       </span>
-                      <span class="text-[11px] bg-brand-50 text-brand-700 border border-brand-100 px-2 py-0.5 rounded-full font-semibold">
+                      <span class="badge-brand">
                         {TIPOS[oferta.tipo_empleo] || oferta.tipo_empleo}
                       </span>
                       {oferta.categoria && (
@@ -327,7 +336,7 @@ function buildCatUrl(cat: string | null) {
                       )}
                     </div>
                   </div>
-                  <div class="hidden sm:flex items-center text-slate-300 group-hover:text-brand-500 transition-colors self-center">
+                  <div class="hidden sm:flex items-center text-slate-300 group-hover:text-brand-500 group-hover:translate-x-0.5 transition-all self-center">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
