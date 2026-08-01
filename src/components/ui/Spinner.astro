@@ -1,0 +1,12 @@
+---
+interface Props {
+  class?: string;
+  light?: boolean;
+}
+const { class: className = 'w-4 h-4', light = true } = Astro.props;
+const ring = light ? 'border-white/40 border-t-white' : 'border-brand-200 border-t-brand-600';
+---
+<span
+  class:list={['inline-block rounded-full border-2 animate-spin shrink-0', ring, className]}
+  aria-hidden="true"
+></span>

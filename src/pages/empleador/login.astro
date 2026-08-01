@@ -2,7 +2,6 @@
 import Layout from '../../layouts/Layout.astro';
 import { getEmpleadorSession } from '../../lib/auth';
 
-// Si ya está logueado, redirigir al dashboard
 const session = await getEmpleadorSession(Astro.cookies);
 if (session) return Astro.redirect('/empleador/dashboard');
 
@@ -14,10 +13,9 @@ const error = Astro.url.searchParams.get('error');
     <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand-50/80 via-slate-50 to-slate-50" aria-hidden="true"></div>
     <div class="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[480px] h-[280px] bg-brand-200/30 blur-3xl rounded-full" aria-hidden="true"></div>
     <div class="relative w-full max-w-md">
-      <!-- Logo / branding -->
       <div class="text-center mb-8 form-enter" style="animation-delay:0ms">
         <div class="w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-glow">
-          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </div>
@@ -28,67 +26,80 @@ const error = Astro.url.searchParams.get('error');
         </p>
       </div>
 
-      <div class="bg-white border border-slate-200/90 rounded-2xl p-8 shadow-card ring-1 ring-slate-900/5 form-enter" style="animation-delay:80ms">
+      <div class="card p-8 form-enter" style="animation-delay:80ms">
         {error && (
-          <div class="mb-5 bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-center gap-2.5 text-sm text-red-700">
-            <svg class="w-4 h-4 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="mb-5 alert-error" role="alert">
+            <svg class="w-4 h-4 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             {error === 'credenciales' ? 'Email o contraseña incorrectos.' : 'Error al iniciar sesión. Intenta de nuevo.'}
           </div>
         )}
 
-        <form id="form-login" class="space-y-5">
+        <form id="form-login" class="space-y-5" novalidate>
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
+            <label for="login-email" class="label-field">Email</label>
             <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none" aria-hidden="true">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
               <input
+                id="login-email"
                 type="email"
                 name="email"
                 required
                 autocomplete="email"
                 placeholder="empresa@correo.cl"
-                class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-shadow"
+                class="input-field-icon"
               />
             </div>
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Contraseña</label>
+            <label for="login-password" class="label-field">Contraseña</label>
             <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none" aria-hidden="true">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
               <input
+                id="login-password"
                 type="password"
                 name="password"
                 required
                 autocomplete="current-password"
                 placeholder="Tu contraseña"
-                class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-shadow"
+                class="input-field-icon pr-12"
               />
+              <button
+                type="button"
+                id="toggle-password"
+                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 min-w-11 justify-center"
+                aria-label="Mostrar contraseña"
+                aria-controls="login-password"
+              >
+                <svg id="eye-open" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <svg id="eye-closed" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                </svg>
+              </button>
             </div>
           </div>
 
-          <div id="login-error" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div id="login-error" class="hidden alert-error" role="alert" aria-live="polite">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span></span>
           </div>
 
-          <button
-            type="submit"
-            id="btn-login"
-            class="w-full bg-brand-600 text-white py-3 rounded-xl font-semibold hover:bg-brand-700 transition-colors disabled:opacity-60 shadow-sm text-sm"
-          >
-            Ingresar
+          <button type="submit" id="btn-login" class="btn-primary w-full py-3">
+            <span id="btn-login-txt">Ingresar</span>
           </button>
         </form>
       </div>
@@ -102,39 +113,62 @@ const error = Astro.url.searchParams.get('error');
     to   { opacity: 1; transform: translateY(0); }
   }
   .form-enter { animation: formEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  @media (prefers-reduced-motion: reduce) {
+    .form-enter { animation: none; }
+  }
 </style>
 
 <script>
-  const form = document.getElementById('form-login') as HTMLFormElement;
-  const btn = document.getElementById('btn-login') as HTMLButtonElement;
-  const errEl = document.getElementById('login-error') as HTMLDivElement;
+  document.addEventListener('astro:page-load', () => {
+    const form = document.getElementById('form-login') as HTMLFormElement | null;
+    const btn = document.getElementById('btn-login') as HTMLButtonElement | null;
+    const btnTxt = document.getElementById('btn-login-txt');
+    const errEl = document.getElementById('login-error') as HTMLDivElement | null;
+    const pwd = document.getElementById('login-password') as HTMLInputElement | null;
+    const toggle = document.getElementById('toggle-password');
+    const eyeOpen = document.getElementById('eye-open');
+    const eyeClosed = document.getElementById('eye-closed');
 
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    btn.textContent = 'Ingresando...';
-    btn.disabled = true;
-    errEl.classList.add('hidden');
+    toggle?.addEventListener('click', () => {
+      if (!pwd) return;
+      const show = pwd.type === 'password';
+      pwd.type = show ? 'text' : 'password';
+      eyeOpen?.classList.toggle('hidden', show);
+      eyeClosed?.classList.toggle('hidden', !show);
+      toggle.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+    });
 
-    try {
-      const body = new FormData(form);
-      const res = await fetch('/api/auth/login', { method: 'POST', body });
-      const data = await res.json();
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!btn || !btnTxt || !errEl) return;
+      btnTxt.innerHTML = '<span class="inline-block w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin"></span> Ingresando…';
+      btn.disabled = true;
+      btn.setAttribute('aria-busy', 'true');
+      errEl.classList.add('hidden');
 
-      if (res.ok && data.ok) {
-        window.location.href = '/empleador/dashboard';
-      } else {
+      try {
+        const body = new FormData(form);
+        const res = await fetch('/api/auth/login', { method: 'POST', body });
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+          window.location.href = '/empleador/dashboard';
+        } else {
+          const span = errEl.querySelector('span');
+          if (span) span.textContent = data.error || 'Error al iniciar sesión.';
+          errEl.classList.remove('hidden');
+          btnTxt.textContent = 'Ingresar';
+          btn.disabled = false;
+          btn.removeAttribute('aria-busy');
+        }
+      } catch {
         const span = errEl.querySelector('span');
-        if (span) span.textContent = data.error || 'Error al iniciar sesión.';
+        if (span) span.textContent = 'Error de conexión. Intenta de nuevo.';
         errEl.classList.remove('hidden');
-        btn.textContent = 'Ingresar';
+        btnTxt.textContent = 'Ingresar';
         btn.disabled = false;
+        btn.removeAttribute('aria-busy');
       }
-    } catch {
-      const span = errEl.querySelector('span');
-      if (span) span.textContent = 'Error de conexión. Intenta de nuevo.';
-      errEl.classList.remove('hidden');
-      btn.textContent = 'Ingresar';
-      btn.disabled = false;
-    }
+    });
   });
 </script>

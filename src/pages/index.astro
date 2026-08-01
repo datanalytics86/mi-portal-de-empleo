@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { supabase } from '../lib/supabase';
-import { TIPOS, CATEGORIAS, CATEGORIA_COLORS } from '../lib/constants';
+import { TIPOS, CATEGORIAS, CATEGORIA_COLORS, CATEGORIA_HEX, BRAND_HEX } from '../lib/constants';
 
 // Filtros desde URL
 const { searchParams } = Astro.url;
@@ -32,6 +32,7 @@ const mapaOfertas = (ofertas || []).map(o => ({
 }));
 
 const hayFiltros = q || tipo || comuna || categoria;
+const conCoords = mapaOfertas.filter(o => o.lat && o.lng).length;
 
 // Construye URL de categoría preservando otros filtros
 function buildCatUrl(cat: string | null) {
@@ -48,14 +49,13 @@ function buildCatUrl(cat: string | null) {
 <Layout title="Empleos en Chile" leaflet={true}>
   <!-- Hero -->
   <section class="relative overflow-hidden bg-gradient-to-br from-brand-800 via-brand-600 to-indigo-600 py-16 sm:py-20 px-4">
-    <!-- Decoración suave -->
     <div class="pointer-events-none absolute inset-0 bg-hero-mesh opacity-90" aria-hidden="true"></div>
     <div class="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-white/10 blur-3xl" aria-hidden="true"></div>
     <div class="pointer-events-none absolute -bottom-32 -left-16 w-80 h-80 rounded-full bg-brand-400/20 blur-3xl" aria-hidden="true"></div>
 
     <div class="relative max-w-6xl mx-auto text-center">
       <div class="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/90 text-xs font-medium px-3 py-1.5 rounded-full mb-5 backdrop-blur-sm">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" aria-hidden="true"></span>
         Postula sin registro · CV en segundos
       </div>
 
@@ -74,14 +74,18 @@ function buildCatUrl(cat: string | null) {
       <!-- Barra de búsqueda -->
       <form
         method="get"
+        role="search"
+        aria-label="Buscar ofertas"
         class="bg-white/95 backdrop-blur rounded-2xl shadow-glow p-2 sm:p-2.5 flex flex-col sm:flex-row gap-1.5 sm:gap-0 max-w-3xl mx-auto ring-1 ring-white/40"
       >
         <input type="hidden" name="categoria" value={categoria} />
         <div class="flex-1 flex items-center gap-2 px-3 min-w-0">
-          <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
+          <label for="search-q" class="sr-only">Cargo o empresa</label>
           <input
+            id="search-q"
             type="text"
             name="q"
             value={q}
@@ -89,23 +93,27 @@ function buildCatUrl(cat: string | null) {
             class="flex-1 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none text-sm bg-transparent min-w-0"
           />
         </div>
-        <div class="hidden sm:block w-px bg-slate-200 my-2"></div>
+        <div class="hidden sm:block w-px bg-slate-200 my-2" aria-hidden="true"></div>
+        <label for="search-tipo" class="sr-only">Tipo de empleo</label>
         <select
+          id="search-tipo"
           name="tipo"
-          class="px-3 py-2.5 text-slate-600 focus:outline-none bg-transparent text-sm rounded-lg cursor-pointer"
+          class="px-3 py-2.5 text-slate-600 focus:outline-none bg-transparent text-sm rounded-lg cursor-pointer min-h-11"
         >
           <option value="">Tipo de empleo</option>
           {Object.entries(TIPOS).map(([val, label]) => (
             <option value={val} selected={tipo === val}>{label}</option>
           ))}
         </select>
-        <div class="hidden sm:block w-px bg-slate-200 my-2"></div>
+        <div class="hidden sm:block w-px bg-slate-200 my-2" aria-hidden="true"></div>
         <div class="flex items-center gap-2 px-3 sm:w-36">
-          <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
+          <label for="search-comuna" class="sr-only">Comuna</label>
           <input
+            id="search-comuna"
             type="text"
             name="comuna"
             value={comuna}
@@ -113,35 +121,33 @@ function buildCatUrl(cat: string | null) {
             class="flex-1 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none text-sm bg-transparent min-w-0"
           />
         </div>
-        <button
-          type="submit"
-          class="bg-gradient-to-r from-brand-600 to-brand-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:from-brand-700 hover:to-brand-800 transition-all shrink-0 shadow-soft"
-        >
+        <button type="submit" class="btn-gradient shrink-0 !px-6">
           Buscar
         </button>
       </form>
 
       <!-- Trust row -->
-      <div class="flex flex-wrap justify-center gap-x-5 gap-y-2 mt-5 text-[11px] sm:text-xs text-white/75 font-medium">
+      <div class="flex flex-wrap justify-center gap-x-5 gap-y-2 mt-5 text-[11px] sm:text-xs text-white/80 font-medium">
         <span class="inline-flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          <svg class="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
           Sin cuenta
         </span>
         <span class="inline-flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          <svg class="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
           CV privado 90 días
         </span>
         <span class="inline-flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          <svg class="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
           Mapa por comuna
         </span>
       </div>
 
       <!-- Pills de categoría -->
-      <div class="flex flex-wrap justify-center gap-2 mt-6">
+      <div class="flex flex-wrap justify-center gap-2 mt-6" role="navigation" aria-label="Categorías">
         <a
           href={buildCatUrl(null)}
           class={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all border ${!categoria ? 'bg-white text-brand-700 border-white shadow-soft' : 'bg-white/10 text-white border-white/20 hover:bg-white/20'}`}
+          aria-current={!categoria ? 'page' : undefined}
         >
           Todas
         </a>
@@ -149,6 +155,7 @@ function buildCatUrl(cat: string | null) {
           <a
             href={buildCatUrl(cat)}
             class={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all border ${categoria === cat ? 'bg-white text-brand-700 border-white shadow-soft' : 'bg-white/10 text-white/95 border-white/20 hover:bg-white/20'}`}
+            aria-current={categoria === cat ? 'page' : undefined}
           >
             {cat}
           </a>
@@ -157,7 +164,7 @@ function buildCatUrl(cat: string | null) {
 
       {hayFiltros && (
         <a href="/" class="mt-4 inline-flex items-center gap-1 text-brand-100 hover:text-white text-sm font-medium transition-colors">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           Limpiar filtros
         </a>
       )}
@@ -166,26 +173,32 @@ function buildCatUrl(cat: string | null) {
 
   <!-- Dual CTA -->
   {!hayFiltros && (
-    <section class="bg-white/70 border-b border-slate-100 py-7 px-4">
+    <section class="bg-white/70 border-b border-slate-100 py-7 px-4" aria-label="Accesos rápidos">
       <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="group flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-br from-brand-50 to-white border border-brand-100/80 shadow-soft hover:shadow-card hover:border-brand-200 transition-all">
+        <a
+          href="#listado-ofertas"
+          class="group flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-br from-brand-50 to-white border border-brand-100/80 shadow-soft hover:shadow-card hover:border-brand-200 transition-all"
+        >
           <div class="p-3 bg-white rounded-xl text-brand-600 shrink-0 shadow-soft border border-brand-100 group-hover:scale-105 transition-transform">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
           <div>
             <h3 class="font-bold text-slate-900 tracking-tight">¿Buscas trabajo?</h3>
             <p class="text-sm text-slate-600 mt-1 leading-relaxed">Explora el mapa, filtra por comuna y postula solo con tu CV.</p>
-            <p class="mt-2 text-xs font-semibold text-brand-600">Desplázate y elige una oferta ↓</p>
+            <span class="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 group-hover:gap-2 transition-all">
+              Ver ofertas
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </span>
           </div>
-        </div>
+        </a>
         <a
           href="/empleador/login"
           class="group flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-br from-indigo-50 to-white border border-indigo-100/80 shadow-soft hover:shadow-card hover:border-indigo-200 transition-all"
         >
           <div class="p-3 bg-white rounded-xl text-indigo-600 shrink-0 shadow-soft border border-indigo-100 group-hover:scale-105 transition-transform">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           </div>
@@ -194,7 +207,7 @@ function buildCatUrl(cat: string | null) {
             <p class="text-sm text-slate-600 mt-1 leading-relaxed">Publica gratis, recibe CVs y ve keywords automáticas.</p>
             <span class="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 group-hover:gap-2 transition-all">
               Publicar empleo
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
             </span>
           </div>
         </a>
@@ -205,12 +218,26 @@ function buildCatUrl(cat: string | null) {
   <div class="max-w-6xl mx-auto px-4 py-8">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
       <!-- Mapa -->
-      <div class="lg:sticky lg:top-24 h-[420px] rounded-2xl overflow-hidden border border-slate-200/80 shadow-card ring-1 ring-slate-900/5">
-        <div id="mapa" class="w-full h-full"></div>
+      <div class="lg:sticky lg:top-24 h-[280px] sm:h-[360px] lg:h-[420px] rounded-2xl overflow-hidden border border-slate-200/80 shadow-card ring-1 ring-slate-900/5 relative">
+        <div id="mapa" class="w-full h-full" role="application" aria-label="Mapa de ofertas de empleo"></div>
+        {(ofertas?.length ?? 0) === 0 || conCoords === 0 ? (
+          <div class="absolute inset-0 flex items-center justify-center bg-slate-50/90 backdrop-blur-[2px] pointer-events-none z-[400]">
+            <div class="text-center px-6">
+              <p class="text-sm font-semibold text-slate-700">
+                {(ofertas?.length ?? 0) === 0 ? 'Sin ofertas en el mapa' : 'Sin ubicación en el mapa'}
+              </p>
+              <p class="text-xs text-slate-500 mt-1">
+                {(ofertas?.length ?? 0) === 0
+                  ? (hayFiltros ? 'Prueba otros filtros o limpia la búsqueda' : 'Vuelve pronto: hay nuevas oportunidades a menudo')
+                  : 'Las ofertas sin coordenadas no aparecen en el mapa'}
+              </p>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <!-- Listado -->
-      <div>
+      <div id="listado-ofertas">
         <div class="flex items-center justify-between mb-4">
           <p class="text-sm text-slate-500 font-medium">
             <span class="text-slate-900 font-bold tabular-nums">{ofertas?.length ?? 0}</span>
@@ -220,16 +247,16 @@ function buildCatUrl(cat: string | null) {
         </div>
 
         {!ofertas || ofertas.length === 0 ? (
-          <div class="text-center py-16 bg-white rounded-2xl border border-slate-200 shadow-soft">
+          <div class="text-center py-16 card">
             <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100">
-              <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
             <p class="text-slate-800 font-semibold">No hay ofertas con esos filtros</p>
             <p class="text-sm text-slate-400 mt-1">Prueba otra comuna o limpia la búsqueda</p>
             {hayFiltros && (
-              <a href="/" class="mt-5 inline-block bg-brand-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-brand-700 transition-colors shadow-soft">
+              <a href="/" class="btn-primary mt-5">
                 Ver todas las ofertas
               </a>
             )}
@@ -285,7 +312,7 @@ function buildCatUrl(cat: string | null) {
                     </div>
                     <div class="flex flex-wrap gap-1.5 mt-2.5">
                       <span class="text-[11px] bg-slate-50 text-slate-600 border border-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1 font-medium">
-                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         </svg>
                         {oferta.comuna}
@@ -301,7 +328,7 @@ function buildCatUrl(cat: string | null) {
                     </div>
                   </div>
                   <div class="hidden sm:flex items-center text-slate-300 group-hover:text-brand-500 transition-colors self-center">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
@@ -315,8 +342,13 @@ function buildCatUrl(cat: string | null) {
   </div>
 </Layout>
 
-<script define:vars={{ mapaOfertas }}>
-  document.addEventListener('DOMContentLoaded', () => {
+<script define:vars={{ mapaOfertas, CATEGORIA_HEX, BRAND_HEX }}>
+  document.addEventListener('astro:page-load', () => {
+    const mapEl = document.getElementById('mapa');
+    if (!mapEl || mapEl.dataset.mapReady === '1') return;
+    if (typeof L === 'undefined') return;
+    mapEl.dataset.mapReady = '1';
+
     const map = L.map('mapa').setView([-33.4569, -70.6483], 11);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -330,16 +362,9 @@ function buildCatUrl(cat: string | null) {
       return d.innerHTML;
     }
 
-    const CAT_COLORS = {
-      'Tecnología': '#4f46e5', 'Administración': '#0ea5e9', 'Salud': '#10b981',
-      'Educación': '#f59e0b', 'Ventas': '#ef4444', 'Construcción': '#f97316',
-      'Logística': '#8b5cf6', 'Gastronomía': '#ec4899', 'Finanzas': '#14b8a6',
-      'Legal': '#6366f1', 'Marketing': '#d946ef', 'RRHH': '#64748b',
-    };
-
     mapaOfertas.forEach((oferta) => {
       if (!oferta.lat || !oferta.lng) return;
-      const color = CAT_COLORS[oferta.categoria] || '#4f46e5';
+      const color = CATEGORIA_HEX[oferta.categoria] || BRAND_HEX;
       const icon = L.divIcon({
         html: `<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`,
         className: '',
@@ -350,26 +375,29 @@ function buildCatUrl(cat: string | null) {
       marker.bindPopup(`
         <div style="min-width:160px">
           <strong>${esc(oferta.titulo)}</strong><br>
-          <span style="color:#555">${esc(oferta.empresa)}</span><br>
-          <span style="color:#888;font-size:12px">${esc(oferta.comuna)}</span><br>
-          <a href="/oferta/${encodeURIComponent(oferta.id)}" style="color:#2563eb;font-size:13px">Ver oferta →</a>
+          <span style="color:#64748b">${esc(oferta.empresa)}</span><br>
+          <span style="color:#94a3b8;font-size:12px">${esc(oferta.comuna)}</span><br>
+          <a href="/oferta/${encodeURIComponent(oferta.id)}" style="color:${BRAND_HEX};font-size:13px;font-weight:600">Ver oferta →</a>
         </div>
       `);
       marker.addTo(map);
     });
+
+    // Invalidate size after layout (sticky / transitions)
+    setTimeout(() => map.invalidateSize(), 100);
   });
 </script>
 
 <script>
-  // Animated counter: cuenta desde 0 hasta el target en ~700ms
   function animateCounter(el: HTMLElement) {
     const target = parseInt(el.dataset.target || '0', 10);
     if (target === 0) { el.textContent = '0'; return; }
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { el.textContent = String(target); return; }
     const duration = 700;
     const start = performance.now();
     const step = (now: number) => {
       const elapsed = Math.min((now - start) / duration, 1);
-      // easeOutCubic
       const eased = 1 - Math.pow(1 - elapsed, 3);
       el.textContent = String(Math.round(eased * target));
       if (elapsed < 1) requestAnimationFrame(step);
@@ -390,5 +418,8 @@ function buildCatUrl(cat: string | null) {
   }
   .card-anim {
     animation: fadeSlideUp 0.38s ease both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card-anim { animation: none; }
   }
 </style>

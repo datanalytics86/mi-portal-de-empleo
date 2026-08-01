@@ -64,9 +64,9 @@ const email = Astro.locals.session?.user?.email ?? '';
         <div class="flex gap-2">
           <a
             href="/empleador/oferta/nueva"
-            class="bg-white text-brand-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-brand-50 transition-all shadow-soft flex items-center gap-1.5"
+            class="inline-flex items-center gap-1.5 bg-white text-brand-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-brand-50 transition-all shadow-soft"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
             </svg>
             Nueva oferta
@@ -103,7 +103,7 @@ const email = Astro.locals.session?.user?.email ?? '';
   <div class="max-w-5xl mx-auto px-4 py-8">
     {ofertasDisplay.length === 0 ? (
       <!-- Empty state editorial -->
-      <div class="relative overflow-hidden text-center py-16 sm:py-20 px-6 bg-white border border-slate-200/90 rounded-3xl shadow-card ring-1 ring-slate-900/5">
+      <div class="relative overflow-hidden text-center py-16 sm:py-20 px-6 card rounded-3xl">
         <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand-50/50 to-transparent" aria-hidden="true"></div>
         <div class="relative">
           <!-- Illustration light SVG -->
@@ -121,11 +121,8 @@ const email = Astro.locals.session?.user?.email ?? '';
             y verás keywords automáticas aquí.
           </p>
           <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href="/empleador/oferta/nueva"
-              class="inline-flex items-center gap-2 bg-gradient-to-r from-brand-600 to-brand-700 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:from-brand-700 hover:to-brand-800 transition-all shadow-glow"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a href="/empleador/oferta/nueva" class="btn-gradient !px-6 !py-3">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
               </svg>
               Publicar primera oferta
@@ -171,7 +168,7 @@ const email = Astro.locals.session?.user?.email ?? '';
 
         <div class="space-y-3">
           {ofertasDisplay.map((oferta) => (
-            <div class={`bg-white border rounded-2xl p-4 sm:p-5 shadow-soft hover:shadow-card-hover hover:-translate-y-0.5 transition-all group ring-1 ring-slate-900/[0.03] ${oferta.urgencia ? 'border-amber-200/80' : 'border-slate-200/90'}`}>
+            <div class={`card p-4 sm:p-5 hover:shadow-card-hover hover:-translate-y-0.5 transition-all group ${oferta.urgencia ? 'border-amber-200/80' : ''}`}>
               <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
@@ -189,7 +186,7 @@ const email = Astro.locals.session?.user?.email ?? '';
                   </div>
                   <p class="text-sm text-slate-500 mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                     <span class="inline-flex items-center gap-1 font-medium">
-                      <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       </svg>
                       {oferta.comuna}
@@ -222,16 +219,17 @@ const email = Astro.locals.session?.user?.email ?? '';
                     href={`/oferta/${oferta.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="text-slate-400 border border-slate-200 p-2.5 rounded-xl hover:bg-slate-50 hover:text-slate-600 transition-colors"
+                    class="btn-icon"
+                    aria-label="Ver oferta pública"
                     title="Ver oferta pública"
                   >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
                   </a>
                   <a
                     href={`/empleador/oferta/${oferta.id}/postulaciones`}
-                    class="text-sm text-white bg-gradient-to-r from-brand-600 to-brand-700 px-3.5 py-2.5 rounded-xl hover:from-brand-700 hover:to-brand-800 transition-all font-semibold shadow-soft"
+                    class="btn-gradient"
                   >
                     Ver CVs
                   </a>
@@ -239,7 +237,7 @@ const email = Astro.locals.session?.user?.email ?? '';
                     <input type="hidden" name="id" value={oferta.id} />
                     <button
                       type="submit"
-                      class="text-sm text-slate-500 border border-slate-200 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors font-medium"
+                      class="btn-secondary"
                       onclick="return confirm('¿Desactivar esta oferta?')"
                     >
                       {oferta.activa ? 'Desactivar' : 'Activar'}
@@ -259,6 +257,13 @@ const email = Astro.locals.session?.user?.email ?? '';
   function animateCounter(el: HTMLElement) {
     const target = parseInt(el.dataset.target || '0', 10);
     if (target === 0) { el.textContent = '0'; return; }
+
+    // Respect prefers-reduced-motion: set final number immediately
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.textContent = String(target);
+      return;
+    }
+
     const duration = 800;
     const start = performance.now();
     const step = (now: number) => {

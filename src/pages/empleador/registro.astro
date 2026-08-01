@@ -11,10 +11,9 @@ if (session) return Astro.redirect('/empleador/dashboard');
     <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand-50/80 via-slate-50 to-slate-50" aria-hidden="true"></div>
     <div class="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[480px] h-[280px] bg-brand-200/30 blur-3xl rounded-full" aria-hidden="true"></div>
     <div class="relative w-full max-w-md">
-      <!-- Logo / branding -->
       <div class="text-center mb-8 form-enter" style="animation-delay:0ms">
         <div class="w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-glow">
-          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </div>
@@ -25,82 +24,97 @@ if (session) return Astro.redirect('/empleador/dashboard');
         </p>
       </div>
 
-      <div class="bg-white border border-slate-200/90 rounded-2xl p-8 shadow-card ring-1 ring-slate-900/5 form-enter" style="animation-delay:80ms">
-        <form id="form-registro" class="space-y-5">
+      <div class="card p-8 form-enter" style="animation-delay:80ms">
+        <form id="form-registro" class="space-y-5" novalidate>
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nombre de la empresa</label>
+            <label for="reg-empresa" class="label-field">Nombre de la empresa</label>
             <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none" aria-hidden="true">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
               <input
+                id="reg-empresa"
                 type="text"
                 name="empresa"
                 required
+                autocomplete="organization"
                 placeholder="Empresa S.A."
-                class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-shadow"
+                class="input-field-icon"
               />
             </div>
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
+            <label for="reg-email" class="label-field">Email</label>
             <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none" aria-hidden="true">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
               <input
+                id="reg-email"
                 type="email"
                 name="email"
                 required
                 autocomplete="email"
                 placeholder="empresa@correo.cl"
-                class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-shadow"
+                class="input-field-icon"
               />
             </div>
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Contraseña</label>
+            <label for="reg-password" class="label-field">Contraseña</label>
             <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none" aria-hidden="true">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
               <input
+                id="reg-password"
                 type="password"
                 name="password"
                 required
                 minlength="8"
                 autocomplete="new-password"
                 placeholder="Mínimo 8 caracteres"
-                class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-shadow"
+                class="input-field-icon pr-12"
               />
+              <button
+                type="button"
+                id="toggle-password-reg"
+                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 min-w-11 justify-center"
+                aria-label="Mostrar contraseña"
+                aria-controls="reg-password"
+              >
+                <svg id="eye-open-reg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <svg id="eye-closed-reg" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                </svg>
+              </button>
             </div>
           </div>
 
-          <div id="registro-error" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div id="registro-error" class="hidden alert-error" role="alert" aria-live="polite">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span></span>
           </div>
-          <div id="registro-ok" class="hidden text-sm text-green-700 bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div id="registro-ok" class="hidden alert-success" role="status" aria-live="polite">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span></span>
           </div>
 
-          <button
-            type="submit"
-            id="btn-registro"
-            class="w-full bg-brand-600 text-white py-3 rounded-xl font-semibold hover:bg-brand-700 transition-colors disabled:opacity-60 shadow-sm text-sm"
-          >
-            Crear cuenta gratis
+          <button type="submit" id="btn-registro" class="btn-primary w-full py-3">
+            <span id="btn-registro-txt">Crear cuenta gratis</span>
           </button>
         </form>
       </div>
@@ -114,43 +128,74 @@ if (session) return Astro.redirect('/empleador/dashboard');
     to   { opacity: 1; transform: translateY(0); }
   }
   .form-enter { animation: formEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  @media (prefers-reduced-motion: reduce) {
+    .form-enter { animation: none; }
+  }
 </style>
 
 <script>
-  const form = document.getElementById('form-registro') as HTMLFormElement;
-  const btn = document.getElementById('btn-registro') as HTMLButtonElement;
-  const errEl = document.getElementById('registro-error') as HTMLDivElement;
-  const okEl = document.getElementById('registro-ok') as HTMLDivElement;
+  document.addEventListener('astro:page-load', () => {
+    const form = document.getElementById('form-registro') as HTMLFormElement | null;
+    const btn = document.getElementById('btn-registro') as HTMLButtonElement | null;
+    const btnTxt = document.getElementById('btn-registro-txt');
+    const errEl = document.getElementById('registro-error') as HTMLDivElement | null;
+    const okEl = document.getElementById('registro-ok') as HTMLDivElement | null;
+    const pwd = document.getElementById('reg-password') as HTMLInputElement | null;
+    const toggle = document.getElementById('toggle-password-reg');
+    const eyeOpen = document.getElementById('eye-open-reg');
+    const eyeClosed = document.getElementById('eye-closed-reg');
 
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    btn.textContent = 'Creando cuenta...';
-    btn.disabled = true;
-    errEl.classList.add('hidden');
-    okEl.classList.add('hidden');
+    toggle?.addEventListener('click', () => {
+      if (!pwd) return;
+      const show = pwd.type === 'password';
+      pwd.type = show ? 'text' : 'password';
+      eyeOpen?.classList.toggle('hidden', show);
+      eyeClosed?.classList.toggle('hidden', !show);
+      toggle.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+    });
 
-    const body = new FormData(form);
-    const res = await fetch('/api/auth/registro', { method: 'POST', body });
-    const data = await res.json();
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!btn || !btnTxt || !errEl || !okEl) return;
+      btnTxt.innerHTML = '<span class="inline-block w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin"></span> Creando cuenta…';
+      btn.disabled = true;
+      btn.setAttribute('aria-busy', 'true');
+      errEl.classList.add('hidden');
+      okEl.classList.add('hidden');
 
-    if (res.ok && data.ok) {
-      if (data.requiresEmailConfirmation) {
-        const span = okEl.querySelector('span');
-        if (span) span.textContent = 'Cuenta creada. Revisa tu bandeja de entrada y confirma tu email para poder iniciar sesión.';
-        okEl.classList.remove('hidden');
-        btn.textContent = 'Cuenta creada';
-      } else {
-        const span = okEl.querySelector('span');
-        if (span) span.textContent = '¡Cuenta creada! Redirigiendo al panel...';
-        okEl.classList.remove('hidden');
-        setTimeout(() => { window.location.href = '/empleador/dashboard'; }, 1500);
+      try {
+        const body = new FormData(form);
+        const res = await fetch('/api/auth/registro', { method: 'POST', body });
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+          if (data.requiresEmailConfirmation) {
+            const span = okEl.querySelector('span');
+            if (span) span.textContent = 'Cuenta creada. Revisa tu bandeja de entrada y confirma tu email para poder iniciar sesión.';
+            okEl.classList.remove('hidden');
+            btnTxt.textContent = 'Cuenta creada';
+          } else {
+            const span = okEl.querySelector('span');
+            if (span) span.textContent = '¡Cuenta creada! Redirigiendo al panel...';
+            okEl.classList.remove('hidden');
+            setTimeout(() => { window.location.href = '/empleador/dashboard'; }, 1500);
+          }
+        } else {
+          const span = errEl.querySelector('span');
+          if (span) span.textContent = data.error || 'Error al crear la cuenta.';
+          errEl.classList.remove('hidden');
+          btnTxt.textContent = 'Crear cuenta gratis';
+          btn.disabled = false;
+          btn.removeAttribute('aria-busy');
+        }
+      } catch {
+        const span = errEl.querySelector('span');
+        if (span) span.textContent = 'Error de conexión. Intenta de nuevo.';
+        errEl.classList.remove('hidden');
+        btnTxt.textContent = 'Crear cuenta gratis';
+        btn.disabled = false;
+        btn.removeAttribute('aria-busy');
       }
-    } else {
-      const span = errEl.querySelector('span');
-      if (span) span.textContent = data.error || 'Error al crear la cuenta.';
-      errEl.classList.remove('hidden');
-      btn.textContent = 'Crear cuenta gratis';
-      btn.disabled = false;
-    }
+    });
   });
 </script>

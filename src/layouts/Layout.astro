@@ -1,5 +1,6 @@
 ---
 import { ViewTransitions } from 'astro:transitions';
+import { getSessionFromCookies } from '../lib/auth';
 
 interface Props {
   title: string;
@@ -22,6 +23,8 @@ const defaultOgImage = new URL('/favicon.svg', Astro.site || Astro.url.origin).h
 const resolvedOgImage = ogImage || defaultOgImage;
 const ogDescription = description.length > 200 ? description.slice(0, 197) + '…' : description;
 const year = new Date().getFullYear();
+const isEmpleador = !!getSessionFromCookies(Astro.cookies);
+const isEmpleadorArea = Astro.url.pathname.startsWith('/empleador/');
 ---
 
 <!doctype html>
@@ -48,7 +51,7 @@ const year = new Date().getFullYear();
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
 
@@ -62,12 +65,19 @@ const year = new Date().getFullYear();
     <ViewTransitions />
   </head>
   <body class="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:px-4 focus:py-2.5 focus:bg-white focus:text-brand-700 focus:rounded-xl focus:shadow-card focus:font-semibold focus:text-sm focus:ring-2 focus:ring-brand-500"
+    >
+      Ir al contenido
+    </a>
+
     <!-- Header glass -->
     <header class="sticky top-0 z-40 border-b border-white/60 bg-white/80 backdrop-blur-xl shadow-soft">
       <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
         <a href="/" class="flex items-center gap-2.5 group">
           <div class="w-9 h-9 bg-gradient-to-br from-brand-500 to-brand-700 rounded-xl flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
-            <svg class="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
@@ -80,24 +90,42 @@ const year = new Date().getFullYear();
             </span>
           </div>
         </a>
-        <nav class="flex items-center gap-2 sm:gap-3 text-sm">
+        <nav class="flex items-center gap-2 sm:gap-3 text-sm" aria-label="Principal">
           <a
             href="/"
-            class="text-slate-500 hover:text-slate-900 font-medium transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-100"
+            class="text-slate-500 hover:text-slate-900 font-medium transition-colors px-3 py-2 min-h-11 inline-flex items-center rounded-lg hover:bg-slate-100"
           >
             Ofertas
           </a>
-          <a
-            href="/empleador/login"
-            class="inline-flex items-center gap-1.5 bg-gradient-to-r from-brand-600 to-brand-700 text-white px-4 py-2 rounded-xl font-semibold hover:from-brand-700 hover:to-brand-800 transition-all shadow-soft hover:shadow-glow"
-          >
-            Para empleadores
-          </a>
+          {isEmpleador ? (
+            <>
+              <a
+                href="/empleador/dashboard"
+                class="btn-primary !py-2 !px-4"
+              >
+                Mi panel
+              </a>
+              {isEmpleadorArea && (
+                <form action="/api/auth/logout" method="post" class="inline">
+                  <button type="submit" class="btn-secondary !py-2 !px-3.5">
+                    Salir
+                  </button>
+                </form>
+              )}
+            </>
+          ) : (
+            <a
+              href="/empleador/login"
+              class="btn-gradient !py-2 !px-4"
+            >
+              Para empleadores
+            </a>
+          )}
         </nav>
       </div>
     </header>
 
-    <main class="min-h-[60vh]">
+    <main id="main-content" class="min-h-[60vh]">
       <slot />
     </main>
 
@@ -108,7 +136,7 @@ const year = new Date().getFullYear();
           <div class="max-w-sm">
             <div class="flex items-center gap-2 mb-3">
               <div class="w-7 h-7 bg-gradient-to-br from-brand-500 to-brand-700 rounded-lg flex items-center justify-center">
-                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
@@ -127,8 +155,14 @@ const year = new Date().getFullYear();
             </div>
             <div>
               <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Empleadores</p>
-              <a href="/empleador/login" class="block text-slate-600 hover:text-brand-700 transition-colors mb-1.5">Ingresar</a>
-              <a href="/empleador/registro" class="block text-slate-600 hover:text-brand-700 transition-colors">Crear cuenta</a>
+              {isEmpleador ? (
+                <a href="/empleador/dashboard" class="block text-slate-600 hover:text-brand-700 transition-colors mb-1.5">Mi panel</a>
+              ) : (
+                <>
+                  <a href="/empleador/login" class="block text-slate-600 hover:text-brand-700 transition-colors mb-1.5">Ingresar</a>
+                  <a href="/empleador/registro" class="block text-slate-600 hover:text-brand-700 transition-colors">Crear cuenta</a>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -137,7 +171,7 @@ const year = new Date().getFullYear();
             &copy; {year} Portal de Empleos Chile
           </p>
           <a
-            href="/empleador/login"
+            href={isEmpleador ? '/empleador/oferta/nueva' : '/empleador/login'}
             class="text-xs font-semibold text-brand-600 hover:text-brand-800 transition-colors"
           >
             Publicar empleo gratis →
@@ -148,10 +182,11 @@ const year = new Date().getFullYear();
 
     <button
       id="scroll-top"
+      type="button"
       aria-label="Volver arriba"
-      class="fixed bottom-20 md:bottom-6 right-5 z-40 w-11 h-11 bg-white text-brand-700 border border-brand-100 rounded-full shadow-card flex items-center justify-center opacity-0 pointer-events-none translate-y-2 transition-all duration-300 hover:bg-brand-600 hover:text-white hover:border-brand-600 hover:scale-105"
+      class="fixed bottom-20 md:bottom-6 right-5 z-40 w-11 h-11 min-h-11 min-w-11 bg-white text-brand-700 border border-brand-100 rounded-full shadow-card flex items-center justify-center opacity-0 pointer-events-none translate-y-2 transition-all duration-300 hover:bg-brand-600 hover:text-white hover:border-brand-600 hover:scale-105"
     >
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7" />
       </svg>
     </button>
@@ -180,6 +215,7 @@ const year = new Date().getFullYear();
       btn.classList.toggle('translate-y-2', !show);
     };
     window.addEventListener('scroll', toggle, { passive: true });
+    toggle();
     btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
   });
 </script>
@@ -194,15 +230,64 @@ const year = new Date().getFullYear();
     scroll-behavior: smooth;
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
   /* Focus agradable y accesible */
   :focus-visible {
     outline: 2px solid #6366f1;
     outline-offset: 2px;
   }
 
+  /* ── Design system utilities ── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-brand-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-soft hover:bg-brand-700 disabled:opacity-60 disabled:pointer-events-none transition-colors;
+  }
+  .btn-gradient {
+    @apply inline-flex items-center justify-center gap-2 bg-gradient-to-r from-brand-600 to-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-soft hover:from-brand-700 hover:to-brand-800 hover:shadow-glow disabled:opacity-60 disabled:pointer-events-none transition-all;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 border border-slate-200 text-slate-600 bg-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 hover:text-slate-800 disabled:opacity-60 transition-colors;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 text-slate-500 px-3 py-2 rounded-xl text-sm font-medium hover:bg-slate-100 hover:text-slate-800 transition-colors;
+  }
+  .btn-icon {
+    @apply inline-flex items-center justify-center min-h-11 min-w-11 p-2.5 rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors;
+  }
+  .input-field {
+    @apply w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white;
+  }
+  .input-field-icon {
+    @apply w-full border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white;
+  }
+  .label-field {
+    @apply block text-sm font-semibold text-slate-700 mb-1.5;
+  }
+  .card {
+    @apply bg-white border border-slate-200/90 rounded-2xl shadow-soft ring-1 ring-slate-900/5;
+  }
+  .alert-error {
+    @apply text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2;
+  }
+  .alert-success {
+    @apply text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center gap-2;
+  }
+
   button:not(:disabled),
   [type='submit']:not(:disabled),
-  a.btn-primary {
+  a.btn-primary,
+  a.btn-gradient {
     transition-property: transform, box-shadow, background-color, color, border-color, opacity;
     transition-duration: 160ms;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -212,7 +297,6 @@ const year = new Date().getFullYear();
     transform: scale(0.97);
   }
 
-  /* Inputs más suaves en todo el sitio */
   input[type='text'],
   input[type='email'],
   input[type='password'],
@@ -224,7 +308,6 @@ const year = new Date().getFullYear();
     transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
   }
 
-  /* Leaflet popup un poco más pro */
   .leaflet-popup-content-wrapper {
     border-radius: 12px !important;
     box-shadow: 0 8px 30px rgba(15, 23, 42, 0.12) !important;

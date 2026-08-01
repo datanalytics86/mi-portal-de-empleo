@@ -4,14 +4,20 @@ import Layout from '../layouts/Layout.astro';
 
 <Layout title="Página no encontrada">
   <div class="max-w-lg mx-auto px-4 py-24 text-center">
-    <p class="text-6xl font-bold text-brand-600 mb-4">404</p>
-    <h1 class="text-2xl font-semibold text-gray-900 mb-2">Página no encontrada</h1>
-    <p class="text-gray-500 mb-8">La dirección que buscas no existe o fue eliminada.</p>
-    <a
-      href="/"
-      class="inline-block bg-brand-600 text-white px-6 py-2.5 rounded font-medium hover:bg-brand-700 transition-colors"
-    >
-      Ver ofertas de empleo
-    </a>
+    <div class="w-20 h-20 bg-gradient-to-br from-brand-50 to-indigo-50 border border-brand-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-soft">
+      <span class="text-2xl font-extrabold text-brand-600 tracking-tight">404</span>
+    </div>
+    <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight mb-2">Página no encontrada</h1>
+    <p class="text-slate-500 mb-8 leading-relaxed">
+      La dirección que buscas no existe o fue eliminada.
+    </p>
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+      <a href="/" class="btn-primary px-6 py-3">
+        Ver ofertas de empleo
+      </a>
+      <a href="/empleador/login" class="btn-secondary">
+        Para empleadores
+      </a>
+    </div>
   </div>
 </Layout>

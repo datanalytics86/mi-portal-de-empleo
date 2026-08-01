@@ -17,14 +17,14 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
     <div class="pointer-events-none absolute inset-0 bg-hero-mesh opacity-80" aria-hidden="true"></div>
     <div class="relative max-w-2xl mx-auto">
       <a href="/empleador/dashboard" class="inline-flex items-center gap-1.5 text-brand-100 hover:text-white text-sm font-medium transition-colors mb-4">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
         Dashboard
       </a>
       <div class="flex items-center gap-3">
         <div class="w-11 h-11 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center backdrop-blur shrink-0 shadow-glow">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
         </div>
@@ -37,41 +37,43 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
   </div>
 
   <div class="max-w-2xl mx-auto px-4 py-8">
-    <div class="bg-white border border-slate-200/90 rounded-2xl shadow-card ring-1 ring-slate-900/5 p-6 sm:p-8">
+    <div class="card p-6 sm:p-8">
       <form id="form-nueva" class="space-y-5">
 
         <!-- Título -->
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+          <label for="titulo" class="label-field">
             Título del cargo <span class="text-red-500">*</span>
           </label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
             <input
               type="text"
+              id="titulo"
               name="titulo"
               required
               maxlength="120"
               placeholder="Ej: Desarrollador Full Stack"
-              class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              class="input-field-icon"
             />
           </div>
         </div>
 
         <!-- Tipo + Categoría -->
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+            <label for="tipo_empleo" class="label-field">
               Tipo de empleo <span class="text-red-500">*</span>
             </label>
             <select
+              id="tipo_empleo"
               name="tipo_empleo"
               required
-              class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-gray-700 bg-white"
+              class="input-field"
             >
               <option value="">Seleccionar...</option>
               <option value="full-time">Full-time</option>
@@ -81,13 +83,14 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
             </select>
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+            <label for="categoria" class="label-field">
               Categoría <span class="text-red-500">*</span>
             </label>
             <select
+              id="categoria"
               name="categoria"
               required
-              class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-gray-700 bg-white"
+              class="input-field"
             >
               <option value="">Seleccionar...</option>
               {CATEGORIAS.map(cat => <option value={cat}>{cat}</option>)}
@@ -97,20 +100,21 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
 
         <!-- Comuna -->
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+          <label for="comuna" class="label-field">
             Comuna <span class="text-red-500">*</span>
           </label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
             <select
+              id="comuna"
               name="comuna"
               required
-              class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-gray-700 bg-white appearance-none"
+              class="input-field-icon appearance-none"
             >
               <option value="">Seleccionar comuna...</option>
               {COMUNAS_NOMBRES.map(c => <option value={c}>{c}</option>)}
@@ -121,24 +125,24 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
         <!-- Descripción -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <label class="block text-sm font-semibold text-gray-700">
+            <label for="descripcion" class="block text-sm font-semibold text-slate-700">
               Descripción del cargo <span class="text-red-500">*</span>
             </label>
-            <span id="char-count" class="text-xs text-gray-400 tabular-nums">0 / 2000</span>
+            <span id="char-count" class="text-xs text-slate-400 tabular-nums">0 / 2000</span>
           </div>
           <!-- Plantillas rápidas (rellenan descripción + categoría/tipo) -->
           <div class="flex flex-wrap gap-1.5 mb-2">
-            <span class="text-xs text-gray-400 flex items-center pr-1">Plantilla:</span>
-            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="tech">
+            <span class="text-xs text-slate-400 flex items-center pr-1">Plantilla:</span>
+            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 min-h-9 py-1.5 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="tech">
               Tecnología
             </button>
-            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="ventas">
+            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 min-h-9 py-1.5 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="ventas">
               Ventas
             </button>
-            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="admin">
+            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 min-h-9 py-1.5 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="admin">
               Admin
             </button>
-            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="practica">
+            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 min-h-9 py-1.5 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="practica">
               Práctica
             </button>
           </div>
@@ -149,39 +153,40 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
             maxlength="2000"
             rows="8"
             placeholder="Describe las responsabilidades, requisitos y condiciones del puesto..."
-            class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-y"
+            class="input-field resize-y"
           ></textarea>
           <!-- Barra de progreso de caracteres -->
-          <div class="mt-1.5 bg-gray-100 rounded-full h-0.5 overflow-hidden">
+          <div class="mt-1.5 bg-slate-100 rounded-full h-0.5 overflow-hidden">
             <div id="char-bar" class="h-full rounded-full bg-brand-400 transition-all duration-150" style="width: 0%"></div>
           </div>
         </div>
 
         <!-- Fecha de cierre -->
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+          <label for="expira_en" class="label-field">
             Fecha de cierre <span class="text-red-500">*</span>
           </label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
             <input
               type="date"
+              id="expira_en"
               name="expira_en"
               required
               min={hoy}
               max={maxFechaStr}
-              class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-gray-700"
+              class="input-field-icon"
             />
           </div>
         </div>
 
         <!-- Error -->
-        <div id="form-error" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2">
-          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div id="form-error" class="hidden alert-error" role="alert" aria-live="polite">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span id="form-error-txt"></span>
@@ -192,16 +197,16 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
           <button
             type="submit"
             id="btn-publicar"
-            class="flex-1 inline-flex items-center justify-center gap-2 bg-brand-600 text-white py-3 rounded-xl font-semibold hover:bg-brand-700 transition-colors disabled:opacity-60 shadow-sm text-sm"
+            class="btn-primary flex-1 py-3"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
             <span id="btn-txt">Publicar oferta</span>
           </button>
           <a
             href="/empleador/dashboard"
-            class="px-5 py-3 text-sm text-gray-600 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+            class="btn-secondary"
           >
             Cancelar
           </a>
@@ -307,72 +312,88 @@ Ofrecemos:
     },
   };
 
-  // Contador de caracteres + barra de progreso
-  const textarea = document.getElementById('descripcion') as HTMLTextAreaElement;
-  const charCount = document.getElementById('char-count');
-  const charBar = document.getElementById('char-bar') as HTMLElement;
-  const formEl = document.getElementById('form-nueva') as HTMLFormElement;
+  document.addEventListener('astro:page-load', () => {
+    const form = document.getElementById('form-nueva') as HTMLFormElement | null;
+    if (!form || form.dataset.bound === '1') return;
+    form.dataset.bound = '1';
 
-  function updateCharCount() {
-    const len = textarea.value.length;
-    const max = 2000;
-    if (charCount) charCount.textContent = `${len} / ${max}`;
-    if (charBar) {
-      const pct = Math.min(100, (len / max) * 100);
-      charBar.style.width = pct + '%';
-      charBar.className = 'h-full rounded-full transition-all duration-150 ' +
-        (pct >= 90 ? 'bg-red-400' : pct >= 70 ? 'bg-orange-400' : 'bg-brand-400');
+    const textarea = document.getElementById('descripcion') as HTMLTextAreaElement | null;
+    const charCount = document.getElementById('char-count');
+    const charBar = document.getElementById('char-bar') as HTMLElement | null;
+
+    function updateCharCount() {
+      if (!textarea) return;
+      const len = textarea.value.length;
+      const max = 2000;
+      if (charCount) charCount.textContent = `${len} / ${max}`;
+      if (charBar) {
+        const pct = Math.min(100, (len / max) * 100);
+        charBar.style.width = pct + '%';
+        charBar.className = 'h-full rounded-full transition-all duration-150 ' +
+          (pct >= 90 ? 'bg-red-400' : pct >= 70 ? 'bg-orange-400' : 'bg-brand-400');
+      }
     }
-  }
 
-  textarea?.addEventListener('input', updateCharCount);
+    textarea?.addEventListener('input', updateCharCount);
 
-  // Plantillas rápidas: descripción + categoría + tipo (+ título si vacío)
-  document.querySelectorAll<HTMLButtonElement>('.tpl-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const key = btn.dataset.tpl;
-      const tpl = key ? PLANTILLAS[key] : undefined;
-      if (!tpl) return;
-      if (textarea.value && !confirm('¿Reemplazar la descripción actual con la plantilla?')) return;
+    document.querySelectorAll('.tpl-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const el = btn as HTMLButtonElement;
+        const key = el.dataset.tpl;
+        const tpl = key ? PLANTILLAS[key] : undefined;
+        if (!tpl || !textarea) return;
+        if (textarea.value && !confirm('¿Reemplazar la descripción actual con la plantilla?')) return;
 
-      textarea.value = tpl.descripcion;
-      updateCharCount();
+        textarea.value = tpl.descripcion;
+        updateCharCount();
 
-      const cat = formEl?.querySelector<HTMLSelectElement>('[name="categoria"]');
-      const tipo = formEl?.querySelector<HTMLSelectElement>('[name="tipo_empleo"]');
-      const titulo = formEl?.querySelector<HTMLInputElement>('[name="titulo"]');
-      if (cat) cat.value = tpl.categoria;
-      if (tipo) tipo.value = tpl.tipo_empleo;
-      if (titulo && !titulo.value.trim()) titulo.value = tpl.titulo;
+        const cat = form.querySelector('[name="categoria"]') as HTMLSelectElement | null;
+        const tipo = form.querySelector('[name="tipo_empleo"]') as HTMLSelectElement | null;
+        const titulo = form.querySelector('[name="titulo"]') as HTMLInputElement | null;
+        if (cat) cat.value = tpl.categoria;
+        if (tipo) tipo.value = tpl.tipo_empleo;
+        if (titulo && !titulo.value.trim()) titulo.value = tpl.titulo;
 
-      textarea.focus();
+        textarea.focus();
+      });
     });
-  });
 
-  // Envío del formulario
-  const form = document.getElementById('form-nueva') as HTMLFormElement;
-  const btn = document.getElementById('btn-publicar') as HTMLButtonElement;
-  const btnTxt = document.getElementById('btn-txt');
-  const errEl = document.getElementById('form-error') as HTMLDivElement;
-  const errTxt = document.getElementById('form-error-txt');
+    const btn = document.getElementById('btn-publicar') as HTMLButtonElement | null;
+    const btnTxt = document.getElementById('btn-txt');
+    const errEl = document.getElementById('form-error') as HTMLDivElement | null;
+    const errTxt = document.getElementById('form-error-txt');
 
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (btnTxt) btnTxt.textContent = 'Publicando...';
-    btn.disabled = true;
-    errEl.classList.add('hidden');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!btn || !errEl) return;
+      if (btnTxt) {
+        btnTxt.innerHTML = '<span class="inline-block w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin"></span> Publicando…';
+      }
+      btn.disabled = true;
+      btn.setAttribute('aria-busy', 'true');
+      errEl.classList.add('hidden');
 
-    const body = new FormData(form);
-    const res = await fetch('/api/ofertas/nueva', { method: 'POST', body });
-    const data = await res.json();
+      try {
+        const body = new FormData(form);
+        const res = await fetch('/api/ofertas/nueva', { method: 'POST', body });
+        const data = await res.json();
 
-    if (res.ok && data.ok) {
-      window.location.href = '/empleador/dashboard';
-    } else {
-      if (errTxt) errTxt.textContent = data.error || 'Error al publicar. Intenta de nuevo.';
-      errEl.classList.remove('hidden');
-      if (btnTxt) btnTxt.textContent = 'Publicar oferta';
-      btn.disabled = false;
-    }
+        if (res.ok && data.ok) {
+          window.location.href = '/empleador/dashboard';
+        } else {
+          if (errTxt) errTxt.textContent = data.error || 'Error al publicar. Intenta de nuevo.';
+          errEl.classList.remove('hidden');
+          if (btnTxt) btnTxt.textContent = 'Publicar oferta';
+          btn.disabled = false;
+          btn.removeAttribute('aria-busy');
+        }
+      } catch {
+        if (errTxt) errTxt.textContent = 'Error de conexión. Intenta de nuevo.';
+        errEl.classList.remove('hidden');
+        if (btnTxt) btnTxt.textContent = 'Publicar oferta';
+        btn.disabled = false;
+        btn.removeAttribute('aria-busy');
+      }
+    });
   });
 </script>
