@@ -25,6 +25,8 @@ const ogDescription = description.length > 200 ? description.slice(0, 197) + '�
 const year = new Date().getFullYear();
 const isEmpleador = !!getSessionFromCookies(Astro.cookies);
 const isEmpleadorArea = Astro.url.pathname.startsWith('/empleador/');
+/** Nonce CSP del middleware — scripts controlados (Leaflet). Ver security-headers.ts */
+const cspNonce = Astro.locals.cspNonce ?? '';
 ---
 
 <!doctype html>
@@ -58,7 +60,8 @@ const isEmpleadorArea = Astro.url.pathname.startsWith('/empleador/');
     {leaflet && (
       <>
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        {/* nonce: script controlado por nosotros; CSP también permite unpkg + unsafe-inline (Astro VT) */}
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" nonce={cspNonce || undefined}></script>
       </>
     )}
     <slot name="head" />

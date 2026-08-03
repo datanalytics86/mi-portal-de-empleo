@@ -1,6 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 import { getEmpleadorSession } from './lib/auth';
-import { applySecurityHeaders } from './lib/security-headers';
+import { applySecurityHeaders, generateCspNonce } from './lib/security-headers';
 
 // Páginas del empleador que requieren sesión activa
 const PROTECTED_PAGES = ['/empleador/dashboard', '/empleador/oferta/'];
@@ -9,6 +9,10 @@ const PROTECTED_PAGES = ['/empleador/dashboard', '/empleador/oferta/'];
 const PROTECTED_API = ['/api/ofertas/', '/api/postulaciones/cv'];
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  // Nonce por request: disponible en Layout y en el header CSP
+  const cspNonce = generateCspNonce();
+  context.locals.cspNonce = cspNonce;
+
   const { pathname } = context.url;
   const isPage = PROTECTED_PAGES.some((p) => pathname.startsWith(p));
   const isApi = PROTECTED_API.some((p) => pathname.startsWith(p));
@@ -22,13 +26,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
             status: 401,
             headers: { 'Content-Type': 'application/json' },
           }),
+          { nonce: cspNonce },
         );
       }
-      return applySecurityHeaders(context.redirect('/empleador/login'));
+      return applySecurityHeaders(context.redirect('/empleador/login'), { nonce: cspNonce });
     }
     context.locals.session = session;
   }
 
   const response = await next();
-  return applySecurityHeaders(response);
+  return applySecurityHeaders(response, { nonce: cspNonce });
 });

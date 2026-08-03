@@ -34,5 +34,7 @@ interface ImportMeta {
 declare namespace App {
   interface Locals {
     session?: import('./lib/auth').EmpleadorSession;
+    /** Nonce CSP por request (middleware → Layout / scripts controlados) */
+    cspNonce?: string;
   }
 }

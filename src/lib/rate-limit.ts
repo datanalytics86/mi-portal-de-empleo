@@ -4,9 +4,11 @@
  * - Si UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN están configurados → Redis.
  * - Si no, o si Upstash falla → Map en memoria + log (degradación elegante).
  * - Multi-instancia: solo Upstash es correcto; el fallback es por proceso (Vercel).
+ * - Auth: combinar IP + email con checkAuthRateLimits (el más restrictivo gana).
  *
  * Uso:
  *   const result = await checkRateLimit(ip, 'auth-login');
+ *   const auth = await checkAuthRateLimits({ ip, email, preset: 'auth-login' });
  *   if (!result.success) return rateLimitResponse(result);
  */
 
@@ -19,12 +21,17 @@ export interface RateLimitResult {
   /** Epoch ms cuando se reinicia la ventana */
   reset: number;
   backend: RateLimitBackend;
+  /** Dimensión que provocó el bloqueo (si aplica) */
+  blockedBy?: 'ip' | 'email' | 'identifier';
 }
 
 export type RateLimitPreset =
   | 'auth-login'
   | 'auth-registro'
   | 'postulaciones';
+
+/** Presets de auth que soportan IP + email compuesto */
+export type AuthRateLimitPreset = 'auth-login' | 'auth-registro';
 
 interface PresetConfig {
   /** Máximo de requests por ventana */
@@ -163,7 +170,21 @@ async function getUpstashLimiter(preset: RateLimitPreset): Promise<UpstashLimite
 // ─── API pública ────────────────────────────────────────────────────────────
 
 /**
- * Comprueba (y consume) un slot de rate limit para `identifier` (típicamente IP).
+ * Normaliza email para claves de rate limit (trim + lowercase).
+ * Devuelve null si vacío o no parece email (evita claves basura).
+ */
+export function normalizeEmailForRateLimit(email: string | null | undefined): string | null {
+  if (email == null) return null;
+  const e = String(email).trim().toLowerCase();
+  if (!e || e.length > 200) return null;
+  // Heurística mínima: debe contener @ y un dominio con punto
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return null;
+  return e;
+}
+
+/**
+ * Comprueba (y consume) un slot de rate limit para `identifier`.
+ * Preferir prefijos `ip:` / `email:` para evitar colisiones entre dimensiones.
  */
 export async function checkRateLimit(
   identifier: string,
@@ -182,13 +203,14 @@ export async function checkRateLimit(
         remaining: res.remaining,
         reset: res.reset,
         backend: 'upstash',
+        blockedBy: res.success ? undefined : 'identifier',
       };
     } catch (err) {
       console.error(
         '[rate-limit] Error Upstash, degradando a memoria:',
         err instanceof Error ? err.message : err,
       );
-      return checkMemory(id, cfg);
+      return { ...checkMemory(id, cfg), blockedBy: undefined };
     }
   }
 
@@ -200,6 +222,60 @@ export async function checkRateLimit(
   }
 
   return checkMemory(id, cfg);
+}
+
+/**
+ * Rate limit compuesto para auth: IP + email (si hay email válido).
+ * Ambos contadores se consumen; el más restrictivo gana (cualquiera bloqueado → 429).
+ * No revelar en la respuesta si el bloqueo fue por IP o por email.
+ */
+export async function checkAuthRateLimits(opts: {
+  ip: string;
+  email?: string | null;
+  preset: AuthRateLimitPreset;
+}): Promise<RateLimitResult> {
+  const ipKey = `ip:${opts.ip || 'unknown'}`;
+  const emailNorm = normalizeEmailForRateLimit(opts.email ?? null);
+
+  const checks: Array<Promise<RateLimitResult & { dim: 'ip' | 'email' }>> = [
+    checkRateLimit(ipKey, opts.preset).then((r) => ({ ...r, dim: 'ip' as const })),
+  ];
+
+  if (emailNorm) {
+    checks.push(
+      checkRateLimit(`email:${emailNorm}`, opts.preset).then((r) => ({
+        ...r,
+        dim: 'email' as const,
+      })),
+    );
+  }
+
+  const results = await Promise.all(checks);
+  const blocked = results.find((r) => !r.success);
+
+  if (blocked) {
+    // No loguear el email en claro; solo dimensión y backend
+    console.info(
+      `[rate-limit] auth blocked preset=${opts.preset} by=${blocked.dim} backend=${blocked.backend}`,
+    );
+    return {
+      success: false,
+      limit: blocked.limit,
+      remaining: 0,
+      reset: blocked.reset,
+      backend: blocked.backend,
+      // Interno para logs/tests; la API no expone al cliente si fue IP o email
+      blockedBy: blocked.dim,
+    };
+  }
+
+  return {
+    success: true,
+    limit: results[0]!.limit,
+    remaining: Math.min(...results.map((r) => r.remaining)),
+    reset: Math.max(...results.map((r) => r.reset)),
+    backend: results.some((r) => r.backend === 'upstash') ? 'upstash' : 'memory',
+  };
 }
 
 /** Extrae IP del request (Vercel / Cloudflare / genérico). */
