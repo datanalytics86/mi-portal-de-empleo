@@ -18,6 +18,13 @@ interface ImportMetaEnv {
   readonly CV_OCR_TIMEOUT_MS?: string;
   /** OCR.space API key — cloud preferido en Vercel https://ocr.space/ocrapi */
   readonly OCR_SPACE_API_KEY?: string;
+  /**
+   * Upstash Redis (rate limiting distribuido).
+   * Si no están definidas, se usa fallback in-memory por instancia.
+   * https://console.upstash.com
+   */
+  readonly UPSTASH_REDIS_REST_URL?: string;
+  readonly UPSTASH_REDIS_REST_TOKEN?: string;
 }
 
 interface ImportMeta {
