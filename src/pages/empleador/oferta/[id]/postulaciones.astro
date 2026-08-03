@@ -1,11 +1,19 @@
 ---
 import Layout from '../../../../layouts/Layout.astro';
 import EmptyState from '../../../../components/ui/EmptyState.astro';
+import Pagination from '../../../../components/ui/Pagination.astro';
+import {
+  POSTULACIONES_PAGE_SIZE,
+  buildPageInfo,
+  parsePage,
+} from '../../../../lib/pagination';
 
 const { id } = Astro.params;
 if (!id) return Astro.redirect('/empleador/dashboard');
 
 const { client, empleador } = Astro.locals.session!;
+const { searchParams, pathname } = Astro.url;
+const page = parsePage(searchParams.get('page'));
 
 // Verificar que la oferta pertenece al empleador
 const { data: oferta, error: ofertaError } = await client
@@ -17,25 +25,35 @@ const { data: oferta, error: ofertaError } = await client
 
 if (ofertaError || !oferta) return Astro.redirect('/empleador/dashboard');
 
-// Obtener postulaciones — default: mejor match primero, luego más recientes
-const { data: postulacionesRaw } = await client
+// Carga de postulaciones (CSV/emails sobre el set completo; UI paginada)
+// Nota: el filtro client-side de skills aplica a la página visible.
+// Para volúmenes típicos (<25) no se muestra paginación.
+const { data: postulacionesRaw, count: totalCount } = await client
   .from('postulaciones')
-  .select('id, nombre, email, cv_url, palabras_clave, keywords, cv_parsed, parse_status, parsed_at, match_score, created_at')
+  .select(
+    'id, nombre, email, cv_url, palabras_clave, keywords, cv_parsed, parse_status, parsed_at, match_score, created_at',
+    { count: 'exact' },
+  )
   .eq('oferta_id', id)
   .order('created_at', { ascending: false });
 
-// Sort en servidor: match_score DESC (nulls al final), luego fecha
-const postulaciones = [...(postulacionesRaw ?? [])].sort((a, b) => {
+const total = totalCount ?? postulacionesRaw?.length ?? 0;
+const pageInfo = buildPageInfo(page, POSTULACIONES_PAGE_SIZE, total);
+
+// Sort: match_score DESC (nulls al final), luego fecha
+const sortedAll = [...(postulacionesRaw ?? [])].sort((a, b) => {
   const sa = a.match_score ?? -1;
   const sb = b.match_score ?? -1;
   if (sb !== sa) return sb - sa;
   return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 });
 
-const total = postulaciones.length;
-const emailsList = postulaciones.filter(p => p.email).map(p => p.email);
+const postulaciones = sortedAll.slice(pageInfo.from, pageInfo.from + pageInfo.pageSize);
+
+// Emails + CSV de TODAS las postulaciones (no se limitan a la página)
+const emailsList = sortedAll.filter((p) => p.email).map((p) => p.email);
 const hasEmails = emailsList.length > 0;
-const csvRows = postulaciones.map(p => {
+const csvRows = sortedAll.map((p) => {
   const parsed = p.cv_parsed as {
     titulo_profesional?: string | null;
     resumen?: string | null;
@@ -288,7 +306,7 @@ type CvParsed = {
                     {initials}
                   </div>
                   <span class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-slate-800 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                    {i + 1}
+                    {pageInfo.from + i + 1}
                   </span>
                 </div>
 
@@ -455,9 +473,18 @@ type CvParsed = {
 
           <!-- Footer con total -->
           <p class="text-center text-xs text-slate-400 pt-2">
-            Mostrando {total} postulaci{total === 1 ? 'ón' : 'ones'} · Los CVs se eliminan automáticamente a los 90 días
+            {pageInfo.totalPages > 1
+              ? `Página ${pageInfo.page} de ${pageInfo.totalPages} · ${total} en total`
+              : `Mostrando ${total} postulaci${total === 1 ? 'ón' : 'ones'}`}
+            {' '}· Los CVs se eliminan automáticamente a los 90 días
           </p>
         </div>
+        <Pagination
+          pageInfo={pageInfo}
+          pathname={pathname}
+          searchParams={searchParams}
+          label="Paginación de postulaciones"
+        />
       </div>
     )}
   </div>

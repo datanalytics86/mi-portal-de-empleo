@@ -1,40 +1,78 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Pagination from '../components/ui/Pagination.astro';
 import { supabase } from '../lib/supabase';
 import { TIPOS, CATEGORIAS, CATEGORIA_COLORS, CATEGORIA_HEX, BRAND_HEX } from '../lib/constants';
+import {
+  DEFAULT_PAGE_SIZE,
+  MAP_MARKERS_CAP,
+  buildPageInfo,
+  parsePage,
+} from '../lib/pagination';
 
 // Filtros desde URL
-const { searchParams } = Astro.url;
+const { searchParams, pathname } = Astro.url;
 const q = searchParams.get('q') || '';
 const tipo = searchParams.get('tipo') || '';
 const comuna = searchParams.get('comuna') || '';
 const categoria = searchParams.get('categoria') || '';
+const page = parsePage(searchParams.get('page'));
 
-// Obtener ofertas activas
-let query = supabase
+// Listado paginado (server-side)
+let listQuery = supabase
   .from('ofertas')
-  .select('id, titulo, empresa, tipo_empleo, categoria, comuna, created_at, expira_en, lat, lng')
+  .select(
+    'id, titulo, empresa, tipo_empleo, categoria, comuna, created_at, expira_en, lat, lng',
+    { count: 'exact' },
+  )
   .eq('activa', true)
   .gte('expira_en', new Date().toISOString())
   .order('created_at', { ascending: false });
 
-if (q) query = query.ilike('titulo', `%${q}%`);
-if (tipo) query = query.eq('tipo_empleo', tipo);
-if (comuna) query = query.ilike('comuna', `%${comuna}%`);
-if (categoria) query = query.eq('categoria', categoria);
+if (q) listQuery = listQuery.ilike('titulo', `%${q}%`);
+if (tipo) listQuery = listQuery.eq('tipo_empleo', tipo);
+if (comuna) listQuery = listQuery.ilike('comuna', `%${comuna}%`);
+if (categoria) listQuery = listQuery.eq('categoria', categoria);
 
-const { data: ofertas = [] } = await query.limit(60);
+// Rango provisional; se recalcula pageInfo con el count real
+const provisionalFrom = (page - 1) * DEFAULT_PAGE_SIZE;
+const { data: ofertasRaw, count: totalCount } = await listQuery.range(
+  provisionalFrom,
+  provisionalFrom + DEFAULT_PAGE_SIZE - 1,
+);
 
-// Serializar datos para el mapa
-const mapaOfertas = (ofertas || []).map(o => ({
-  id: o.id, titulo: o.titulo, empresa: o.empresa,
-  lat: o.lat, lng: o.lng, comuna: o.comuna, categoria: o.categoria ?? '',
+const total = totalCount ?? ofertasRaw?.length ?? 0;
+const pageInfo = buildPageInfo(page, DEFAULT_PAGE_SIZE, total);
+const ofertas = ofertasRaw ?? [];
+
+// Mapa: query ligera independiente (hasta MAP_MARKERS_CAP) para no perder pins al paginar
+let mapQuery = supabase
+  .from('ofertas')
+  .select('id, titulo, empresa, lat, lng, comuna, categoria')
+  .eq('activa', true)
+  .gte('expira_en', new Date().toISOString())
+  .order('created_at', { ascending: false })
+  .limit(MAP_MARKERS_CAP);
+if (q) mapQuery = mapQuery.ilike('titulo', `%${q}%`);
+if (tipo) mapQuery = mapQuery.eq('tipo_empleo', tipo);
+if (comuna) mapQuery = mapQuery.ilike('comuna', `%${comuna}%`);
+if (categoria) mapQuery = mapQuery.eq('categoria', categoria);
+const { data: mapRows } = await mapQuery;
+
+const mapaOfertas = (mapRows || []).map((o) => ({
+  id: o.id,
+  titulo: o.titulo,
+  empresa: o.empresa,
+  lat: o.lat,
+  lng: o.lng,
+  comuna: o.comuna,
+  categoria: o.categoria ?? '',
 }));
 
 const hayFiltros = q || tipo || comuna || categoria;
-const conCoords = mapaOfertas.filter(o => o.lat && o.lng).length;
+const conCoords = mapaOfertas.filter((o) => o.lat && o.lng).length;
 
-// Construye URL de categoría preservando otros filtros
+// Construye URL de categoría preservando otros filtros (reset page)
 function buildCatUrl(cat: string | null) {
   const p = new URLSearchParams();
   if (cat) p.set('categoria', cat);
@@ -66,8 +104,8 @@ function buildCatUrl(cat: string | null) {
         </span>
       </h1>
       <p class="text-brand-100/95 text-base sm:text-lg mb-8 max-w-xl mx-auto leading-relaxed">
-        <span id="hero-count" class="font-bold text-white tabular-nums" data-target={ofertas?.length ?? 0}>0</span>
-        {' '}oportunidad{(ofertas?.length ?? 0) !== 1 ? 'es' : ''} activa{(ofertas?.length ?? 0) !== 1 ? 's' : ''}
+        <span id="hero-count" class="font-bold text-white tabular-nums" data-target={total}>0</span>
+        {' '}oportunidad{total !== 1 ? 'es' : ''} activa{total !== 1 ? 's' : ''}
         · mapa interactivo · keywords automáticas del CV
       </p>
 
@@ -220,14 +258,14 @@ function buildCatUrl(cat: string | null) {
       <!-- Mapa -->
       <div class="lg:sticky lg:top-24 h-[280px] sm:h-[360px] lg:h-[420px] rounded-2xl overflow-hidden border border-slate-200/80 shadow-card ring-1 ring-slate-900/5 relative">
         <div id="mapa" class="w-full h-full" role="application" aria-label="Mapa de ofertas de empleo"></div>
-        {(ofertas?.length ?? 0) === 0 || conCoords === 0 ? (
+        {total === 0 || conCoords === 0 ? (
           <div class="absolute inset-0 flex items-center justify-center bg-slate-50/90 backdrop-blur-[2px] pointer-events-none z-[400]">
             <div class="text-center px-6">
               <p class="text-sm font-semibold text-slate-700">
-                {(ofertas?.length ?? 0) === 0 ? 'Sin ofertas en el mapa' : 'Sin ubicación en el mapa'}
+                {total === 0 ? 'Sin ofertas en el mapa' : 'Sin ubicación en el mapa'}
               </p>
               <p class="text-xs text-slate-500 mt-1">
-                {(ofertas?.length ?? 0) === 0
+                {total === 0
                   ? (hayFiltros ? 'Prueba otros filtros o limpia la búsqueda' : 'Vuelve pronto: hay nuevas oportunidades a menudo')
                   : 'Las ofertas sin coordenadas no aparecen en el mapa'}
               </p>
@@ -240,9 +278,12 @@ function buildCatUrl(cat: string | null) {
       <div id="listado-ofertas">
         <div class="flex items-center justify-between mb-4">
           <p class="text-sm text-slate-500 font-medium">
-            <span class="text-slate-900 font-bold tabular-nums">{ofertas?.length ?? 0}</span>
-            {' '}oferta{(ofertas?.length ?? 0) !== 1 ? 's' : ''}
+            <span class="text-slate-900 font-bold tabular-nums">{total}</span>
+            {' '}oferta{total !== 1 ? 's' : ''}
             {hayFiltros && <span class="ml-1.5 text-brand-600 font-semibold">· filtrado</span>}
+            {pageInfo.totalPages > 1 && (
+              <span class="ml-1.5 text-slate-400">· pág. {pageInfo.page}/{pageInfo.totalPages}</span>
+            )}
           </p>
         </div>
 
@@ -274,6 +315,7 @@ function buildCatUrl(cat: string | null) {
         ) : (
           <div class="space-y-3">
             {ofertas.map((oferta, i) => {
+              // delay de animación acotado a la página actual
               const esNueva = (Date.now() - new Date(oferta.created_at).getTime()) < 48 * 3600 * 1000;
               const diasRestantes = Math.ceil((new Date(oferta.expira_en).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
               const iniciales = oferta.empresa
@@ -345,6 +387,12 @@ function buildCatUrl(cat: string | null) {
               );
             })}
           </div>
+          <Pagination
+            pageInfo={pageInfo}
+            pathname={pathname}
+            searchParams={searchParams}
+            label="Paginación de ofertas"
+          />
         )}
       </div>
     </div>
