@@ -23,6 +23,7 @@ import {
   type ParseCvInput,
   type ParseCvResult,
 } from './types';
+import { log, captureException } from '../observability';
 
 export type { CvParsed, ParseCvInput, ParseCvResult } from './types';
 export type { CvFormat } from './file-validation';
@@ -46,6 +47,14 @@ export async function parseCv(
 
     // .doc legacy o sin texto: postulación OK, parse skipped/failed
     if (input.format === 'doc') {
+      const duration_ms = Date.now() - started;
+      log.info('parse_cv.complete', {
+        status: 'skipped',
+        method: 'rule',
+        duration_ms,
+        format: input.format,
+        reason: 'legacy_doc',
+      });
       return {
         status: 'skipped',
         cv_parsed: emptyCvParsed({
@@ -61,12 +70,22 @@ export async function parseCv(
     }
 
     if (!extracted.cleaned.trim() || extracted.cleaned.replace(/\s/g, '').length < 40) {
+      const duration_ms = Date.now() - started;
+      const method = extracted.usedOcr ? 'ocr' : 'rule';
+      log.info('parse_cv.complete', {
+        status: 'failed',
+        method,
+        duration_ms,
+        format: input.format,
+        used_ocr: extracted.usedOcr,
+        reason: 'no_extractable_text',
+      });
       return {
         status: 'failed',
         cv_parsed: emptyCvParsed({
           nombre_completo: input.formNombre || null,
           email: input.formEmail || null,
-          parse_method: extracted.usedOcr ? 'ocr' : 'rule',
+          parse_method: method,
           used_ocr: extracted.usedOcr,
           ocr_engine: extracted.ocrEngine ?? null,
           warnings: warnings.length
@@ -115,10 +134,19 @@ export async function parseCv(
     structured.raw_text_length = extracted.cleaned.length;
 
     const match_score = computeMatchScore(structured, input.ofertaTexto);
+    const duration_ms = Date.now() - started;
 
-    console.info(
-      `[parse-cv] ok method=${structured.parse_method} ocr=${extracted.usedOcr} keywords=${kw.length} ms=${Date.now() - started}`,
-    );
+    log.info('parse_cv.complete', {
+      status: 'success',
+      method: structured.parse_method,
+      duration_ms,
+      format: input.format,
+      used_ocr: extracted.usedOcr,
+      ocr_engine: extracted.ocrEngine ?? null,
+      keywords: kw.length,
+      match_score,
+      raw_text_length: structured.raw_text_length,
+    });
 
     return {
       status: 'success',
@@ -128,7 +156,20 @@ export async function parseCv(
     };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.error('[parse-cv] fatal (non-blocking):', msg);
+    const duration_ms = Date.now() - started;
+    // Fail-open: log + Sentry, pero NUNCA propagar al candidato
+    log.error('parse_cv.fatal', {
+      status: 'failed',
+      method: 'rule',
+      duration_ms,
+      format: input.format,
+      error: msg,
+    });
+    void captureException(e, {
+      tags: { component: 'parse_cv' },
+      extra: { duration_ms, format: input.format },
+      level: 'error',
+    });
     return {
       status: 'failed',
       cv_parsed: emptyCvParsed({

@@ -25,6 +25,13 @@ interface ImportMetaEnv {
    */
   readonly UPSTASH_REDIS_REST_URL?: string;
   readonly UPSTASH_REDIS_REST_TOKEN?: string;
+  /**
+   * Sentry DSN (opcional). Sin valor → no se carga el SDK; la app funciona igual.
+   * https://sentry.io → Project → Client Keys (DSN)
+   */
+  readonly SENTRY_DSN?: string;
+  /** Sample rate de traces Sentry (default 0.05) */
+  readonly SENTRY_TRACES_SAMPLE_RATE?: string;
 }
 
 interface ImportMeta {
