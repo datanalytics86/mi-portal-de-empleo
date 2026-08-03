@@ -1,17 +1,16 @@
 /**
- * Security headers baseline para todas las respuestas HTML/API.
+ * Security headers + CSP Fase 2.1
  *
- * CSP Fase 2 (pragmática con nonces):
- * - Generamos un nonce por request y lo aplicamos a scripts que controlamos (p.ej. Leaflet).
- * - Se mantiene 'unsafe-inline' en script-src porque Astro View Transitions y los
- *   `<script>` de páginas (.astro) emiten inline sin nonce.
- *   → Fase 2.1: externalizar scripts de página / hashes para retirar unsafe-inline.
- * - 'unsafe-inline' en style-src: Tailwind + estilos de Leaflet + style= en UI.
- * - NO usamos 'unsafe-eval' (no necesario).
- * - Cuando hay nonce, algunos browsers ignoran unsafe-inline en script-src (CSP2/3).
- *   Por eso el nonce se emite junto a unsafe-inline: en browsers modernos el nonce
- *   cubre scripts etiquetados; en la práctica Astro + VT siguen requiriendo
- *   unsafe-inline hasta la 2.1. Si se detectan roturas, priorizar UX (documentado).
+ * script-src (con nonce):
+ *   'self' + 'nonce-…' + https://unpkg.com (Leaflet)
+ *   SIN 'unsafe-inline' — los scripts de página reciben nonce vía injectScriptNonces()
+ *   en el middleware (HTML rewrite).
+ *
+ * style-src:
+ *   'unsafe-inline' se MANTIENE (Tailwind util classes en style attrs, Leaflet CSS, UI).
+ *   Documentado; retirar requiere migrar a clases puras / CSS modules (Fase 2.2).
+ *
+ * Sin 'unsafe-eval'.
  */
 
 const SECURITY_HEADERS: Record<string, string> = {
@@ -21,21 +20,17 @@ const SECURITY_HEADERS: Record<string, string> = {
   'Permissions-Policy':
     'camera=(), microphone=(), geolocation=(), payment=(), interest-cohort=()',
   'X-DNS-Prefetch-Control': 'on',
-  // HSTS: Vercel ya lo aplica en el edge; reforzamos en respuesta app
   'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
-  // Endurecimiento adicional (bajo riesgo de rotura)
   'Cross-Origin-Opener-Policy': 'same-origin',
   'X-Permitted-Cross-Domain-Policies': 'none',
 };
 
 /**
  * Genera un nonce criptográfico apto para atributos CSP / HTML.
- * Base64 URL-safe sin padding excesivo.
  */
 export function generateCspNonce(): string {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
-  // btoa en Node/Edge: usar Buffer si está; si no, btoa sobre binary string
   if (typeof Buffer !== 'undefined') {
     return Buffer.from(bytes).toString('base64url');
   }
@@ -44,34 +39,47 @@ export function generateCspNonce(): string {
   return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+export type CspMode = 'strict' | 'legacy';
+
 /**
  * Construye la Content-Security-Policy.
- * @param nonce — si se pasa, se incluye 'nonce-…' en script-src (scripts controlados).
+ *
+ * @param nonce — nonce de la request
+ * @param mode
+ *   - `strict` (default con nonce): sin unsafe-inline en script-src
+ *   - `legacy`: incluye unsafe-inline en script-src (solo si se pide explícitamente)
  */
-export function buildCsp(nonce?: string): string {
+export function buildCsp(nonce?: string, mode: CspMode = 'strict'): string {
   const nonceSrc = nonce ? ` 'nonce-${nonce}'` : '';
+  // Sin nonce no podemos ser estrictos en scripts (SSR edge cases / errores)
+  const allowInlineScripts = mode === 'legacy' || !nonce;
+  const scriptInline = allowInlineScripts ? " 'unsafe-inline'" : '';
 
   /**
    * script-src:
    * - 'self' — bundles Astro/Vite
-   * - 'unsafe-inline' — REQUIRED hoy: View Transitions + scripts de página Astro
-   *   (Fase 2.1: retirar cuando scripts estén externalizados o hasheados)
-   * - nonce — scripts etiquetados por nosotros (Leaflet CDN tag)
+   * - nonce — scripts de página (inyectados) + Leaflet en Layout
    * - https://unpkg.com — Leaflet 1.9.4
+   * - 'unsafe-inline' SOLO en mode legacy o sin nonce
    *
    * style-src:
-   * - 'unsafe-inline' — REQUIRED: Tailwind runtime classes + Leaflet CSS + style attrs
-   * - fonts.googleapis.com, unpkg (Leaflet CSS)
+   * - 'unsafe-inline' REQUIRED hoy (Tailwind style attrs, Leaflet, UI)
    *
-   * NO incluimos 'unsafe-eval'.
+   * script-src-attr:
+   * - 'none' en modo strict — no onclick= inline (dashboard usa data-confirm)
    */
+  const scriptSrc = `script-src 'self'${scriptInline}${nonceSrc} https://unpkg.com`;
+  const scriptSrcAttr =
+    allowInlineScripts ? "script-src-attr 'unsafe-inline'" : "script-src-attr 'none'";
+
   const directives = [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${nonceSrc} https://unpkg.com`,
+    scriptSrc,
+    scriptSrcAttr,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://*.supabase.co",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.x.ai https://api.ocr.space https://*.upstash.io",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.x.ai https://api.ocr.space https://*.upstash.io https://*.ingest.sentry.io https://*.sentry.io",
     "worker-src 'self' blob:",
     "media-src 'self'",
     "manifest-src 'self'",
@@ -84,9 +92,26 @@ export function buildCsp(nonce?: string): string {
   return directives.join('; ');
 }
 
+/**
+ * Inyecta `nonce="…"` en tags <script> que aún no lo tienen.
+ * Pure function — testeable. No toca <script> que ya traen nonce.
+ */
+export function injectScriptNonces(html: string, nonce: string): string {
+  if (!html || !nonce) return html;
+  // Escapar por si el nonce contuviera caracteres raros (base64url es safe)
+  const safe = nonce.replace(/"/g, '');
+  return html.replace(/<script(\s[^>]*)?>/gi, (full, attrs: string = '') => {
+    if (/\bnonce\s*=/i.test(attrs)) return full;
+    // Mantener atributos existentes; insertar nonce primero
+    const rest = attrs && attrs.trim().length ? attrs : '';
+    return `<script nonce="${safe}"${rest}>`;
+  });
+}
+
 export interface ApplySecurityHeadersOptions {
-  /** Nonce CSP de esta request (HTML). Omitir en JSON/redirects si se prefiere. */
   nonce?: string;
+  /** default: strict si hay nonce */
+  mode?: CspMode;
 }
 
 /** Aplica headers de seguridad sobre una Response (mutación in-place de headers). */
@@ -95,6 +120,7 @@ export function applySecurityHeaders(
   options: ApplySecurityHeadersOptions = {},
 ): Response {
   const headers = response.headers;
+  const mode = options.mode ?? (options.nonce ? 'strict' : 'legacy');
 
   for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
     if (!headers.has(key)) {
@@ -103,10 +129,46 @@ export function applySecurityHeaders(
   }
 
   if (!headers.has('Content-Security-Policy')) {
-    headers.set('Content-Security-Policy', buildCsp(options.nonce));
+    headers.set('Content-Security-Policy', buildCsp(options.nonce, mode));
   }
 
   return response;
+}
+
+/**
+ * Si la respuesta es HTML, reescribe el body inyectando nonces en <script>.
+ * Devuelve una Response nueva (body consumido).
+ */
+export async function applyCspToHtmlResponse(
+  response: Response,
+  nonce: string,
+): Promise<Response> {
+  const ct = response.headers.get('content-type') || '';
+  if (!ct.includes('text/html') || !nonce) {
+    return applySecurityHeaders(response, { nonce, mode: 'strict' });
+  }
+
+  try {
+    const html = await response.text();
+    const rewritten = injectScriptNonces(html, nonce);
+    const headers = new Headers(response.headers);
+    // Content-Length puede quedar obsoleto tras reescritura
+    headers.delete('content-length');
+    if (!headers.has('Content-Security-Policy')) {
+      headers.set('Content-Security-Policy', buildCsp(nonce, 'strict'));
+    }
+    for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+      if (!headers.has(key)) headers.set(key, value);
+    }
+    return new Response(rewritten, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+  } catch {
+    // Si falla la reescritura, aplicar headers sin tocar body
+    return applySecurityHeaders(response, { nonce, mode: 'legacy' });
+  }
 }
 
 export { SECURITY_HEADERS };

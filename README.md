@@ -25,8 +25,10 @@ Candidatos postulan **sin registro** (solo suben su CV). Empleadores publican of
 - **Dashboard empleador** — tags de keywords, resumen del CV, % match, filtro por skill, export CSV.
 - **Privacidad** — CVs en bucket privado; retención ~90 días (cron de limpieza).
 - **Rate limiting** — postulaciones (3/IP/h); login (10/15 min) y registro (5/h) por **IP + email** (el más restrictivo gana). Upstash Redis opcional; fallback in-memory.
-- **Security headers** — CSP con nonce por request (scripts controlados) + `unsafe-inline` documentado para Astro VT; X-Content-Type-Options, X-Frame-Options, HSTS, COOP, Permissions-Policy.
+- **Security headers** — CSP **strict** con nonce por request (HTML rewrite inyecta nonces en `<script>`); sin `unsafe-inline` en `script-src`. `style-src` aún permite inline (Tailwind/Leaflet). HSTS, COOP, Permissions-Policy.
 - **Paginación** — ofertas públicas y dashboard; postulaciones con `ORDER BY match_score NULLS LAST` + `range` nativo (CSV exporta el set completo).
+- **CI** — GitHub Actions: `npm ci` → `npm test` → `npm run build` en PR y push a `main`.
+- **Observabilidad** — logs JSON estructurados + Sentry opcional (`SENTRY_DSN`).
 
 ---
 
@@ -74,11 +76,17 @@ CV_OCR_MAX_PAGES=3
 # Rate limiting distribuido (recomendado en Vercel multi-instancia)
 UPSTASH_REDIS_REST_URL=   # https://console.upstash.com → Redis → REST URL
 UPSTASH_REDIS_REST_TOKEN= # REST TOKEN
+
+# Observabilidad (opcional)
+SENTRY_DSN=               # https://sentry.io → Client Keys (DSN)
 ```
 
-Sin Upstash la app sigue funcionando con rate limit **in-memory por instancia** (suficiente en local y en un solo proceso).
+Sin Upstash la app sigue funcionando con rate limit **in-memory por instancia** (suficiente en local y en un solo proceso).  
+Sin Sentry: solo logs estructurados en consola/Vercel; **fail-soft** (la app no depende del DSN).
 
 Ver `.env.example` completo.
+
+> **Producción multi-instancia:** configura **Upstash** en Vercel. Sin Redis el rate limit es por instancia y se diluye entre cold starts.
 
 ### Base de datos
 
@@ -122,6 +130,41 @@ Documentación detallada:
 | [SPECIFICATIONS.md](./SPECIFICATIONS.md) | Producto + sección completa de parsing |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Estructura, pipeline, componentes |
 | [DEPLOY-CV-PARSE.md](./DEPLOY-CV-PARSE.md) | Deploy, env, Edge Function, checklist |
+| [docs/OPS-CHECKLIST.md](./docs/OPS-CHECKLIST.md) | Pre/post-deploy, CSP, branches mergeados |
+
+---
+
+## CI (GitHub Actions)
+
+Workflow: [`.github/workflows/ci.yml`](./.github/workflows/ci.yml)
+
+| Trigger | Jobs |
+|---------|------|
+| `pull_request` → `main` | Node 22 · `npm ci` · `npm test` · `npm run build` |
+| `push` → `main` | Igual |
+
+- Cache de npm vía `actions/setup-node`
+- El job **falla** si tests o build fallan
+- Build usa placeholders de Supabase (no se necesitan secrets reales en CI)
+
+```bash
+# Equivalente local
+npm ci
+npm test
+npm run build
+```
+
+---
+
+## Observabilidad
+
+| Capa | Comportamiento |
+|------|----------------|
+| **Logs** | JSON por línea (`ts`, `level`, `event`, campos). Ej: `parse_cv.complete`, `postulaciones.parse_persisted` |
+| **Sentry** | Si `SENTRY_DSN` está definido, captura excepciones de API/parse. Sin DSN → no-op |
+| **Parse** | Cada run emite `status`, `method` (rule/llm/hybrid/ocr), `duration_ms`, keywords, OCR |
+
+Instrumentación principal: `src/lib/observability/`, `src/lib/cv-parser/index.ts`, APIs de auth/postulaciones.
 
 ---
 
@@ -142,9 +185,14 @@ Documentación detallada:
 ```
 src/
   lib/cv-parser/          # Orquestador + extractores + keywords + OCR + match
+  lib/observability/      # Logger JSON + Sentry fail-soft
+  lib/rate-limit.ts
+  lib/security-headers.ts
   pages/api/postulaciones.ts
   pages/empleador/oferta/[id]/postulaciones.astro
   pages/oferta/[id].astro
+.github/workflows/ci.yml
+docs/OPS-CHECKLIST.md
 schema.sql
 scripts/migration-cv-parse.sql
 supabase/functions/parse-cv/

@@ -17,6 +17,7 @@
     "@astrojs/tailwind": "^5.1.0",
     "@astrojs/vercel": "^9.0.4",
     "@napi-rs/canvas": "^0.1.65",
+    "@sentry/node": "^9.47.1",
     "@supabase/supabase-js": "^2.45.4",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.1",

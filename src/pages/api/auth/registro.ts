@@ -6,6 +6,7 @@ import {
   getClientIp,
   rateLimitResponse,
 } from '../../../lib/rate-limit';
+import { log, captureException } from '../../../lib/observability';
 import { z } from 'zod';
 
 const RegistroSchema = z.object({
@@ -83,6 +84,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   if (dbError) {
     // Rollback: eliminar el usuario creado
     await serviceClient.auth.admin.deleteUser(authData.user.id);
+    log.error('auth.registro_db_failed', { error: dbError.message });
+    void captureException(dbError, { tags: { component: 'auth', action: 'registro' } });
     return new Response(JSON.stringify({ error: 'Error al guardar los datos. Intenta de nuevo.' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

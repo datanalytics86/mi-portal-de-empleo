@@ -12,6 +12,7 @@ import {
   getClientIp,
   rateLimitHeaders,
 } from '../../lib/rate-limit';
+import { log, captureException } from '../../lib/observability';
 import { z } from 'zod';
 
 const PostulacionSchema = z.object({
@@ -27,7 +28,12 @@ const PostulacionSchema = z.object({
  * En Vercel usa waitUntil; si no está disponible, fire-and-forget + Edge opcional.
  */
 function scheduleBackground(task: Promise<unknown>): void {
-  void task.catch((err) => console.error('[postulaciones] background task error:', err));
+  void task.catch((err) => {
+    log.error('postulaciones.background_task_error', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    void captureException(err, { tags: { component: 'postulaciones', phase: 'background' } });
+  });
 
   try {
     // Dynamic import — no rompe builds locales sin el paquete
@@ -90,11 +96,22 @@ async function runParseInBackground(opts: {
       .eq('id', opts.postulationId);
 
     if (updErr) {
-      console.error('[postulaciones] Error actualizando parse:', updErr);
+      log.error('postulaciones.parse_update_failed', {
+        postulation_id: opts.postulationId,
+        error: updErr.message,
+      });
+      void captureException(updErr, {
+        tags: { component: 'postulaciones', phase: 'parse_update' },
+        extra: { postulation_id: opts.postulationId },
+      });
     } else {
-      console.info(
-        `[postulaciones] parse ${result.status} id=${opts.postulationId} keywords=${result.keywords.length} score=${result.match_score}`,
-      );
+      log.info('postulaciones.parse_persisted', {
+        postulation_id: opts.postulationId,
+        status: result.status,
+        method: result.cv_parsed?.parse_method ?? null,
+        keywords: result.keywords.length,
+        match_score: result.match_score,
+      });
     }
 
     // Reintento edge solo si falló
@@ -108,10 +125,23 @@ async function runParseInBackground(opts: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ postulation_id: opts.postulationId }),
-      }).catch((err) => console.warn('[postulaciones] edge reparse skip:', err));
+      }).catch((err) =>
+        log.warn('postulaciones.edge_reparse_skip', {
+          postulation_id: opts.postulationId,
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
     }
   } catch (e) {
-    console.error('[postulaciones] parse no crítico falló:', e);
+    // Fail-open: postulación ya guardada; solo marcamos parse failed
+    log.error('postulaciones.parse_background_failed', {
+      postulation_id: opts.postulationId,
+      error: e instanceof Error ? e.message : String(e),
+    });
+    void captureException(e, {
+      tags: { component: 'postulaciones', phase: 'parse_background' },
+      extra: { postulation_id: opts.postulationId },
+    });
     await serviceClient
       .from('postulaciones')
       .update({
@@ -197,7 +227,12 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
   if (uploadError || !uploadData) {
-    console.error('[postulaciones] Error subiendo CV:', uploadError);
+    log.error('postulaciones.cv_upload_failed', {
+      error: uploadError?.message ?? 'no data',
+    });
+    void captureException(uploadError ?? new Error('cv upload failed'), {
+      tags: { component: 'postulaciones', phase: 'upload' },
+    });
     return json({ error: 'Error al subir el CV. Intenta de nuevo.' }, 500);
   }
 
@@ -225,7 +260,12 @@ export const POST: APIRoute = async ({ request }) => {
 
   if (dbError || !inserted) {
     await serviceClient.storage.from('cvs').remove([fileName]);
-    console.error('[postulaciones] Error guardando postulación:', dbError);
+    log.error('postulaciones.insert_failed', {
+      error: dbError?.message ?? 'no data',
+    });
+    void captureException(dbError ?? new Error('postulacion insert failed'), {
+      tags: { component: 'postulaciones', phase: 'insert' },
+    });
     return json({ error: 'Error al guardar la postulación. Intenta de nuevo.' }, 500);
   }
 

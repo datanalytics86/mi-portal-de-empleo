@@ -244,7 +244,7 @@ const email = Astro.locals.session?.user?.email ?? '';
                     <button
                       type="submit"
                       class="btn-secondary"
-                      onclick="return confirm('¿Desactivar esta oferta?')"
+                      data-confirm="¿Desactivar esta oferta?"
                     >
                       {oferta.activa ? 'Desactivar' : 'Activar'}
                     </button>
@@ -291,6 +291,19 @@ const email = Astro.locals.session?.user?.email ?? '';
     ['metric-activas', 'metric-postulaciones', 'metric-expiradas'].forEach(id => {
       const el = document.getElementById(id);
       if (el) animateCounter(el);
+    });
+
+    // CSP strict: sin onclick inline — confirm vía data-confirm
+    document.querySelectorAll<HTMLFormElement>('form[action="/api/ofertas/desactivar"]').forEach((form) => {
+      if (form.dataset.confirmBound === '1') return;
+      form.dataset.confirmBound = '1';
+      form.addEventListener('submit', (e) => {
+        const btn = form.querySelector<HTMLButtonElement>('[data-confirm]');
+        const msg = btn?.dataset.confirm;
+        if (msg && !window.confirm(msg)) {
+          e.preventDefault();
+        }
+      });
     });
   });
 </script>

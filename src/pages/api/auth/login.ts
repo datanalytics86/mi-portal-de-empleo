@@ -6,6 +6,7 @@ import {
   getClientIp,
   rateLimitResponse,
 } from '../../../lib/rate-limit';
+import { log, captureException } from '../../../lib/observability';
 import { z } from 'zod';
 
 const LoginSchema = z.object({
@@ -60,17 +61,30 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   const { email, password } = parsed.data;
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error || !data.session) {
-    // Mensaje genérico: no revelar si el email existe
-    return new Response(JSON.stringify({ error: 'Email o contraseña incorrectos.' }), {
-      status: 401,
+  let sessionToken: string | null = null;
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data.session) {
+      // Mensaje genérico: no revelar si el email existe
+      log.info('auth.login_failed', { reason: 'invalid_credentials' });
+      return new Response(JSON.stringify({ error: 'Email o contraseña incorrectos.' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    sessionToken = data.session.access_token;
+  } catch (err) {
+    log.error('auth.login_exception', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    void captureException(err, { tags: { component: 'auth', action: 'login' } });
+    return new Response(JSON.stringify({ error: 'Error al iniciar sesión. Intenta de nuevo.' }), {
+      status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
   }
 
-  cookies.set(SESSION_COOKIE, data.session.access_token, {
+  cookies.set(SESSION_COOKIE, sessionToken, {
     path: '/',
     httpOnly: true,
     secure: true,
