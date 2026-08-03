@@ -24,8 +24,9 @@ Candidatos postulan **sin registro** (solo suben su CV). Empleadores publican of
   - **Fail-open:** si el parse falla, la postulación y el CV se guardan igual.
 - **Dashboard empleador** — tags de keywords, resumen del CV, % match, filtro por skill, export CSV.
 - **Privacidad** — CVs en bucket privado; retención ~90 días (cron de limpieza).
-- **Rate limiting** — postulaciones (3/IP/h), login (10/IP/15 min) y registro (5/IP/h). Upstash Redis opcional; fallback in-memory.
-- **Security headers** — CSP, X-Content-Type-Options, X-Frame-Options, HSTS, Permissions-Policy.
+- **Rate limiting** — postulaciones (3/IP/h); login (10/15 min) y registro (5/h) por **IP + email** (el más restrictivo gana). Upstash Redis opcional; fallback in-memory.
+- **Security headers** — CSP con nonce por request (scripts controlados) + `unsafe-inline` documentado para Astro VT; X-Content-Type-Options, X-Frame-Options, HSTS, COOP, Permissions-Policy.
+- **Paginación** — ofertas públicas y dashboard; postulaciones con `ORDER BY match_score NULLS LAST` + `range` nativo (CSV exporta el set completo).
 
 ---
 
