@@ -1,16 +1,39 @@
 import type { APIRoute } from 'astro';
 import { supabase, createServiceClient } from '../../../lib/supabase';
 import { SESSION_COOKIE, SESSION_MAX_AGE } from '../../../lib/auth';
+import {
+  checkRateLimit,
+  getClientIp,
+  rateLimitResponse,
+} from '../../../lib/rate-limit';
 import { z } from 'zod';
 
 const RegistroSchema = z.object({
   empresa: z.string().min(2, 'Nombre de empresa demasiado corto').max(100),
-  email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
+  email: z.string().email('Email inválido').max(200),
+  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres').max(200),
 });
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  const form = await request.formData();
+  const ip = getClientIp(request);
+  const rl = await checkRateLimit(ip, 'auth-registro');
+  if (!rl.success) {
+    return rateLimitResponse(
+      rl,
+      'Demasiados intentos de registro. Espera una hora e inténtalo de nuevo.',
+    );
+  }
+
+  let form: FormData;
+  try {
+    form = await request.formData();
+  } catch {
+    return new Response(JSON.stringify({ error: 'Datos inválidos.' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   const parsed = RegistroSchema.safeParse({
     empresa: form.get('empresa'),
     email: (form.get('email') as string)?.trim().toLowerCase(),
@@ -20,7 +43,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   if (!parsed.success) {
     const msg = parsed.error.errors[0]?.message || 'Datos inválidos.';
     return new Response(JSON.stringify({ error: msg }), {
-      status: 400, headers: { 'Content-Type': 'application/json' },
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -34,7 +58,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       ? 'Este email ya está registrado.'
       : 'Error al crear la cuenta.';
     return new Response(JSON.stringify({ error: msg }), {
-      status: 400, headers: { 'Content-Type': 'application/json' },
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -50,7 +75,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Rollback: eliminar el usuario creado
     await serviceClient.auth.admin.deleteUser(authData.user.id);
     return new Response(JSON.stringify({ error: 'Error al guardar los datos. Intenta de nuevo.' }), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -64,12 +90,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       maxAge: SESSION_MAX_AGE,
     });
     return new Response(JSON.stringify({ ok: true }), {
-      status: 200, headers: { 'Content-Type': 'application/json' },
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
   // Supabase requiere confirmación de email — informar al frontend
   return new Response(JSON.stringify({ ok: true, requiresEmailConfirmation: true }), {
-    status: 200, headers: { 'Content-Type': 'application/json' },
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
   });
 };

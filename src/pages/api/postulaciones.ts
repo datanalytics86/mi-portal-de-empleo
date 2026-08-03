@@ -7,31 +7,12 @@ import {
   MAX_CV_SIZE,
   type CvFormat,
 } from '../../lib/cv-parser';
+import {
+  checkRateLimit,
+  getClientIp,
+  rateLimitHeaders,
+} from '../../lib/rate-limit';
 import { z } from 'zod';
-
-const RATE_LIMIT_MAX = 3;
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hora
-
-// Rate limiting en memoria (suficiente para un solo proceso; usar Redis en multi-instancia)
-const rateLimitMap = new Map<string, number[]>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const timestamps = (rateLimitMap.get(ip) || []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
-  if (timestamps.length >= RATE_LIMIT_MAX) return true;
-  timestamps.push(now);
-  rateLimitMap.set(ip, timestamps);
-
-  if (rateLimitMap.size > 100) {
-    for (const [key, ts] of rateLimitMap) {
-      const active = ts.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
-      if (active.length === 0) rateLimitMap.delete(key);
-      else rateLimitMap.set(key, active);
-    }
-  }
-
-  return false;
-}
 
 const PostulacionSchema = z.object({
   oferta_id: z.string().uuid('ID de oferta inválido'),
@@ -142,15 +123,20 @@ async function runParseInBackground(opts: {
 }
 
 export const POST: APIRoute = async ({ request }) => {
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('cf-connecting-ip') ||
-    'unknown';
-
-  if (isRateLimited(ip)) {
-    return json(
-      { error: 'Demasiadas postulaciones. Espera una hora antes de intentarlo de nuevo.' },
-      429,
+  const ip = getClientIp(request);
+  const rl = await checkRateLimit(ip, 'postulaciones');
+  if (!rl.success) {
+    return new Response(
+      JSON.stringify({
+        error: 'Demasiadas postulaciones. Espera una hora antes de intentarlo de nuevo.',
+      }),
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          ...rateLimitHeaders(rl),
+        },
+      },
     );
   }
 
