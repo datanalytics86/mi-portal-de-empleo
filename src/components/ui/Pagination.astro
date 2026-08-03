@@ -1,0 +1,104 @@
+---
+import type { PageInfo } from '../../lib/pagination';
+import { pageHref } from '../../lib/pagination';
+
+interface Props {
+  pageInfo: PageInfo;
+  pathname: string;
+  searchParams: URLSearchParams;
+  /** Etiqueta accesible del listado */
+  label?: string;
+}
+
+const { pageInfo, pathname, searchParams, label = 'Paginación' } = Astro.props;
+const { page, totalPages, total, hasPrev, hasNext, pageSize } = pageInfo;
+
+if (totalPages <= 1 || total === 0) {
+  return null;
+}
+
+const prevHref = pageHref(pathname, searchParams, page - 1);
+const nextHref = pageHref(pathname, searchParams, page + 1);
+
+// Ventana de páginas compacta (máx. 5 números)
+const windowSize = 5;
+let start = Math.max(1, page - Math.floor(windowSize / 2));
+let end = Math.min(totalPages, start + windowSize - 1);
+start = Math.max(1, end - windowSize + 1);
+const pages: number[] = [];
+for (let p = start; p <= end; p++) pages.push(p);
+
+const fromItem = (page - 1) * pageSize + 1;
+const toItem = Math.min(page * pageSize, total);
+---
+
+<nav class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3" aria-label={label}>
+  <p class="text-xs text-slate-500 font-medium tabular-nums order-2 sm:order-1">
+    {fromItem}–{toItem} de {total}
+  </p>
+  <div class="flex items-center gap-1.5 order-1 sm:order-2">
+    {hasPrev ? (
+      <a
+        href={prevHref}
+        class="inline-flex items-center gap-1 min-h-10 px-3 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors"
+        rel="prev"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Anterior
+      </a>
+    ) : (
+      <span
+        class="inline-flex items-center gap-1 min-h-10 px-3 text-sm font-semibold text-slate-300 border border-slate-100 rounded-xl bg-slate-50 cursor-not-allowed"
+        aria-disabled="true"
+      >
+        Anterior
+      </span>
+    )}
+
+    <div class="hidden sm:flex items-center gap-1">
+      {pages.map((p) =>
+        p === page ? (
+          <span
+            class="min-w-10 min-h-10 inline-flex items-center justify-center text-sm font-bold rounded-xl bg-brand-600 text-white shadow-soft"
+            aria-current="page"
+          >
+            {p}
+          </span>
+        ) : (
+          <a
+            href={pageHref(pathname, searchParams, p)}
+            class="min-w-10 min-h-10 inline-flex items-center justify-center text-sm font-semibold rounded-xl text-slate-600 border border-slate-200 bg-white hover:bg-brand-50 hover:border-brand-200 hover:text-brand-700 transition-colors"
+          >
+            {p}
+          </a>
+        ),
+      )}
+    </div>
+
+    <span class="sm:hidden text-xs font-semibold text-slate-500 tabular-nums px-2">
+      {page} / {totalPages}
+    </span>
+
+    {hasNext ? (
+      <a
+        href={nextHref}
+        class="inline-flex items-center gap-1 min-h-10 px-3 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors"
+        rel="next"
+      >
+        Siguiente
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    ) : (
+      <span
+        class="inline-flex items-center gap-1 min-h-10 px-3 text-sm font-semibold text-slate-300 border border-slate-100 rounded-xl bg-slate-50 cursor-not-allowed"
+        aria-disabled="true"
+      >
+        Siguiente
+      </span>
+    )}
+  </div>
+</nav>

@@ -24,7 +24,8 @@ Candidatos postulan **sin registro** (solo suben su CV). Empleadores publican of
   - **Fail-open:** si el parse falla, la postulación y el CV se guardan igual.
 - **Dashboard empleador** — tags de keywords, resumen del CV, % match, filtro por skill, export CSV.
 - **Privacidad** — CVs en bucket privado; retención ~90 días (cron de limpieza).
-- **Rate limiting** — máx. 3 postulaciones por IP por hora.
+- **Rate limiting** — postulaciones (3/IP/h), login (10/IP/15 min) y registro (5/IP/h). Upstash Redis opcional; fallback in-memory.
+- **Security headers** — CSP, X-Content-Type-Options, X-Frame-Options, HSTS, Permissions-Policy.
 
 ---
 
@@ -68,7 +69,13 @@ XAI_MODEL=grok-3-mini
 OCR_SPACE_API_KEY=        # OCR cloud para PDFs escaneados (recomendado en Vercel)
 CV_OCR_ENABLED=true
 CV_OCR_MAX_PAGES=3
+
+# Rate limiting distribuido (recomendado en Vercel multi-instancia)
+UPSTASH_REDIS_REST_URL=   # https://console.upstash.com → Redis → REST URL
+UPSTASH_REDIS_REST_TOKEN= # REST TOKEN
 ```
+
+Sin Upstash la app sigue funcionando con rate limit **in-memory por instancia** (suficiente en local y en un solo proceso).
 
 Ver `.env.example` completo.
 
@@ -124,6 +131,8 @@ Documentación detallada:
 | `npm run dev` | Servidor de desarrollo |
 | `npm run build` | Build de producción |
 | `npm run preview` | Preview del build |
+| `npm test` | Tests unitarios (Vitest) |
+| `npm run test:watch` | Vitest en modo watch |
 
 ---
 

@@ -1,10 +1,36 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import EmptyState from '../../components/ui/EmptyState.astro';
+import Pagination from '../../components/ui/Pagination.astro';
 import { TIPOS } from '../../lib/constants';
+import {
+  DASHBOARD_PAGE_SIZE,
+  buildPageInfo,
+  parsePage,
+} from '../../lib/pagination';
 
 const { client, empleador } = Astro.locals.session!;
+const { searchParams, pathname } = Astro.url;
+const page = parsePage(searchParams.get('page'));
 
+// Métricas globales (todas las ofertas del empleador, sin paginar)
+const { data: allOfertas } = await client
+  .from('ofertas')
+  .select(`
+    id, activa, expira_en,
+    postulaciones(count)
+  `)
+  .eq('empleador_id', empleador.id);
+
+const now = new Date();
+
+const ofertasActivas = allOfertas?.filter(o => o.activa && new Date(o.expira_en) >= now).length ?? 0;
+const ofertasExpiradas = allOfertas?.filter(o => !o.activa || new Date(o.expira_en) < now).length ?? 0;
+const totalPostulaciones = allOfertas?.reduce((sum, o) => sum + ((o.postulaciones as { count: number }[])?.[0]?.count ?? 0), 0) ?? 0;
+const totalOfertas = allOfertas?.length ?? 0;
+const pageInfo = buildPageInfo(page, DASHBOARD_PAGE_SIZE, totalOfertas);
+
+// Página de listado
 const { data: ofertas } = await client
   .from('ofertas')
   .select(`
@@ -12,13 +38,8 @@ const { data: ofertas } = await client
     postulaciones(count)
   `)
   .eq('empleador_id', empleador.id)
-  .order('created_at', { ascending: false });
-
-const now = new Date();
-
-const ofertasActivas = ofertas?.filter(o => o.activa && new Date(o.expira_en) >= now).length ?? 0;
-const ofertasExpiradas = ofertas?.filter(o => !o.activa || new Date(o.expira_en) < now).length ?? 0;
-const totalPostulaciones = ofertas?.reduce((sum, o) => sum + ((o.postulaciones as { count: number }[])?.[0]?.count ?? 0), 0) ?? 0;
+  .order('created_at', { ascending: false })
+  .range(pageInfo.from, pageInfo.to);
 
 const ofertasDisplay = (ofertas ?? []).map((oferta) => {
   const expirada = new Date(oferta.expira_en) < now;
@@ -134,9 +155,12 @@ const email = Astro.locals.session?.user?.email ?? '';
           <div>
             <h2 class="text-lg font-extrabold text-slate-900 tracking-tight">Tus ofertas</h2>
             <p class="text-sm text-slate-500 mt-0.5">
-              {ofertasDisplay.length} publicaci{ofertasDisplay.length === 1 ? 'ón' : 'ones'}
+              {totalOfertas} publicaci{totalOfertas === 1 ? 'ón' : 'ones'}
               {totalPostulaciones > 0 && (
                 <span> · <span class="font-semibold text-brand-600">{totalPostulaciones}</span> CV{totalPostulaciones !== 1 ? 's' : ''} en total</span>
+              )}
+              {pageInfo.totalPages > 1 && (
+                <span class="text-slate-400"> · pág. {pageInfo.page}/{pageInfo.totalPages}</span>
               )}
             </p>
           </div>
@@ -230,6 +254,12 @@ const email = Astro.locals.session?.user?.email ?? '';
             </div>
           ))}
         </div>
+        <Pagination
+          pageInfo={pageInfo}
+          pathname={pathname}
+          searchParams={searchParams}
+          label="Paginación de ofertas del dashboard"
+        />
       </div>
     )}
   </div>
