@@ -18,13 +18,20 @@ const categoriaRaw = sanitizeSearchParam(searchParams.get('categoria'), 40);
 const categoria = (CATEGORIAS as readonly string[]).includes(categoriaRaw) ? categoriaRaw : '';
 const page = parsePage(searchParams.get('page'));
 
-const { ofertas, total, mapaOfertas, pageInfo } = await loadPublicOfertas({
+const { ofertas, total, demoCount, realCount, mapaOfertas, pageInfo } = await loadPublicOfertas({
   q,
   tipo,
   comuna,
   categoria,
   page,
 });
+
+const catalogAllDemo = realCount === 0 && demoCount > 0;
+const counterLabel = catalogAllDemo
+  ? `${demoCount} ofertas de demostración`
+  : realCount > 0 && demoCount > 0
+    ? `${realCount} vigentes · ${demoCount} de demostración`
+    : null;
 
 const hayFiltros = q || tipo || comuna || categoria;
 const conCoords = mapaOfertas.filter((o) => o.lat && o.lng).length;
@@ -67,6 +74,12 @@ function buildCatUrl(cat: string | null) {
 
       <CvEnlistModal />
 
+      {demoCount > 0 && (
+        <p class="mt-8 max-w-xl text-sm text-muted-foreground border border-border rounded-card px-4 py-3" role="note">
+          Estas {demoCount} ofertas son de demostración. No hay un empleador real detrás. Sirven para probar el portal.
+        </p>
+      )}
+
       <form
         method="get"
         role="search"
@@ -98,8 +111,14 @@ function buildCatUrl(cat: string | null) {
       <div id="listado-ofertas" class="lg:col-span-3">
         <div class="flex flex-wrap items-baseline justify-between gap-3 mb-4">
           <p class="text-sm text-muted-foreground">
-            <span class="text-foreground font-semibold tabular-nums">{total}</span>
-            {' '}oferta{total !== 1 ? 's' : ''}
+            {counterLabel ? (
+              <span class="text-foreground font-semibold tabular-nums">{counterLabel}</span>
+            ) : (
+              <>
+                <span class="text-foreground font-semibold tabular-nums">{total}</span>
+                {' '}oferta{total !== 1 ? 's' : ''}
+              </>
+            )}
             {hayFiltros && <span class="ml-1.5">· filtrado</span>}
           </p>
           {hayFiltros && (
@@ -151,7 +170,6 @@ function buildCatUrl(cat: string | null) {
             placeholder="Comuna"
             class="input-field !w-40 !py-2 text-sm"
           />
-          <button type="submit" class="btn-secondary !py-2">Filtrar</button>
         </form>
 
         {!ofertas || ofertas.length === 0 ? (
@@ -161,7 +179,7 @@ function buildCatUrl(cat: string | null) {
             </p>
             <p class="text-sm text-muted-foreground mt-2 max-w-sm">
               {hayFiltros
-                ? 'Prueba otra búsqueda o limpia los filtros.'
+                ? 'Prueba sin tildes o con otra forma (enfermero / enfermera) o limpia los filtros.'
                 : 'Cuando una empresa publique, postulas solo con tu CV.'}
             </p>
             {hayFiltros ? (
@@ -182,6 +200,7 @@ function buildCatUrl(cat: string | null) {
                 comuna={oferta.comuna}
                 created_at={oferta.created_at}
                 expira_en={oferta.expira_en}
+                is_demo={oferta.is_demo === true}
               />
             ))}
           </div>
@@ -209,6 +228,15 @@ function buildCatUrl(cat: string | null) {
     </div>
   </div>
 </Layout>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const tipo = document.getElementById('filter-tipo') as HTMLSelectElement | null;
+    if (!tipo || tipo.dataset.bound === '1') return;
+    tipo.dataset.bound = '1';
+    tipo.addEventListener('change', () => tipo.form?.requestSubmit());
+  });
+</script>
 
 <script define:vars={{ mapaOfertas, BRAND_HEX, MAP_TILE_LIGHT }}>
   document.addEventListener('astro:page-load', () => {

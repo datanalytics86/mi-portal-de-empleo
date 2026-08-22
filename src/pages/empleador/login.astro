@@ -18,6 +18,7 @@ const error = Astro.url.searchParams.get('error');
           ¿No tienes cuenta?{' '}
           <a href="/empleador/registro" class="text-accent hover:text-foreground font-medium">Regístrate gratis</a>
         </p>
+        <p class="text-muted-foreground mt-2 text-xs">El acceso demo no está activo. Crea una cuenta real o pide el re-seed de Auth.</p>
       </div>
 
       <div class="card p-8 quiet-enter" style="animation-delay:80ms">
@@ -135,10 +136,18 @@ const error = Astro.url.searchParams.get('error');
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!btn || !btnTxt || !errEl) return;
+      hideLoginError();
+
+      const email = (form.querySelector('#login-email') as HTMLInputElement | null)?.value.trim() || '';
+      const password = (form.querySelector('#login-password') as HTMLInputElement | null)?.value || '';
+      if (!email || !password) {
+        showLoginError('Email y contraseña requeridos.');
+        return;
+      }
+
       btnTxt.innerHTML = '<span class="spinner" aria-hidden="true"></span> Ingresando…';
       btn.disabled = true;
       btn.setAttribute('aria-busy', 'true');
-      hideLoginError();
 
       try {
         const body = new FormData(form);
@@ -161,11 +170,15 @@ const error = Astro.url.searchParams.get('error');
             ? `Demasiados intentos. Espera ${retry}s e inténtalo de nuevo.`
             : 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.';
         } else if (res.status === 403) {
-          msg = 'Demasiados intentos';
+          msg = data.error || 'Origen no permitido. Recarga la página e intenta de nuevo.';
+        } else if (res.status === 401) {
+          msg = data.error || 'Email o contraseña incorrectos.';
         } else if (data.error) {
           msg = data.error;
         } else if (res.status === 400) {
           msg = 'Email y contraseña requeridos.';
+        } else if (res.status > 0) {
+          msg = 'No pudimos iniciar sesión. Intenta de nuevo.';
         }
         showLoginError(msg);
         btnTxt.textContent = 'Ingresar';

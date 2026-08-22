@@ -40,6 +40,8 @@ interface ImportMetaEnv {
   readonly SENTRY_DSN?: string;
   /** Sample rate de traces Sentry (default 0.05) */
   readonly SENTRY_TRACES_SAMPLE_RATE?: string;
+  /** Bearer del cron /api/cron/limpiar */
+  readonly CRON_SECRET?: string;
 }
 
 interface ImportMeta {

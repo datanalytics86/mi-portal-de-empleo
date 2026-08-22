@@ -148,7 +148,13 @@ async function main() {
     }));
     const res = await sql`
       INSERT INTO public.ofertas ${sql(slice)}
-      ON CONFLICT (id) DO NOTHING
+      ON CONFLICT (id) DO UPDATE SET
+        titulo = EXCLUDED.titulo,
+        descripcion = EXCLUDED.descripcion,
+        empresa = EXCLUDED.empresa,
+        categoria = EXCLUDED.categoria,
+        comuna = EXCLUDED.comuna
+      WHERE public.ofertas.is_demo = TRUE
     `;
     inserted += res.count ?? slice.length;
     if ((i / BATCH) % 4 === 0) console.log('  ', i + slice.length, '/', rows.length);

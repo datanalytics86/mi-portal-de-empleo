@@ -163,6 +163,12 @@ const cspNonce = Astro.locals.cspNonce ?? '';
         <div class="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
           <p class="text-xs text-muted-foreground">
             &copy; {year} Portal de Empleos Chile
+            {' · '}
+            <a href="/privacidad" class="hover:text-foreground">Privacidad</a>
+            {' · '}
+            <a href="/terminos" class="hover:text-foreground">Términos</a>
+            {' · '}
+            <a href="/cookies" class="hover:text-foreground">Cookies</a>
           </p>
           <a
             href={isEmpleador ? '/empleador/oferta/nueva' : '/empleador/login'}
@@ -270,7 +276,8 @@ const cspNonce = Astro.locals.cspNonce ?? '';
   }
   /* .alert-error usa display:flex; sin esto gana a Tailwind .hidden → franja rosa vacía */
   .alert-error.hidden,
-  .alert-success.hidden {
+  .alert-success.hidden,
+  .hidden.flex {
     display: none !important;
   }
   [hidden] {

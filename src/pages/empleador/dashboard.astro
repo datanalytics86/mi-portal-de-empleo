@@ -35,7 +35,8 @@ if (!allOfertas) {
 
 const now = new Date();
 
-const ofertasActivas = allOfertas?.filter(o => o.activa && new Date(o.expira_en) >= now).length ?? 0;
+const ofertasActivas =
+  allOfertas?.filter((o) => !o.is_demo && o.activa && new Date(o.expira_en) >= now).length ?? 0;
 const ofertasExpiradas = allOfertas?.filter(o => !o.activa || new Date(o.expira_en) < now).length ?? 0;
 const totalPostulaciones = allOfertas?.reduce((sum, o) => sum + ((o.postulaciones as { count: number }[])?.[0]?.count ?? 0), 0) ?? 0;
 const totalOfertas = allOfertas?.length ?? 0;
@@ -125,6 +126,12 @@ const email = Astro.locals.session?.user?.email ?? '';
         </div>
       </div>
 
+      {totalDemo > 0 && (
+        <p class="mt-6 text-sm text-muted-foreground max-w-xl border border-border rounded-card px-4 py-3" role="note">
+          {totalDemo} ofertas de demostración en este panel. Empresas repetidas en el seed no son un bug: el giro se reutiliza a propósito.
+        </p>
+      )}
+
       <dl class="grid grid-cols-3 gap-6 mt-8 max-w-lg">
         <div>
           <dt class="text-[10px] font-medium tracking-[0.16em] uppercase text-muted-foreground">Activas</dt>
@@ -167,6 +174,8 @@ const email = Astro.locals.session?.user?.email ?? '';
               </p>
             )}
             <p class="text-sm text-muted-foreground mt-0.5">
+              {totalOfertas - totalDemo} reales · {totalDemo} demo
+              {' · '}
               {totalOfertas} publicaci{totalOfertas === 1 ? 'ón' : 'ones'}
               {totalPostulaciones > 0 && (
                 <span> · <span class="font-semibold text-accent">{totalPostulaciones}</span> CV{totalPostulaciones !== 1 ? 's' : ''} en total</span>
@@ -256,6 +265,18 @@ const email = Astro.locals.session?.user?.email ?? '';
                   >
                     Ver CVs
                   </a>
+                  {oferta.is_demo && (
+                    <form action="/api/ofertas/marcar-real" method="post" class="inline">
+                      <input type="hidden" name="id" value={oferta.id} />
+                      <button
+                        type="submit"
+                        class="btn-secondary"
+                        data-confirm="¿Marcar esta oferta como real? Dejará de mostrarse como demostración."
+                      >
+                        Marcar real
+                      </button>
+                    </form>
+                  )}
                   <form action="/api/ofertas/desactivar" method="post" class="inline">
                     <input type="hidden" name="id" value={oferta.id} />
                     <button
@@ -311,7 +332,7 @@ const email = Astro.locals.session?.user?.email ?? '';
     });
 
     // CSP strict: sin onclick inline — confirm vía data-confirm
-    document.querySelectorAll<HTMLFormElement>('form[action="/api/ofertas/desactivar"]').forEach((form) => {
+    document.querySelectorAll<HTMLFormElement>('form[action="/api/ofertas/desactivar"], form[action="/api/ofertas/marcar-real"]').forEach((form) => {
       if (form.dataset.confirmBound === '1') return;
       form.dataset.confirmBound = '1';
       form.addEventListener('submit', (e) => {

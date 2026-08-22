@@ -157,9 +157,18 @@ export const POST: APIRoute = async ({ request }) => {
       error: err instanceof Error ? err.message : String(err),
     });
     void captureException(err, { tags: { component: 'postulaciones', phase: 'unhandled' } });
-    return json({ error: 'Error al procesar la postulación. Intenta de nuevo.' }, 500);
+    return json(
+      {
+        error:
+          'No pudimos guardar la postulación. El envío está fallando en el servidor. No reenvíes el CV.',
+      },
+      500,
+    );
   }
 };
+
+export const GET: APIRoute = () =>
+  json({ error: 'Usa el formulario de la oferta. No abras esta URL en el navegador.' }, 405);
 
 async function handlePostulacion(request: Request): Promise<Response> {
   const ip = getClientIp(request);
@@ -233,7 +242,13 @@ async function handlePostulacion(request: Request): Promise<Response> {
     void captureException(uploadError, {
       tags: { component: 'postulaciones', phase: 'upload' },
     });
-    return json({ error: 'Error al subir el CV. Intenta de nuevo.' }, 500);
+    return json(
+      {
+        error:
+          'No pudimos guardar la postulación. El envío está fallando en el servidor. No reenvíes el CV.',
+      },
+      500,
+    );
   }
 
   const nombre = parsed.data.nombre || null;
@@ -258,7 +273,13 @@ async function handlePostulacion(request: Request): Promise<Response> {
     void captureException(dbError, {
       tags: { component: 'postulaciones', phase: 'insert' },
     });
-    return json({ error: 'Error al guardar la postulación. Intenta de nuevo.' }, 500);
+    return json(
+      {
+        error:
+          'No pudimos guardar la postulación. El envío está fallando en el servidor. No reenvíes el CV.',
+      },
+      500,
+    );
   }
 
   const ofertaTexto = [
