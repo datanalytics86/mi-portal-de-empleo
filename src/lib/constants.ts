@@ -5,9 +5,24 @@ export const TIPOS: Record<string, string> = {
   practica: 'Práctica',
 };
 
+/** Categorías priorizadas para el nicho operarios / no-titulados (Free Stage) */
 export const CATEGORIAS = [
-  'Tecnología', 'Ventas', 'Marketing', 'Finanzas', 'Administración',
-  'Salud', 'Educación', 'Operaciones', 'Diseño', 'Legal', 'Otro',
+  'Operarios',
+  'Construcción',
+  'Minería / Faena',
+  'Logística / Bodega',
+  'Choferes / Transporte',
+  'Aseo / Limpieza',
+  'Agro / Campo',
+  'Retail / Piso',
+  'Servicios / Auxiliares',
+  'Cocina / Gastronomía',
+  'Operaciones',
+  'Salud',
+  'Administración',
+  'Ventas',
+  'Tecnología',
+  'Otro',
 ] as const;
 
 export type Categoria = (typeof CATEGORIAS)[number];
