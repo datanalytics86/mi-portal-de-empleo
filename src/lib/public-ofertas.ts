@@ -2,6 +2,7 @@ import { MAP_MARKERS_CAP, buildPageInfo, DEFAULT_PAGE_SIZE } from './pagination'
 import { filterDemoOfertas, getDemoOferta, type PublicOferta } from './demo-catalog';
 import { getSql, withSqlTimeout } from './neon';
 import { log } from './observability';
+import { foldSearch, likeSafe, searchNeedles, SQL_ACCENT_FROM, SQL_ACCENT_TO } from './search-fold';
 
 export type PublicFilters = {
   q?: string;
@@ -16,6 +17,8 @@ export type PublicFilters = {
 export type PublicListResult = {
   ofertas: PublicOferta[];
   total: number;
+  demoCount: number;
+  realCount: number;
   mapaOfertas: Array<Pick<PublicOferta, 'id' | 'titulo' | 'empresa' | 'lat' | 'lng' | 'comuna' | 'categoria'>>;
   pageInfo: ReturnType<typeof buildPageInfo>;
 };
@@ -35,6 +38,7 @@ function mapRow(r: Record<string, unknown>): PublicOferta {
     expira_en: new Date(String(r.expira_en)).toISOString(),
     empleador_id: String(r.empleador_id ?? ''),
     created_at: new Date(String(r.created_at)).toISOString(),
+    is_demo: r.is_demo === true,
   };
 }
 
@@ -48,6 +52,8 @@ function fromCatalog(filters: PublicFilters): PublicListResult {
   return {
     ofertas,
     total: all.length,
+    demoCount: all.length,
+    realCount: 0,
     mapaOfertas: all.slice(0, mapCap).map((o) => ({
       id: o.id,
       titulo: o.titulo,
@@ -72,32 +78,45 @@ export async function loadPublicOfertas(filters: PublicFilters): Promise<PublicL
   const tipo = filters.tipo || '';
   const comuna = (filters.comuna || '').trim();
   const categoria = filters.categoria || '';
-  const qLike = q ? `%${q}%` : '';
-  const comunaLike = comuna ? `%${comuna}%` : '';
+  const needles = searchNeedles(q);
+  const qFold = foldSearch(q);
+  const qLike1 = needles[0] ? `%${likeSafe(needles[0])}%` : '';
+  const qLike2 = needles[1] ? `%${likeSafe(needles[1])}%` : qLike1;
+  const comunaFold = foldSearch(comuna);
+  const comunaLike = comunaFold ? `%${likeSafe(comunaFold)}%` : '';
 
   const queried = await withSqlTimeout(
     (async () => {
+      const splitRows = await sql<{ demo: number; reales: number }[]>`
+        SELECT
+          COUNT(*) FILTER (WHERE COALESCE(is_demo, FALSE) = TRUE)::int AS demo,
+          COUNT(*) FILTER (WHERE COALESCE(is_demo, FALSE) = FALSE)::int AS reales
+        FROM public.ofertas
+        WHERE activa = TRUE AND expira_en >= NOW()
+      `;
       const countRows = await sql<{ count: number }[]>`
         SELECT COUNT(*)::int AS count
         FROM public.ofertas
         WHERE activa = TRUE
           AND expira_en >= NOW()
-          AND (${q} = '' OR titulo ILIKE ${qLike} OR empresa ILIKE ${qLike})
+          AND (${qFold} = '' OR translate(lower(coalesce(titulo,'') || ' ' || coalesce(empresa,'') || ' ' || coalesce(descripcion,'')), ${SQL_ACCENT_FROM}, ${SQL_ACCENT_TO}) LIKE ${qLike1}
+            OR translate(lower(coalesce(titulo,'') || ' ' || coalesce(empresa,'') || ' ' || coalesce(descripcion,'')), ${SQL_ACCENT_FROM}, ${SQL_ACCENT_TO}) LIKE ${qLike2})
           AND (${tipo} = '' OR tipo_empleo = ${tipo})
-          AND (${comuna} = '' OR comuna ILIKE ${comunaLike})
+          AND (${comunaFold} = '' OR translate(lower(coalesce(comuna,'')), ${SQL_ACCENT_FROM}, ${SQL_ACCENT_TO}) LIKE ${comunaLike})
           AND (${categoria} = '' OR categoria = ${categoria})
       `;
       const total = countRows[0]?.count ?? 0;
       const pageInfo = buildPageInfo(page, pageSize, total);
       const rows = await sql`
         SELECT id, titulo, descripcion, empresa, tipo_empleo, categoria, comuna,
-               lat, lng, activa, expira_en, empleador_id, created_at
+               lat, lng, activa, expira_en, empleador_id, created_at, is_demo
         FROM public.ofertas
         WHERE activa = TRUE
           AND expira_en >= NOW()
-          AND (${q} = '' OR titulo ILIKE ${qLike} OR empresa ILIKE ${qLike})
+          AND (${qFold} = '' OR translate(lower(coalesce(titulo,'') || ' ' || coalesce(empresa,'') || ' ' || coalesce(descripcion,'')), ${SQL_ACCENT_FROM}, ${SQL_ACCENT_TO}) LIKE ${qLike1}
+            OR translate(lower(coalesce(titulo,'') || ' ' || coalesce(empresa,'') || ' ' || coalesce(descripcion,'')), ${SQL_ACCENT_FROM}, ${SQL_ACCENT_TO}) LIKE ${qLike2})
           AND (${tipo} = '' OR tipo_empleo = ${tipo})
-          AND (${comuna} = '' OR comuna ILIKE ${comunaLike})
+          AND (${comunaFold} = '' OR translate(lower(coalesce(comuna,'')), ${SQL_ACCENT_FROM}, ${SQL_ACCENT_TO}) LIKE ${comunaLike})
           AND (${categoria} = '' OR categoria = ${categoria})
         ORDER BY created_at DESC
         OFFSET ${pageInfo.from}
@@ -108,9 +127,10 @@ export async function loadPublicOfertas(filters: PublicFilters): Promise<PublicL
         FROM public.ofertas
         WHERE activa = TRUE
           AND expira_en >= NOW()
-          AND (${q} = '' OR titulo ILIKE ${qLike} OR empresa ILIKE ${qLike})
+          AND (${qFold} = '' OR translate(lower(coalesce(titulo,'') || ' ' || coalesce(empresa,'') || ' ' || coalesce(descripcion,'')), ${SQL_ACCENT_FROM}, ${SQL_ACCENT_TO}) LIKE ${qLike1}
+            OR translate(lower(coalesce(titulo,'') || ' ' || coalesce(empresa,'') || ' ' || coalesce(descripcion,'')), ${SQL_ACCENT_FROM}, ${SQL_ACCENT_TO}) LIKE ${qLike2})
           AND (${tipo} = '' OR tipo_empleo = ${tipo})
-          AND (${comuna} = '' OR comuna ILIKE ${comunaLike})
+          AND (${comunaFold} = '' OR translate(lower(coalesce(comuna,'')), ${SQL_ACCENT_FROM}, ${SQL_ACCENT_TO}) LIKE ${comunaLike})
           AND (${categoria} = '' OR categoria = ${categoria})
         ORDER BY created_at DESC
         LIMIT ${mapCap}
@@ -118,6 +138,8 @@ export async function loadPublicOfertas(filters: PublicFilters): Promise<PublicL
       return {
         ofertas: rows.map((r) => mapRow(r as Record<string, unknown>)),
         total,
+        demoCount: splitRows[0]?.demo ?? 0,
+        realCount: splitRows[0]?.reales ?? 0,
         mapaOfertas: mapRows.map((o) => ({
           id: String(o.id),
           titulo: String(o.titulo),
@@ -150,7 +172,7 @@ export async function loadPublicOferta(id: string): Promise<PublicOferta | null>
       (async () => {
         const rows = await sql`
           SELECT id, titulo, descripcion, empresa, tipo_empleo, categoria, comuna,
-                 lat, lng, activa, expira_en, empleador_id, created_at
+                 lat, lng, activa, expira_en, empleador_id, created_at, is_demo
           FROM public.ofertas
           WHERE id = ${id}::uuid
           LIMIT 1
@@ -170,7 +192,7 @@ export async function loadOfertasForRecommend(limit = 800): Promise<PublicOferta
     const rows = await withSqlTimeout(
       sql`
         SELECT id, titulo, descripcion, empresa, tipo_empleo, categoria, comuna,
-               lat, lng, activa, expira_en, empleador_id, created_at
+               lat, lng, activa, expira_en, empleador_id, created_at, is_demo
         FROM public.ofertas
         WHERE activa = TRUE AND expira_en >= NOW()
         ORDER BY created_at DESC

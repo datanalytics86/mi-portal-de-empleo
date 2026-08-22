@@ -6,7 +6,7 @@ Candidatos postulan **sin registro** (solo suben su CV). Empleadores publican of
 
 | | |
 |---|---|
-| **Demo** | [mi-portal-de-empleo.vercel.app](https://mi-portal-de-empleo.vercel.app) |
+| **Live** | [mi-portal-de-empleo.vercel.app](https://mi-portal-de-empleo.vercel.app) — **seed de 1100 ofertas de demostración** (`is_demo=true`). No son clientes reales. |
 | **Repo** | [github.com/datanalytics86/mi-portal-de-empleo](https://github.com/datanalytics86/mi-portal-de-empleo) |
 | **Stack** | Astro 5 · TypeScript · Tailwind · Supabase · Vercel |
 
@@ -120,7 +120,7 @@ Hay **dos** semillas. No son intercambiables.
 | Script | Qué crea | Dónde |
 |--------|----------|--------|
 | `scripts/seed.sql` | 2 empleadores + **12** ofertas + postulaciones con `keywords` / `match_score` | Supabase SQL Editor (`auth.users` + tablas públicas) |
-| `scripts/seed-demo-1000.sql` | Empleador demo + **1100** ofertas `is_demo=true` | Supabase SQL Editor (también cubre `auth.users`) |
+| `scripts/seed-demo-1000.sql` | **No usar** en prod (texto con `(is_demo)`). Preferir el generador | — |
 | `scripts/bootstrap-neon.mjs` | DDL + las mismas **1100** ofertas demo | Neon (`DATABASE_URL`). Es lo que alimenta el listado público en prod |
 | `scripts/seed-expired-fixture.sql` | 1 oferta expirada (`…e410`) para QA **410** | Neon o Supabase. No reescribe los IDs de las 1100 |
 | `scripts/ensure-demo-empleadores.mjs` | Recrea las cuentas Auth (password incluido) | Service role. Hace falta si el login 401 después de sembrar solo Neon |
@@ -136,11 +136,15 @@ node scripts/ensure-demo-empleadores.mjs .env.local
 psql $DATABASE_URL -f scripts/seed-expired-fixture.sql
 ```
 
-| Cuenta | Password | Empresa | Notas |
-|--------|----------|---------|--------|
-| `test-empresa1@test.cl` | `TestPass123!` | TechCorp Chile | `seed.sql` + `ensure-demo-empleadores.mjs` |
-| `test-empresa2@test.cl` | `TestPass123!` | Salud Conecta | igual |
-| `demo-ofertas@portal.cl` | `DemoPass123!` | Portal Demo Chile | dueño de las 1100 `is_demo` |
+**Live:** el acceso demo **no está activo**. Sembrar Neon (`bootstrap-neon.mjs`) **no** crea usuarios de Supabase Auth. Para login local, corre `ensure-demo-empleadores.mjs` contra el proyecto de Auth (no publiques esas claves en la UI).
+
+| Cuenta (solo seed local) | Empresa |
+|--------|---------|
+| `test-empresa1@test.cl` | TechCorp Chile |
+| `test-empresa2@test.cl` | Salud Conecta |
+| `demo-ofertas@portal.cl` | Portal Demo Chile |
+
+No uses `scripts/seed-demo-1000.sql` crudo (el texto incluye el leak `(is_demo)`). Regen: `npm run seed:neon`.
 
 Las 1100 ofertas públicas **no** salen de `seed.sql` (solo 12). El listado en [mi-portal-de-empleo.vercel.app](https://mi-portal-de-empleo.vercel.app) se sirve desde Neon (`is_demo=true`). Sembrar solo `seed.sql` no llena el home.
 

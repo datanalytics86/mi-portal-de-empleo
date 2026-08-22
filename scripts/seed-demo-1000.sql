@@ -1,3 +1,5 @@
+-- NO APLICAR EN PROD. El texto incluye leak "(is_demo)".
+-- Regen: npm run seed:neon (scripts/bootstrap-neon.mjs + demo-data.mjs).
 -- 1000+ ofertas ficticias (is_demo = true)
 -- Requiere: ALTER is_demo (scripts/migration-is-demo.sql)
 -- Empleador demo: demo-ofertas@portal.cl / DemoPass123!

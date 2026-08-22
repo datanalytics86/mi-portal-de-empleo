@@ -13,6 +13,9 @@ if (session) return Astro.redirect('/empleador/dashboard');
         <span class="brand-mark mb-5 block" aria-hidden="true"></span>
         <h1 class="text-2xl font-semibold text-foreground tracking-tight">Publica empleos gratis</h1>
         <p class="text-muted-foreground mt-1.5 text-sm">
+          Puedes crear una cuenta real. Las ofertas del listado público son seed de demostración, no clientes.
+        </p>
+        <p class="text-muted-foreground mt-1.5 text-sm">
           ¿Ya tienes cuenta?{' '}
           <a href="/empleador/login" class="text-accent hover:text-foreground font-medium">Inicia sesión</a>
         </p>
@@ -94,6 +97,11 @@ if (session) return Astro.redirect('/empleador/dashboard');
             </div>
           </div>
 
+          <label class="flex items-start gap-2.5 text-xs text-muted-foreground leading-relaxed">
+            <input type="checkbox" id="reg-privacidad" name="privacidad" class="mt-0.5 h-4 w-4 rounded border-border" />
+            <span>Acepto el <a href="/privacidad" class="text-accent hover:text-foreground font-medium">tratamiento de datos</a> de la cuenta empleador.</span>
+          </label>
+
           <div id="registro-error" class="hidden alert-error" hidden role="alert" aria-live="polite">
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -138,12 +146,37 @@ if (session) return Astro.redirect('/empleador/dashboard');
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!btn || !btnTxt || !errEl || !okEl) return;
-      btnTxt.innerHTML = '<span class="spinner" aria-hidden="true"></span> Creando cuenta…';
-      btn.disabled = true;
-      btn.setAttribute('aria-busy', 'true');
       errEl.classList.add('hidden');
       errEl.setAttribute('hidden', '');
       okEl.classList.add('hidden');
+
+      const empresa = (form.querySelector('#reg-empresa') as HTMLInputElement | null)?.value.trim() || '';
+      const email = (form.querySelector('#reg-email') as HTMLInputElement | null)?.value.trim() || '';
+      const password = (form.querySelector('#reg-password') as HTMLInputElement | null)?.value || '';
+      const showRegError = (msg: string) => {
+        const span = errEl.querySelector('span');
+        if (span) span.textContent = msg;
+        errEl.classList.remove('hidden');
+        errEl.removeAttribute('hidden');
+      };
+      if (!empresa || !email || !password) {
+        showRegError('Completa empresa, email y contraseña.');
+        return;
+      }
+      if (password.length < 8) {
+        showRegError('La contraseña debe tener al menos 8 caracteres.');
+        return;
+      }
+
+      const privacy = document.getElementById('reg-privacidad') as HTMLInputElement | null;
+      if (privacy && !privacy.checked) {
+        showRegError('Debes aceptar el tratamiento de datos.');
+        return;
+      }
+
+      btnTxt.innerHTML = '<span class="spinner" aria-hidden="true"></span> Creando cuenta…';
+      btn.disabled = true;
+      btn.setAttribute('aria-busy', 'true');
 
       try {
         const body = new FormData(form);
@@ -174,7 +207,7 @@ if (session) return Astro.redirect('/empleador/dashboard');
               ? `Demasiados intentos. Espera ${retry}s e inténtalo de nuevo.`
               : 'Demasiados intentos de registro. Espera una hora e inténtalo de nuevo.';
           } else if (res.status === 403) {
-            msg = 'Demasiados intentos';
+            msg = data.error || 'Origen no permitido. Recarga la página e intenta de nuevo.';
           }
           if (span) span.textContent = msg;
           errEl.classList.remove('hidden');

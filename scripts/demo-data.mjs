@@ -78,7 +78,7 @@ export const TITULOS = {
   ],
   Salud: [
     'Enfermero/a Clínico', 'Técnico/a en Enfermería', 'Kinesiólogo/a',
-    'Tens de Urgencia', 'Químico/a Farmacéutico', 'Matron/a',
+    'TENS de Urgencia', 'Químico/a Farmacéutico', 'Matrona',
     'Tecnólogo/a Médico', 'Auxiliar de Enfermería', 'Coordinador/a de Salud',
   ],
   Educación: [
@@ -106,23 +106,33 @@ export const TITULOS = {
   ],
 };
 
-export const EMPRESAS = [
-  'Andes Digital SpA', 'Cordillera Salud', 'Pacífico Retail', 'Norte Minero Ltda',
-  'Sur Austral Logística', 'Mapocho Consultores', 'Valle Central Alimentos',
-  'Costa Pacífico Turismo', 'Altos del Maipo Energía', 'Bosque Nativo Forestal',
-  'Río Claro Agrícola', 'Puerto Seco Transportes', 'Luz del Sur Servicios',
-  'Atacama Solar', 'Patagonia Outdoor', 'Chiloe Mariscos', 'Aconcagua Viñedos',
-  'Santiago Hub SpA', 'Biobío Industria', 'Araucanía Educa', 'Tarapacá Comercio',
-  'Maule Agroexport', 'OHiggins Construcciones', 'Los Lagos Salmones',
-  'Magallanes Servicios', 'Coquimbo Pesca', 'Antofagasta Ingeniería',
-  'Ñuble Alimentos', 'Maule Textil', 'Centro Médico Cordillera',
-  'Clínica del Valle', 'Colegio Los Alerces', 'Instituto Pacífico',
-  'Estudio Jurídico Plaza Italia', 'Abogados del Sur', 'Finanzas Andinas',
-  'Banco del Valle (filial)', 'Seguros Estrella', 'Inmobiliaria Los Peumos',
-  'Constructora Rucacura', 'Retail Andes', 'Supermercados del Centro',
-  'Farmacias del Pacífico', 'Laboratorio BioAndes', 'TechSur Chile',
-  'Datos Claros Analytics', 'Nube Austral', 'Ciber Andes', 'AppSur Desarrollo',
-];
+export const EMPRESAS_POR_GIRO = {
+  Tecnología: [
+    'Andes Digital SpA', 'TechSur Chile', 'Datos Claros Analytics', 'Nube Austral',
+    'Ciber Andes', 'AppSur Desarrollo', 'Santiago Hub SpA', 'Antofagasta Ingeniería',
+  ],
+  Ventas: ['Pacífico Retail', 'Retail Andes', 'Supermercados del Centro', 'Tarapacá Comercio'],
+  Marketing: ['Mapocho Consultores', 'Patagonia Outdoor', 'Costa Pacífico Turismo'],
+  Finanzas: ['Finanzas Andinas', 'Banco del Valle (filial)', 'Seguros Estrella'],
+  Administración: ['Luz del Sur Servicios', 'Magallanes Servicios', 'Inmobiliaria Los Peumos'],
+  Salud: [
+    'Cordillera Salud', 'Centro Médico Cordillera', 'Clínica del Valle',
+    'Farmacias del Pacífico', 'Laboratorio BioAndes',
+  ],
+  Educación: ['Araucanía Educa', 'Colegio Los Alerces', 'Instituto Pacífico'],
+  Operaciones: [
+    'Sur Austral Logística', 'Puerto Seco Transportes', 'Valle Central Alimentos',
+    'Ñuble Alimentos', 'Maule Textil',
+  ],
+  Diseño: ['Patagonia Outdoor', 'Mapocho Consultores', 'Andes Digital SpA'],
+  Legal: ['Estudio Jurídico Plaza Italia', 'Abogados del Sur'],
+  Otro: [
+    'Altos del Maipo Energía', 'Bosque Nativo Forestal', 'Río Claro Agrícola',
+    'Atacama Solar', 'Chiloé Mariscos', 'Aconcagua Viñedos', 'Biobío Industria',
+    'Maule Agroexport', "O'Higgins Construcciones", 'Los Lagos Salmones', 'Coquimbo Pesca',
+    'Constructora Rucacura', 'Norte Minero Ltda',
+  ],
+};
 
 export function demoUuid(i) {
   return `eeeeeeee-0000-4000-8000-${String(i).padStart(12, '0')}`;
@@ -140,7 +150,8 @@ export function buildDemoOfertas(now = Date.now()) {
     const cat = cats[i % cats.length];
     const titles = TITULOS[cat];
     const titulo = titles[i % titles.length];
-    const empresa = EMPRESAS[i % EMPRESAS.length];
+    const giro = EMPRESAS_POR_GIRO[cat] || EMPRESAS_POR_GIRO.Otro;
+    const empresa = giro[i % giro.length];
     const tipo = TIPOS[i % TIPOS.length];
     const [comuna, lat0, lng0] = COMUNAS[i % COMUNAS.length];
     const lat = +(lat0 + jitter(i, 0.02)).toFixed(6);

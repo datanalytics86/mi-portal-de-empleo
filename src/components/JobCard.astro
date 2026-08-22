@@ -10,6 +10,7 @@ interface Props {
   comuna: string;
   created_at: string;
   expira_en: string;
+  is_demo?: boolean;
   index?: number;
 }
 
@@ -22,9 +23,10 @@ const {
   comuna,
   created_at,
   expira_en,
+  is_demo = false,
 } = Astro.props;
 
-const esNueva = Date.now() - new Date(created_at).getTime() < 48 * 3600 * 1000;
+const esNueva = !is_demo && Date.now() - new Date(created_at).getTime() < 48 * 3600 * 1000;
 const diasRestantes = Math.ceil(
   (new Date(expira_en).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
 );
@@ -43,6 +45,9 @@ const urgenciaLabel = diasRestantes <= 1 ? 'Último día' : ('Cierra en ' + dias
           <h2 class="truncate text-[0.95rem] font-semibold tracking-tight text-foreground sm:text-base">
             {titulo}
           </h2>
+          {is_demo && (
+            <span class="shrink-0 text-[11px] font-medium text-muted-foreground">Demo</span>
+          )}
           {esNueva && (
             <span class="shrink-0 text-[11px] font-medium text-accent">Nueva</span>
           )}

@@ -1,4 +1,5 @@
 import type { TipoEmpleo } from '../types/database';
+import { matchesFolded, searchNeedles } from './search-fold';
 
 export const DEMO_EMPLEADOR_ID = 'eeeeeeee-0000-4000-8000-000000000000';
 export const DEMO_EMPLEADOR_EMAIL = 'demo-ofertas@portal.cl';
@@ -85,7 +86,7 @@ const TITULOS: Record<string, string[]> = {
   ],
   Salud: [
     'Enfermero/a Clínico', 'Técnico/a en Enfermería', 'Kinesiólogo/a',
-    'Tens de Urgencia', 'Químico/a Farmacéutico', 'Matron/a',
+    'TENS de Urgencia', 'Químico/a Farmacéutico', 'Matrona',
     'Tecnólogo/a Médico', 'Auxiliar de Enfermería', 'Coordinador/a de Salud',
   ],
   Educación: [
@@ -113,23 +114,34 @@ const TITULOS: Record<string, string[]> = {
   ],
 };
 
-const EMPRESAS = [
-  'Andes Digital SpA', 'Cordillera Salud', 'Pacífico Retail', 'Norte Minero Ltda',
-  'Sur Austral Logística', 'Mapocho Consultores', 'Valle Central Alimentos',
-  'Costa Pacífico Turismo', 'Altos del Maipo Energía', 'Bosque Nativo Forestal',
-  'Río Claro Agrícola', 'Puerto Seco Transportes', 'Luz del Sur Servicios',
-  'Atacama Solar', 'Patagonia Outdoor', 'Chiloe Mariscos', 'Aconcagua Viñedos',
-  'Santiago Hub SpA', 'Biobío Industria', 'Araucanía Educa', 'Tarapacá Comercio',
-  'Maule Agroexport', 'OHiggins Construcciones', 'Los Lagos Salmones',
-  'Magallanes Servicios', 'Coquimbo Pesca', 'Antofagasta Ingeniería',
-  'Ñuble Alimentos', 'Maule Textil', 'Centro Médico Cordillera',
-  'Clínica del Valle', 'Colegio Los Alerces', 'Instituto Pacífico',
-  'Estudio Jurídico Plaza Italia', 'Abogados del Sur', 'Finanzas Andinas',
-  'Banco del Valle (filial)', 'Seguros Estrella', 'Inmobiliaria Los Peumos',
-  'Constructora Rucacura', 'Retail Andes', 'Supermercados del Centro',
-  'Farmacias del Pacífico', 'Laboratorio BioAndes', 'TechSur Chile',
-  'Datos Claros Analytics', 'Nube Austral', 'Ciber Andes', 'AppSur Desarrollo',
-];
+/** Empresa alineada al giro de la categoría. No ciclar un pool mixto. */
+const EMPRESAS_POR_GIRO: Record<string, string[]> = {
+  Tecnología: [
+    'Andes Digital SpA', 'TechSur Chile', 'Datos Claros Analytics', 'Nube Austral',
+    'Ciber Andes', 'AppSur Desarrollo', 'Santiago Hub SpA', 'Antofagasta Ingeniería',
+  ],
+  Ventas: ['Pacífico Retail', 'Retail Andes', 'Supermercados del Centro', 'Tarapacá Comercio'],
+  Marketing: ['Mapocho Consultores', 'Patagonia Outdoor', 'Costa Pacífico Turismo'],
+  Finanzas: ['Finanzas Andinas', 'Banco del Valle (filial)', 'Seguros Estrella'],
+  Administración: ['Luz del Sur Servicios', 'Magallanes Servicios', 'Inmobiliaria Los Peumos'],
+  Salud: [
+    'Cordillera Salud', 'Centro Médico Cordillera', 'Clínica del Valle',
+    'Farmacias del Pacífico', 'Laboratorio BioAndes',
+  ],
+  Educación: ['Araucanía Educa', 'Colegio Los Alerces', 'Instituto Pacífico'],
+  Operaciones: [
+    'Sur Austral Logística', 'Puerto Seco Transportes', 'Valle Central Alimentos',
+    'Ñuble Alimentos', 'Maule Textil',
+  ],
+  Diseño: ['Patagonia Outdoor', 'Mapocho Consultores', 'Andes Digital SpA'],
+  Legal: ['Estudio Jurídico Plaza Italia', 'Abogados del Sur'],
+  Otro: [
+    'Altos del Maipo Energía', 'Bosque Nativo Forestal', 'Río Claro Agrícola',
+    'Atacama Solar', 'Chiloé Mariscos', 'Aconcagua Viñedos', 'Biobío Industria',
+    'Maule Agroexport', "O'Higgins Construcciones", 'Los Lagos Salmones', 'Coquimbo Pesca',
+    'Constructora Rucacura', 'Norte Minero Ltda',
+  ],
+};
 
 export type PublicOferta = {
   id: string;
@@ -145,6 +157,7 @@ export type PublicOferta = {
   expira_en: string;
   empleador_id: string;
   created_at: string;
+  is_demo?: boolean;
 };
 
 function demoUuid(i: number): string {
@@ -167,7 +180,8 @@ export function getDemoOfertas(): PublicOferta[] {
     const cat = cats[i % cats.length];
     const titles = TITULOS[cat];
     const titulo = titles[i % titles.length];
-    const empresa = EMPRESAS[i % EMPRESAS.length];
+    const giro = EMPRESAS_POR_GIRO[cat] || EMPRESAS_POR_GIRO.Otro;
+    const empresa = giro[i % giro.length];
     const tipo = TIPOS[i % TIPOS.length];
     const [comuna, lat0, lng0] = COMUNAS[i % COMUNAS.length];
     const lat = +(lat0 + jitter(i, 0.02)).toFixed(6);
@@ -191,6 +205,7 @@ export function getDemoOfertas(): PublicOferta[] {
       expira_en: new Date(now + daysLive * 86400000).toISOString(),
       empleador_id: DEMO_EMPLEADOR_ID,
       created_at: new Date(now - daysAgo * 86400000).toISOString(),
+      is_demo: true,
     });
   }
   cache = rows;
@@ -207,16 +222,20 @@ export function filterDemoOfertas(opts: {
   comuna?: string;
   categoria?: string;
 }): PublicOferta[] {
-  const q = (opts.q || '').trim().toLowerCase();
+  const needles = searchNeedles(opts.q || '');
+  const comunaNeedles = searchNeedles(opts.comuna || '');
   const tipo = opts.tipo || '';
-  const comuna = (opts.comuna || '').trim().toLowerCase();
   const categoria = opts.categoria || '';
   const nowIso = new Date().toISOString();
   return getDemoOfertas()
     .filter((o) => o.activa && o.expira_en >= nowIso)
-    .filter((o) => !q || o.titulo.toLowerCase().includes(q) || o.empresa.toLowerCase().includes(q))
+    .filter(
+      (o) =>
+        !needles.length ||
+        matchesFolded(`${o.titulo} ${o.empresa} ${o.descripcion}`, needles),
+    )
     .filter((o) => !tipo || o.tipo_empleo === tipo)
-    .filter((o) => !comuna || o.comuna.toLowerCase().includes(comuna))
+    .filter((o) => !comunaNeedles.length || matchesFolded(o.comuna, comunaNeedles))
     .filter((o) => !categoria || o.categoria === categoria)
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
 }
