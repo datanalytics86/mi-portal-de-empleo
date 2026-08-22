@@ -1,5 +1,11 @@
 import type { APIRoute } from 'astro';
-import { insertPerfil, storeCvFile, updatePerfil } from '../../lib/persist';
+import {
+  insertPerfil,
+  storeCvFile,
+  updatePerfil,
+  ensureDemoCatalogSeeded,
+} from '../../lib/persist';
+import { recommendOfertas } from '../../lib/recommend';
 import {
   validateCvFile,
   storageExtension,
@@ -226,6 +232,33 @@ async function handleEnlist(request: Request): Promise<Response> {
       formEmail: email,
     }),
   );
+  scheduleBackground(ensureDemoCatalogSeeded());
 
-  return json({ ok: true, id: inserted.id, parsing: true }, 200);
+  let keywords: string[] = [];
+  try {
+    const { extractCvText } = await import('../../lib/cv-parser/extract-text');
+    const { extractKeywords } = await import('../../lib/cv-parser/keywords');
+    const extracted = await Promise.race([
+      extractCvText(cvBuffer, fileCheck.format),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500)),
+    ]);
+    if (extracted?.cleaned) {
+      keywords = extractKeywords(extracted.cleaned, 20);
+    }
+  } catch {
+    /* fail-open: matching con catálogo destacado */
+  }
+
+  if (keywords.length > 0) {
+    await updatePerfil(inserted.id, { keywords }).catch(() => {
+      /* el parse de fondo lo reintenta */
+    });
+  }
+
+  const matches = recommendOfertas({ keywords, limit: 6 });
+
+  return json(
+    { ok: true, id: inserted.id, parsing: true, keywords, matches },
+    200,
+  );
 }

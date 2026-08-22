@@ -134,6 +134,11 @@ export async function loadPublicOfertas(filters: PublicFilters): Promise<PublicL
 
   if (queried && queried.total > 0) return queried;
   log.warn('public_ofertas.fallback_catalog', { reason: queried ? 'empty' : 'timeout_or_error' });
+  void import('./persist')
+    .then((m) => m.ensureDemoCatalogSeeded())
+    .catch(() => {
+      /* seed best-effort */
+    });
   return fromCatalog(filters);
 }
 

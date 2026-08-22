@@ -1,5 +1,10 @@
 import type { APIRoute } from 'astro';
-import { insertPostulacion, storeCvFile, updatePostulacion } from '../../lib/persist';
+import {
+  insertPostulacion,
+  storeCvFile,
+  updatePostulacion,
+  ensureDemoCatalogSeeded,
+} from '../../lib/persist';
 import { loadPublicOferta } from '../../lib/public-ofertas';
 import {
   validateCvFile,
@@ -279,6 +284,7 @@ async function handlePostulacion(request: Request): Promise<Response> {
       ofertaTexto,
     }),
   );
+  scheduleBackground(ensureDemoCatalogSeeded());
 
   return json({ ok: true, id: inserted.id, parsing: true }, 200);
 }

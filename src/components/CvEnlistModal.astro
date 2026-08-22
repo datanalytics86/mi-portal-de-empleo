@@ -8,6 +8,7 @@
 <dialog
   id="enlist-modal"
   class="enlist-dialog"
+  aria-modal="true"
   aria-labelledby="enlist-title"
   aria-describedby="enlist-sub"
 >
@@ -82,20 +83,21 @@
       </form>
     </div>
 
-    <div id="enlist-success" class="hidden py-4" role="status" aria-live="polite">
+    <div id="enlist-success" class="hidden py-4" hidden role="status" aria-live="polite">
       <p class="text-lg font-semibold text-foreground">Listo. Ya estás enlistado.</p>
-      <p class="text-sm text-muted-foreground mt-2 leading-relaxed">
-        Te recomendaremos ofertas que calcen con tu perfil.
+      <p id="enlist-success-sub" class="text-sm text-muted-foreground mt-2 leading-relaxed">
+        Estas ofertas calzan con tu CV.
       </p>
-      <button type="button" id="enlist-see-jobs" class="btn-primary mt-6">Ver ofertas</button>
+      <ul id="enlist-matches" class="mt-5 space-y-2"></ul>
+      <button type="button" id="enlist-see-jobs" class="btn-primary mt-6">Ver todas las ofertas</button>
     </div>
   </div>
 </dialog>
 
 <style>
   .enlist-dialog {
-    width: min(32rem, calc(100vw - 1.5rem));
-    max-height: min(92vh, 44rem);
+    width: min(34rem, calc(100vw - 1.5rem));
+    max-height: min(92vh, 48rem);
     margin: auto;
     overflow: auto;
     border: 1px solid oklch(var(--border));
@@ -121,6 +123,15 @@
   const MAX_CV = 5 * 1024 * 1024;
   const ALLOWED_EXT = ['.pdf', '.doc', '.docx'];
 
+  type Match = {
+    id: string;
+    titulo: string;
+    empresa: string;
+    comuna: string;
+    categoria: string;
+    match_score: number;
+  };
+
   function formatSize(bytes: number): string {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
@@ -133,6 +144,14 @@
     if (file.size > MAX_CV) return 'El CV supera el tamaño máximo de 5MB.';
     if (file.size === 0) return 'Debes adjuntar tu CV.';
     return null;
+  }
+
+  function focusables(root: HTMLElement): HTMLElement[] {
+    return Array.from(
+      root.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((el) => !el.hasAttribute('hidden') && el.offsetParent !== null);
   }
 
   function bindEnlist() {
@@ -152,6 +171,11 @@
     const submitTxt = document.getElementById('enlist-submit-txt');
     const formWrap = document.getElementById('enlist-form-wrap');
     const success = document.getElementById('enlist-success');
+    const matchesEl = document.getElementById('enlist-matches');
+    const successSub = document.getElementById('enlist-success-sub');
+    const closeBtn = document.getElementById('enlist-close');
+
+    let lastFocus: HTMLElement | null = null;
 
     const showError = (msg: string) => {
       const span = errEl?.querySelector('span');
@@ -164,15 +188,54 @@
       errEl?.setAttribute('hidden', '');
     };
 
+    const restoreFocus = () => {
+      const target = lastFocus && document.contains(lastFocus)
+        ? lastFocus
+        : document.getElementById('open-enlist');
+      target?.focus();
+    };
+
     const open = () => {
       hideError();
+      lastFocus = (document.activeElement as HTMLElement) || null;
       if (typeof dialog.showModal === 'function') dialog.showModal();
       else dialog.setAttribute('open', '');
+      closeBtn?.focus();
     };
+
     const close = () => {
-      dialog.close();
-      document.getElementById('open-enlist')?.focus();
+      if (typeof dialog.close === 'function' && dialog.open) dialog.close();
+      else {
+        dialog.removeAttribute('open');
+        restoreFocus();
+      }
     };
+
+    dialog.addEventListener('close', restoreFocus);
+    dialog.addEventListener('cancel', (e) => {
+      e.preventDefault();
+      close();
+    });
+
+    dialog.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const list = focusables(dialog);
+      if (list.length === 0) return;
+      const first = list[0]!;
+      const last = list[list.length - 1]!;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
 
     document.addEventListener('click', (e) => {
       const t = e.target as HTMLElement;
@@ -182,7 +245,7 @@
       }
     });
 
-    document.getElementById('enlist-close')?.addEventListener('click', close);
+    closeBtn?.addEventListener('click', close);
     document.getElementById('enlist-see-jobs')?.addEventListener('click', () => {
       close();
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -191,6 +254,36 @@
     dialog.addEventListener('click', (e) => {
       if (e.target === dialog) close();
     });
+
+    const renderMatches = (matches: Match[]) => {
+      if (!matchesEl) return;
+      matchesEl.replaceChildren();
+      if (!matches.length) {
+        if (successSub) {
+          successSub.textContent = 'Te mostramos ofertas abiertas. Explora el listado cuando quieras.';
+        }
+        return;
+      }
+      if (successSub) {
+        successSub.textContent = 'Estas ofertas calzan con tu CV.';
+      }
+      for (const m of matches) {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = '/oferta/' + encodeURIComponent(m.id);
+        a.className = 'block border border-border rounded-card px-3.5 py-3 hover:border-foreground/30';
+        const title = document.createElement('p');
+        title.className = 'text-sm font-semibold text-foreground';
+        title.textContent = m.titulo;
+        const meta = document.createElement('p');
+        meta.className = 'text-xs text-muted-foreground mt-0.5';
+        const score = m.match_score > 0 ? ' · ' + m.match_score + '% match' : '';
+        meta.textContent = m.empresa + ' · ' + m.comuna + ' · ' + m.categoria + score;
+        a.append(title, meta);
+        li.append(a);
+        matchesEl.append(li);
+      }
+    };
 
     const setCvFile = (file: File | null) => {
       if (!cvInput) return;
@@ -266,7 +359,7 @@
       submitTxt.innerHTML = '<span class="spinner" aria-hidden="true"></span> Enlistando…';
       try {
         const res = await fetch('/api/enlist', { method: 'POST', body: new FormData(form) });
-        let data: { ok?: boolean; error?: string } = {};
+        let data: { ok?: boolean; error?: string; matches?: Match[] } = {};
         const ct = res.headers.get('content-type') || '';
         if (ct.includes('application/json')) {
           try { data = await res.json(); } catch { data = {}; }
@@ -274,6 +367,10 @@
         if (res.ok && data.ok) {
           formWrap?.classList.add('hidden');
           success?.classList.remove('hidden');
+          success?.removeAttribute('hidden');
+          renderMatches(Array.isArray(data.matches) ? data.matches : []);
+          const firstLink = matchesEl?.querySelector('a') as HTMLElement | null;
+          (firstLink || document.getElementById('enlist-see-jobs'))?.focus();
         } else {
           showError(data.error || 'No pudimos guardar tu CV. Intenta de nuevo.');
           submitTxt.textContent = 'Enlistarme ahora';

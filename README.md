@@ -38,9 +38,25 @@ Candidatos postulan **sin registro** (solo suben su CV). Empleadores publican of
 |------|------------|
 | Frontend / API | Astro 5 (SSR), TypeScript, Tailwind CSS |
 | Mapa | Leaflet + OpenStreetMap |
-| Backend | Supabase (PostgreSQL, Auth, Storage) |
+| Datos públicos + postulaciones + perfiles | **Neon (PostgreSQL)** — `DATABASE_URL` / `POSTGRES_URL` |
+| Auth empleador + storage fallback | **Supabase** (Auth JWT, bucket `cvs` si no hay Blob) |
 | CV parse | `pdf-parse`, `mammoth`, Zod; OCR (`tesseract` / OCR.space); LLM opcional (xAI Grok) |
-| Deploy | Vercel (+ Edge Function opcional `parse-cv`) |
+| Matching | Overlap de keywords CV ↔ título/descripción/categoría (`src/lib/recommend.ts`) |
+| Deploy | Vercel (+ Blob opcional para CVs) |
+
+**Neon vs Supabase:** el listado, el mapa, `/api/enlist` y `/api/postulaciones` leen y escriben en Neon. El dashboard empleador (sesión, crear oferta) sigue en Supabase Auth + PostgREST. Los IDs demo `eeeeeeee-…` son los mismos en el catálogo en memoria y en Neon; si una oferta se ve en el listado (fallback) y aún no está en Neon, la postulación la **inserta** antes del FK.
+
+## Matching (enlist)
+
+```
+POST /api/enlist
+  → valida CV + guarda perfil (parse_status=pending)
+  → extrae keywords (rápido, fail-open ≤2.5s)
+  → 200 { ok, id, keywords, matches[3–6] }
+  → background: parse completo + seed del catálogo si Neon estaba vacío
+```
+
+El success del modal pinta esas ofertas. Score 0–100 (overlap + bonus categoría/comuna). Sin texto extraíble, igual se muestran 6 ofertas diversas.
 
 ---
 
@@ -63,6 +79,8 @@ PUBLIC_SUPABASE_URL=
 PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 PUBLIC_SITE_URL=https://mi-portal-de-empleo.vercel.app
+DATABASE_URL=                 # Neon — listado, enlist, postulaciones
+BLOB_READ_WRITE_TOKEN=        # Vercel Blob (CVs). Si falta, se usa Storage de Supabase
 ```
 
 **Opcionales (mejor calidad de parsing)**
@@ -196,7 +214,7 @@ Instrumentación principal: `src/lib/observability/`, `src/lib/cv-parser/index.t
 | `npm run preview` | Preview del build |
 | `npm test` | Tests unitarios (Vitest) |
 | `npm run test:watch` | Vitest en modo watch |
-| `node scripts/bootstrap-neon.mjs [env]` | DDL + 1100 ofertas demo en Neon |
+| `npm run seed:neon` | DDL + 1100 ofertas demo en Neon (`scripts/bootstrap-neon.mjs`) |
 | `node scripts/ensure-demo-empleadores.mjs [env]` | Recrea `test-empresa*@test.cl` y `demo-ofertas@portal.cl` |
 
 ---
