@@ -84,13 +84,27 @@ function buildCatUrl(cat: string | null) {
 <Layout title="Empleos en Chile" leaflet={true}>
   <section class="px-4 pt-16 sm:pt-24 pb-8">
     <div class="max-w-measure mx-auto">
-      <h1 class="text-display text-foreground max-w-[16ch]">
-        Carga tu CV en segundos.<br />
-        <span class="text-accent">Sin registro.</span>
+      <h1 class="text-display text-foreground max-w-[18ch]">
+        ¿Aburrido de llenar formularios?
       </h1>
-      <p class="mt-5 max-w-lg text-muted-foreground text-base sm:text-lg leading-relaxed">
-        Enlistate con tu PDF o Word. Luego el sistema te puede proponer ofertas según tu perfil.
+      <p class="mt-5 max-w-lg text-foreground text-lg sm:text-xl font-medium leading-snug">
+        Sube tu CV una sola vez. Sin cuenta. Sin campos interminables.
       </p>
+      <p class="mt-3 max-w-lg text-muted-foreground text-base leading-relaxed">
+        Nosotros te recomendamos los trabajos que calzan contigo.
+      </p>
+
+      <div class="mt-8">
+        <button
+          type="button"
+          id="open-enlist"
+          class="btn-primary px-6 py-3.5 min-h-12 text-base"
+          aria-haspopup="dialog"
+          aria-controls="enlist-modal"
+        >
+          Postula con tu CV · Sin registro
+        </button>
+      </div>
 
       <CvEnlistModal />
 

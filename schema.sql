@@ -41,13 +41,15 @@ CREATE TABLE IF NOT EXISTS public.ofertas (
   activa       BOOLEAN NOT NULL DEFAULT TRUE,
   expira_en    TIMESTAMPTZ NOT NULL,
   empleador_id UUID NOT NULL REFERENCES public.empleadores(id) ON DELETE CASCADE,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  is_demo      BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- Índices
 CREATE INDEX IF NOT EXISTS idx_ofertas_activa_expira ON public.ofertas (activa, expira_en);
 CREATE INDEX IF NOT EXISTS idx_ofertas_empleador ON public.ofertas (empleador_id);
 CREATE INDEX IF NOT EXISTS idx_ofertas_tipo ON public.ofertas (tipo_empleo);
+CREATE INDEX IF NOT EXISTS idx_ofertas_is_demo ON public.ofertas (is_demo);
 
 ALTER TABLE public.ofertas ENABLE ROW LEVEL SECURITY;
 

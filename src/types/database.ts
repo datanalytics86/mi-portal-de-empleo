@@ -70,6 +70,7 @@ export interface Database {
           expira_en: string;
           empleador_id: string;
           created_at: string;
+          is_demo: boolean;
         };
         Insert: {
           id?: string;
@@ -85,6 +86,7 @@ export interface Database {
           expira_en: string;
           empleador_id: string;
           created_at?: string;
+          is_demo?: boolean;
         };
         Update: {
           titulo?: string;
@@ -93,6 +95,7 @@ export interface Database {
           categoria?: string;
           activa?: boolean;
           expira_en?: string;
+          is_demo?: boolean;
         };
       };
       postulaciones: {
