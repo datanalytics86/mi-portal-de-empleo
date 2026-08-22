@@ -1,0 +1,140 @@
+/**
+ * Frictionless Clarity — system foundation
+ *
+ * Emotion: confianza inmediata por simplicidad extrema (Fintual + BCI).
+ * The promise is the design. Light is the only native field.
+ * Channels only — consume as oklch(var(--token) / <alpha>).
+ */
+
+:root {
+  color-scheme: light;
+
+  --background: 0.99 0.004 250;
+  --foreground: 0.22 0.02 250;
+
+  --muted: 0.965 0.006 250;
+  --muted-foreground: 0.48 0.02 250;
+
+  --card: 1 0 0;
+  --card-foreground: 0.22 0.02 250;
+
+  --popover: 1 0 0;
+  --popover-foreground: 0.22 0.02 250;
+
+  --border: 0.90 0.01 250;
+  --input: 1 0 0;
+  --ring: 0.50 0.14 245;
+
+  /* One trust blue. Never indigo, never mesh. */
+  --accent: 0.50 0.14 245;
+  --accent-foreground: 0.99 0.01 245;
+
+  --primary: 0.50 0.14 245;
+  --primary-foreground: 0.99 0.01 245;
+
+  --destructive: 0.52 0.14 25;
+  --destructive-foreground: 0.99 0.02 25;
+
+  --success: 0.52 0.10 155;
+  --success-foreground: 0.99 0.02 155;
+
+  --warning: 0.55 0.11 75;
+  --warning-foreground: 0.22 0.05 75;
+
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --text-display: clamp(2.5rem, 1.4rem + 4vw, 4rem);
+  --text-title: clamp(1.25rem, 1.1rem + 0.7vw, 1.65rem);
+  --text-body: 1rem;
+  --leading-body: 1.6;
+  --tracking-display: -0.03em;
+
+  --measure: 68rem;
+  --header-h: 3.75rem;
+
+  --radius-input: 0.5rem;
+  --radius-control: 0.5rem;
+  --radius-card: 0.5rem;
+  --radius-map: 0.5rem;
+  --radius-mark: 0.2rem;
+
+  --ease-quiet: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-enter: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --duration-micro: 120ms;
+  --duration-move: 180ms;
+  --duration-enter: 240ms;
+
+  --shadow-quiet: none;
+  --shadow-map: none;
+}
+
+html {
+  background: oklch(var(--background));
+  scroll-behavior: smooth;
+}
+
+body {
+  background: oklch(var(--background));
+  color: oklch(var(--foreground));
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  min-height: 100dvh;
+}
+
+::selection {
+  background: oklch(var(--accent) / 0.18);
+  color: oklch(var(--foreground));
+}
+
+.text-display {
+  font-size: var(--text-display);
+  letter-spacing: var(--tracking-display);
+  line-height: 1.12;
+  font-weight: 600;
+}
+
+.max-w-measure {
+  max-width: var(--measure);
+}
+
+.brand-mark {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-mark);
+  background: oklch(var(--accent));
+  flex-shrink: 0;
+}
+
+.page-hero {
+  padding: 2.25rem 1rem 2rem;
+  border-bottom: 1px solid oklch(var(--border));
+}
+
+.site-header {
+  border-bottom-color: oklch(var(--border));
+  background: oklch(var(--background) / 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.map-material {
+  border-radius: var(--radius-map);
+  overflow: hidden;
+  border: 1px solid oklch(var(--border));
+}
+
+kbd.quiet-kbd {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: oklch(var(--muted-foreground));
+  border: 1px solid oklch(var(--border));
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.35rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

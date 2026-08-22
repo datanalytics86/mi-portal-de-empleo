@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { createServiceClient } from '../../lib/supabase';
-import { TIPOS, BRAND_HEX, MAP_TILE_DARK, MAP_TILE_LIGHT } from '../../lib/constants';
+import { TIPOS, BRAND_HEX, MAP_TILE_LIGHT } from '../../lib/constants';
 
 const { id } = Astro.params;
 
@@ -218,7 +218,8 @@ const readingTime = oferta
 
         <!-- Formulario de postulación -->
         <div class="card p-6">
-          <h2 class="font-semibold text-foreground mb-4 tracking-tight">Postular a esta oferta</h2>
+          <h2 class="font-semibold text-foreground tracking-tight">Sube tu CV</h2>
+          <p class="text-sm text-muted-foreground mt-1 mb-4">Sin registro. Sin cuenta. Solo tu archivo.</p>
 
           {exito ? (
             <div class="success-panel" role="status" aria-live="polite">
@@ -385,7 +386,7 @@ const readingTime = oferta
   )}
 </Layout>}
 
-<script define:vars={{ ofertaLat: oferta?.lat ?? null, ofertaLng: oferta?.lng ?? null, ofertaTitulo: oferta?.titulo ?? '', ofertaEmpresa: oferta?.empresa ?? '', MAP_TILE_DARK, MAP_TILE_LIGHT, BRAND_HEX }}>
+<script define:vars={{ ofertaLat: oferta?.lat ?? null, ofertaLng: oferta?.lng ?? null, ofertaTitulo: oferta?.titulo ?? '', ofertaEmpresa: oferta?.empresa ?? '', MAP_TILE_LIGHT, BRAND_HEX }}>
   document.addEventListener('astro:page-load', () => {
     // Confetti si la postulación fue enviada con éxito
     if (window.location.search.includes('exito=1')) {
@@ -476,8 +477,7 @@ const readingTime = oferta
     if (miniMapaEl && ofertaLat && ofertaLng && !miniMapaEl.dataset.mapReady) {
       miniMapaEl.dataset.mapReady = '1';
       const miniMap = L.map('mini-mapa', { zoomControl: true, dragging: false }).setView([ofertaLat, ofertaLng], 14);
-      const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      L.tileLayer(dark ? MAP_TILE_DARK : MAP_TILE_LIGHT, {
+      L.tileLayer(MAP_TILE_LIGHT, {
         attribution: '&copy; OSM &copy; CARTO',
         maxZoom: 18,
       }).addTo(miniMap);

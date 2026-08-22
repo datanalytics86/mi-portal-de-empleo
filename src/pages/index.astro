@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Pagination from '../components/ui/Pagination.astro';
 import JobCard from '../components/JobCard.astro';
 import { supabase } from '../lib/supabase';
-import { TIPOS, CATEGORIAS, BRAND_HEX, MAP_TILE_DARK, MAP_TILE_LIGHT } from '../lib/constants';
+import { TIPOS, CATEGORIAS, BRAND_HEX, MAP_TILE_LIGHT } from '../lib/constants';
 import {
   DEFAULT_PAGE_SIZE,
   MAP_MARKERS_CAP,
@@ -81,195 +81,121 @@ function buildCatUrl(cat: string | null) {
 ---
 
 <Layout title="Empleos en Chile" leaflet={true}>
-  <section class="relative px-4 pt-14 sm:pt-20 pb-10">
-    <div
-      class="pointer-events-none absolute inset-0"
-      aria-hidden="true"
-      style="background: radial-gradient(ellipse 55% 70% at 8% 0%, oklch(var(--accent) / 0.10), transparent 62%);"
-    ></div>
-
-    <div class="relative max-w-measure mx-auto">
-      <p class="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-5">
-        <span class="brand-mark" aria-hidden="true"></span>
-        Postula sin registro · CV en segundos
-      </p>
-
-      <h1 class="text-display text-foreground max-w-[14ch] sm:max-w-none">
-        Encuentra tu próximo
-        <span class="font-display italic font-normal text-foreground/95">empleo</span>
-        en Chile
+  <section class="px-4 pt-16 sm:pt-24 pb-8">
+    <div class="max-w-measure mx-auto">
+      <h1 class="text-display text-foreground max-w-[18ch]">
+        Postula con tu CV en segundos.<br />
+        <span class="text-accent">Sin registro.</span>
       </h1>
-
-      <p class="mt-5 max-w-xl text-muted-foreground text-base sm:text-[1.05rem] leading-relaxed">
-        <span id="hero-count" class="font-semibold text-foreground tabular-nums" data-target={total}>0</span>
-        {' '}oportunidad{total !== 1 ? 'es' : ''} activa{total !== 1 ? 's' : ''}
-        <span class="text-muted-foreground/40 mx-1.5" aria-hidden="true">·</span>
-        mapa por comuna
-        <span class="text-muted-foreground/40 mx-1.5" aria-hidden="true">·</span>
-        keywords del CV
+      <p class="mt-5 max-w-md text-muted-foreground">
+        Elige una oferta, sube tu archivo y listo. Sin cuenta ni formularios.
       </p>
 
       <form
         method="get"
         role="search"
         aria-label="Buscar ofertas"
-        class="mt-8 bg-card border border-border rounded-card p-1.5 sm:p-2 flex flex-col sm:flex-row sm:items-stretch gap-1.5 sm:gap-0 max-w-3xl"
+        class="mt-10 flex flex-col sm:flex-row gap-2 max-w-xl"
       >
         <input type="hidden" name="categoria" value={categoria} />
-        <div class="flex-1 flex items-center gap-2 px-3 min-w-0">
-          <svg class="w-4 h-4 text-muted-foreground/70 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <label for="search-q" class="sr-only">Cargo o empresa</label>
-          <input
-            id="search-q"
-            type="text"
-            name="q"
-            value={q}
-            placeholder="Cargo o empresa"
-            class="flex-1 py-2.5 text-foreground placeholder:text-muted-foreground/70 focus:outline-none text-sm bg-transparent min-w-0"
-          />
-          <kbd class="quiet-kbd hidden sm:inline" title="Atajo de teclado">/</kbd>
+        <input type="hidden" name="tipo" value={tipo} />
+        <input type="hidden" name="comuna" value={comuna} />
+        <label for="search-q" class="sr-only">Cargo o empresa</label>
+        <input
+          id="search-q"
+          type="text"
+          name="q"
+          value={q}
+          placeholder="Cargo o empresa"
+          class="input-field flex-1"
+        />
+        <button type="submit" class="btn-primary shrink-0 px-6">
+          Buscar
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <div class="max-w-measure mx-auto px-4 pb-16">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-10">
+      <div id="listado-ofertas" class="lg:col-span-3">
+        <div class="flex flex-wrap items-baseline justify-between gap-3 mb-4">
+          <p class="text-sm text-muted-foreground">
+            <span class="text-foreground font-semibold tabular-nums">{total}</span>
+            {' '}oferta{total !== 1 ? 's' : ''}
+            {hayFiltros && <span class="ml-1.5">· filtrado</span>}
+          </p>
+          {hayFiltros && (
+            <a href="/" class="text-sm text-muted-foreground hover:text-foreground">Limpiar filtros</a>
+          )}
         </div>
-        <div class="hidden sm:block w-px bg-border my-2" aria-hidden="true"></div>
-        <label for="search-tipo" class="sr-only">Tipo de empleo</label>
-        <select
-          id="search-tipo"
-          name="tipo"
-          class="px-3 py-2.5 text-muted-foreground focus:outline-none bg-transparent text-sm rounded-input cursor-pointer min-h-11"
-        >
-          <option value="">Tipo</option>
-          {Object.entries(TIPOS).map(([val, label]) => (
-            <option value={val} selected={tipo === val}>{label}</option>
+
+        <div class="flex flex-wrap gap-x-3 gap-y-1.5 mb-6" role="navigation" aria-label="Categorías">
+          <a
+            href={buildCatUrl(null)}
+            class:list={[
+              'text-sm pb-0.5 border-b',
+              !categoria ? 'text-foreground border-foreground' : 'text-muted-foreground border-transparent hover:text-foreground',
+            ]}
+            aria-current={!categoria ? 'page' : undefined}
+          >
+            Todas
+          </a>
+          {CATEGORIAS.map((cat) => (
+            <a
+              href={buildCatUrl(cat)}
+              class:list={[
+                'text-sm pb-0.5 border-b',
+                categoria === cat ? 'text-foreground border-foreground' : 'text-muted-foreground border-transparent hover:text-foreground',
+              ]}
+              aria-current={categoria === cat ? 'page' : undefined}
+            >
+              {cat}
+            </a>
           ))}
-        </select>
-        <div class="hidden sm:block w-px bg-border my-2" aria-hidden="true"></div>
-        <div class="flex items-center gap-2 px-3 sm:w-36">
-          <label for="search-comuna" class="sr-only">Comuna</label>
+        </div>
+
+        <form method="get" class="flex flex-wrap gap-2 mb-6">
+          {q && <input type="hidden" name="q" value={q} />}
+          {categoria && <input type="hidden" name="categoria" value={categoria} />}
+          <label for="filter-tipo" class="sr-only">Tipo de empleo</label>
+          <select id="filter-tipo" name="tipo" class="input-field !w-auto !py-2 text-sm">
+            <option value="">Tipo</option>
+            {Object.entries(TIPOS).map(([val, label]) => (
+              <option value={val} selected={tipo === val}>{label}</option>
+            ))}
+          </select>
+          <label for="filter-comuna" class="sr-only">Comuna</label>
           <input
-            id="search-comuna"
+            id="filter-comuna"
             type="text"
             name="comuna"
             value={comuna}
             placeholder="Comuna"
-            class="flex-1 py-2.5 text-foreground placeholder:text-muted-foreground/70 focus:outline-none text-sm bg-transparent min-w-0"
+            class="input-field !w-40 !py-2 text-sm"
           />
-        </div>
-        <button type="submit" class="btn-primary shrink-0 !px-5">
-          Buscar
-        </button>
-      </form>
-
-      <p class="mt-4 text-[12px] text-muted-foreground tracking-wide">
-        Sin cuenta
-        <span class="text-muted-foreground/40 mx-2" aria-hidden="true">·</span>
-        CV privado 90 días
-        <span class="text-muted-foreground/40 mx-2" aria-hidden="true">·</span>
-        Mapa por comuna
-      </p>
-
-      <nav class="flex flex-wrap gap-x-4 gap-y-2 mt-7" aria-label="Categorías">
-        <a
-          href={buildCatUrl(null)}
-          class:list={[
-            'text-[13px] font-medium transition-colors duration-micro ease-quiet pb-0.5 border-b',
-            !categoria
-              ? 'text-foreground border-accent'
-              : 'text-muted-foreground border-transparent hover:text-foreground',
-          ]}
-          aria-current={!categoria ? 'page' : undefined}
-        >
-          Todas
-        </a>
-        {CATEGORIAS.map((cat) => (
-          <a
-            href={buildCatUrl(cat)}
-            class:list={[
-              'text-[13px] font-medium transition-colors duration-micro ease-quiet pb-0.5 border-b',
-              categoria === cat
-                ? 'text-foreground border-accent'
-                : 'text-muted-foreground border-transparent hover:text-foreground',
-            ]}
-            aria-current={categoria === cat ? 'page' : undefined}
-          >
-            {cat}
-          </a>
-        ))}
-      </nav>
-
-      {hayFiltros && (
-        <a href="/" class="mt-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-micro">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/></svg>
-          Limpiar filtros
-        </a>
-      )}
-    </div>
-  </section>
-
-  {!hayFiltros && (
-    <section class="px-4" aria-label="Accesos rápidos">
-      <div class="max-w-measure mx-auto flex flex-col sm:flex-row sm:items-baseline gap-4 sm:gap-10 text-sm">
-        <a href="#listado-ofertas" class="group text-muted-foreground hover:text-foreground transition-colors duration-micro ease-quiet">
-          <span class="text-[10px] font-medium uppercase tracking-[0.16em] block mb-1">Candidatos</span>
-          Ver ofertas <span class="text-accent">→</span>
-        </a>
-        <a href="/empleador/login" class="group text-muted-foreground hover:text-foreground transition-colors duration-micro ease-quiet">
-          <span class="text-[10px] font-medium uppercase tracking-[0.16em] block mb-1">Empleadores</span>
-          Publicar empleo <span class="text-muted-foreground/50 group-hover:text-accent">→</span>
-        </a>
-      </div>
-    </section>
-  )}
-
-  <div class="max-w-measure mx-auto px-4 py-10">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
-      <div class="lg:sticky lg:top-24 h-[280px] sm:h-[360px] lg:h-[440px] map-material relative">
-        <div id="mapa" class="w-full h-full" role="application" aria-label="Mapa de ofertas de empleo"></div>
-        {total === 0 || conCoords === 0 ? (
-          <div class="absolute inset-0 flex items-center justify-center bg-background/80 pointer-events-none z-[400]">
-            <div class="text-center px-6">
-              <p class="text-sm font-medium text-foreground">
-                {total === 0 ? 'Sin ofertas en el mapa' : 'Sin ubicación en el mapa'}
-              </p>
-              <p class="text-xs text-muted-foreground mt-1">
-                {total === 0
-                  ? (hayFiltros ? 'Prueba otros filtros o limpia la búsqueda' : 'Vuelve pronto: hay nuevas oportunidades a menudo')
-                  : 'Las ofertas sin coordenadas no aparecen en el mapa'}
-              </p>
-            </div>
-          </div>
-        ) : null}
-      </div>
-
-      <div id="listado-ofertas">
-        <p class="text-sm text-muted-foreground font-medium mb-4">
-          <span class="text-foreground font-semibold tabular-nums">{total}</span>
-          {' '}oferta{total !== 1 ? 's' : ''}
-          {hayFiltros && <span class="ml-1.5 text-accent font-medium">· filtrado</span>}
-          {pageInfo.totalPages > 1 && (
-            <span class="ml-1.5 text-muted-foreground/70">· pág. {pageInfo.page}/{pageInfo.totalPages}</span>
-          )}
-        </p>
+          <button type="submit" class="btn-secondary !py-2">Filtrar</button>
+        </form>
 
         {!ofertas || ofertas.length === 0 ? (
-          <div class="py-16 px-4 border border-border rounded-card text-center">
-            <p class="text-foreground font-semibold tracking-tight">
-              {hayFiltros ? 'Sin resultados con esos filtros' : 'Aún no hay ofertas publicadas'}
+          <div class="py-14">
+            <p class="text-foreground font-semibold">
+              {hayFiltros ? 'Sin resultados' : 'Aún no hay ofertas'}
             </p>
-            <p class="text-sm text-muted-foreground mt-2 max-w-xs mx-auto leading-relaxed">
+            <p class="text-sm text-muted-foreground mt-2 max-w-sm">
               {hayFiltros
-                ? 'Prueba otra comuna, tipo de empleo o limpia la búsqueda.'
-                : 'Vuelve pronto: las empresas publican oportunidades a diario.'}
+                ? 'Prueba otra búsqueda o limpia los filtros.'
+                : 'Cuando una empresa publique, postulas solo con tu CV.'}
             </p>
             {hayFiltros ? (
-              <a href="/" class="btn-primary mt-7">Ver todas las ofertas</a>
+              <a href="/" class="btn-primary mt-6">Ver todas</a>
             ) : (
-              <a href="/empleador/login" class="btn-secondary mt-7">¿Eres empresa? Publica gratis</a>
+              <a href="/empleador/login" class="btn-secondary mt-6">Publicar empleo</a>
             )}
           </div>
         ) : (
-          <div class="space-y-2.5">
-            {ofertas.map((oferta, i) => (
+          <div class="space-y-2">
+            {ofertas.map((oferta) => (
               <JobCard
                 id={oferta.id}
                 titulo={oferta.titulo}
@@ -279,7 +205,6 @@ function buildCatUrl(cat: string | null) {
                 comuna={oferta.comuna}
                 created_at={oferta.created_at}
                 expira_en={oferta.expira_en}
-                index={i}
               />
             ))}
           </div>
@@ -293,11 +218,22 @@ function buildCatUrl(cat: string | null) {
           />
         )}
       </div>
+
+      <div class="lg:col-span-2 lg:sticky lg:top-24 h-[240px] sm:h-[320px] lg:h-[400px] map-material relative">
+        <div id="mapa" class="w-full h-full" role="application" aria-label="Mapa de ofertas de empleo"></div>
+        {total === 0 || conCoords === 0 ? (
+          <div class="absolute inset-0 flex items-center justify-center bg-background/85 pointer-events-none z-[400]">
+            <p class="text-sm text-muted-foreground px-6 text-center">
+              {total === 0 ? 'Sin ofertas en el mapa' : 'Sin ubicación en el mapa'}
+            </p>
+          </div>
+        ) : null}
+      </div>
     </div>
   </div>
 </Layout>
 
-<script define:vars={{ mapaOfertas, BRAND_HEX, MAP_TILE_DARK, MAP_TILE_LIGHT }}>
+<script define:vars={{ mapaOfertas, BRAND_HEX, MAP_TILE_LIGHT }}>
   document.addEventListener('astro:page-load', () => {
     const mapEl = document.getElementById('mapa');
     if (!mapEl || mapEl.dataset.mapReady === '1') return;
@@ -307,8 +243,7 @@ function buildCatUrl(cat: string | null) {
     const map = L.map('mapa', { zoomControl: false }).setView([-33.4569, -70.6483], 11);
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    L.tileLayer(dark ? MAP_TILE_DARK : MAP_TILE_LIGHT, {
+    L.tileLayer(MAP_TILE_LIGHT, {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 18,
     }).addTo(map);
@@ -322,46 +257,21 @@ function buildCatUrl(cat: string | null) {
     mapaOfertas.forEach((oferta) => {
       if (!oferta.lat || !oferta.lng) return;
       const icon = L.divIcon({
-        html: `<div style="width:10px;height:10px;background:${BRAND_HEX};border-radius:1px;border:1.5px solid oklch(0.93 0.01 95 / 0.9);box-shadow:0 1px 4px oklch(0.1 0.02 240 / 0.45)"></div>`,
+        html: '<div style="width:10px;height:10px;background:' + BRAND_HEX + ';border-radius:2px;border:2px solid white"></div>',
         className: '',
         iconSize: [10, 10],
         iconAnchor: [5, 5],
       });
       const marker = L.marker([oferta.lat, oferta.lng], { icon });
-      marker.bindPopup(`
-        <div style="min-width:160px;font-family:inherit">
-          <strong>${esc(oferta.titulo)}</strong><br>
-          <span style="opacity:.7">${esc(oferta.empresa)}</span><br>
-          <span style="opacity:.5;font-size:12px">${esc(oferta.comuna)}</span><br>
-          <a href="/oferta/${encodeURIComponent(oferta.id)}" style="color:${BRAND_HEX};font-size:13px;font-weight:600">Ver oferta →</a>
-        </div>
-      `);
+      marker.bindPopup(
+        '<div style="min-width:160px"><strong>' + esc(oferta.titulo) + '</strong><br>' +
+        '<span style="opacity:.7">' + esc(oferta.empresa) + '</span><br>' +
+        '<span style="opacity:.5;font-size:12px">' + esc(oferta.comuna) + '</span><br>' +
+        '<a href="/oferta/' + encodeURIComponent(oferta.id) + '" style="color:' + BRAND_HEX + ';font-size:13px;font-weight:600">Ver oferta</a></div>'
+      );
       marker.addTo(map);
     });
 
     setTimeout(() => map.invalidateSize(), 100);
-  });
-</script>
-
-<script>
-  function animateCounter(el: HTMLElement) {
-    const target = parseInt(el.dataset.target || '0', 10);
-    if (target === 0) { el.textContent = '0'; return; }
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) { el.textContent = String(target); return; }
-    const duration = 900;
-    const start = performance.now();
-    const step = (now: number) => {
-      const elapsed = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - elapsed, 3);
-      el.textContent = String(Math.round(eased * target));
-      if (elapsed < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }
-
-  document.addEventListener('astro:page-load', () => {
-    const el = document.getElementById('hero-count');
-    if (el) animateCounter(el);
   });
 </script>

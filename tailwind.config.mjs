@@ -6,17 +6,10 @@ export default {
       fontFamily: {
         sans: [
           'var(--font-sans)',
-          '"Plus Jakarta Sans"',
-          'Inter',
+          'Poppins',
           'ui-sans-serif',
           'system-ui',
           'sans-serif',
-        ],
-        display: [
-          'var(--font-display)',
-          'Newsreader',
-          'Georgia',
-          'serif',
         ],
       },
       colors: {
@@ -57,7 +50,6 @@ export default {
           DEFAULT: 'oklch(var(--warning) / <alpha-value>)',
           foreground: 'oklch(var(--warning-foreground) / <alpha-value>)',
         },
-        /* Compatibility: leftover brand-* maps to the teal accent, never indigo */
         brand: {
           50: 'oklch(var(--accent) / 0.10)',
           100: 'oklch(var(--accent) / 0.16)',
@@ -79,11 +71,11 @@ export default {
         mark: 'var(--radius-mark)',
       },
       boxShadow: {
-        quiet: 'var(--shadow-quiet)',
-        map: 'var(--shadow-map)',
-        soft: 'var(--shadow-quiet)',
-        card: 'var(--shadow-quiet)',
-        'card-hover': 'var(--shadow-quiet)',
+        quiet: 'none',
+        map: 'none',
+        soft: 'none',
+        card: 'none',
+        'card-hover': 'none',
         glow: 'none',
       },
       maxWidth: {
