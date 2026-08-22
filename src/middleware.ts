@@ -5,6 +5,7 @@ import {
   applyCspToHtmlResponse,
   generateCspNonce,
 } from './lib/security-headers';
+import { isAllowedPostOrigin } from './lib/site-url';
 import { log, captureException } from './lib/observability';
 
 // Páginas del empleador que requieren sesión activa
@@ -22,6 +23,21 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const isApi = PROTECTED_API.some((p) => pathname.startsWith(p));
 
   try {
+    const method = context.request.method.toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+      const origin = context.request.headers.get('origin');
+      // Sin Origin: permitir (curl, same-site). Con Origin: allowlist público.
+      if (origin && !isAllowedPostOrigin(origin, context.request)) {
+        return applySecurityHeaders(
+          new Response(JSON.stringify({ error: 'Origen no permitido.' }), {
+            status: 403,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+          { nonce: cspNonce },
+        );
+      }
+    }
+
     if (isPage || isApi) {
       const session = await getEmpleadorSession(context.cookies);
       if (!session) {

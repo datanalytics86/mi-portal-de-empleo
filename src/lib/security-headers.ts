@@ -93,16 +93,37 @@ export function buildCsp(nonce?: string, mode: CspMode = 'strict'): string {
 }
 
 /**
- * Inyecta `nonce="…"` en tags <script> que aún no lo tienen.
- * Pure function — testeable. No toca <script> que ya traen nonce.
+ * True when `index` sits inside an open tag's quoted attribute value
+ * (`<input value="…<script>…">`). Those are user markup, not server scripts.
+ */
+export function isInsideHtmlAttribute(html: string, index: number): boolean {
+  const lastLt = html.lastIndexOf('<', index - 1);
+  if (lastLt < 0) return false;
+  const between = html.slice(lastLt, index);
+  if (between.includes('>')) return false;
+  let quote: '"' | "'" | null = null;
+  for (let i = 0; i < between.length; i++) {
+    const ch = between[i]!;
+    if (quote) {
+      if (ch === quote) quote = null;
+    } else if (ch === '"' || ch === "'") {
+      quote = ch;
+    }
+  }
+  return quote !== null;
+}
+
+/**
+ * Inyecta `nonce="…"` solo en tags <script> reales del HTML del server.
+ * No toca coincidencias dentro de atributos (query string, etc.).
+ * No toca <script> que ya traen nonce.
  */
 export function injectScriptNonces(html: string, nonce: string): string {
   if (!html || !nonce) return html;
-  // Escapar por si el nonce contuviera caracteres raros (base64url es safe)
   const safe = nonce.replace(/"/g, '');
-  return html.replace(/<script(\s[^>]*)?>/gi, (full, attrs: string = '') => {
+  return html.replace(/<script(\s[^>]*)?>/gi, (full, attrs: string = '', offset: number) => {
+    if (isInsideHtmlAttribute(html, offset)) return full;
     if (/\bnonce\s*=/i.test(attrs)) return full;
-    // Mantener atributos existentes; insertar nonce primero
     const rest = attrs && attrs.trim().length ? attrs : '';
     return `<script nonce="${safe}"${rest}>`;
   });

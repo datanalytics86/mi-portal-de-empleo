@@ -26,11 +26,31 @@ export async function getEmpleadorSession(cookies: AstroCookies) {
   const { data: { user }, error } = await client.auth.getUser();
   if (error || !user) return null;
 
-  const { data: empleador } = await client
+  let { data: empleador } = await client
     .from('empleadores')
     .select('*')
     .eq('id', user.id)
     .single();
+
+  if (!empleador) {
+    try {
+      const { getSql } = await import('./neon');
+      const sql = getSql();
+      if (sql) {
+        const rows = await sql<
+          { id: string; email: string; empresa: string; created_at: string }[]
+        >`
+          SELECT id, email, empresa, created_at
+          FROM public.empleadores
+          WHERE id = ${user.id}::uuid
+          LIMIT 1
+        `;
+        if (rows[0]) empleador = rows[0];
+      }
+    } catch {
+      /* Neon opcional */
+    }
+  }
 
   return empleador ? { user, empleador, token, client } : null;
 }

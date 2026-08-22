@@ -1,6 +1,8 @@
 import type { TipoEmpleo } from '../types/database';
 
 export const DEMO_EMPLEADOR_ID = 'eeeeeeee-0000-4000-8000-000000000000';
+export const DEMO_EMPLEADOR_EMAIL = 'demo-ofertas@portal.cl';
+export const DEMO_EMPLEADOR_EMPRESA = 'Portal Demo Chile';
 export const DEMO_TOTAL = 1100;
 
 const COMUNAS: Array<[string, number, number]> = [

@@ -205,12 +205,21 @@ const readingTime = oferta
       <!-- Columna derecha: mapa + formulario -->
       <div class="space-y-6">
         <!-- Mini mapa -->
-        {oferta.lat && oferta.lng && (
-          <div class="card p-6">
-            <h2 class="font-semibold text-foreground mb-3 tracking-tight">Ubicación</h2>
-            <div id="mini-mapa" class="h-40 map-material"></div>
-          </div>
-        )}
+        <div class="card p-6">
+          <h2 class="font-semibold text-foreground mb-3 tracking-tight">Ubicación</h2>
+          {oferta.lat && oferta.lng ? (
+            <div
+              id="mini-mapa"
+              class="h-40 map-material"
+              role="application"
+              aria-label={`Mapa de la oferta en ${oferta.comuna}`}
+            ></div>
+          ) : (
+            <p class="text-sm text-muted-foreground" id="mini-mapa-fallback">
+              {oferta.comuna}, Chile
+            </p>
+          )}
+        </div>
 
         <!-- Formulario de postulación -->
         <div class="card p-6">
@@ -300,7 +309,6 @@ const readingTime = oferta
                     name="cv"
                     id="cv-input"
                     accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    required
                     class="sr-only"
                   />
                   <div id="cv-placeholder" class="text-center py-3 sm:py-2">
@@ -343,7 +351,7 @@ const readingTime = oferta
                 </label>
               </div>
 
-              <div id="error-msg" class="hidden alert-error" role="alert" aria-live="polite">
+              <div id="error-msg" class="hidden alert-error" hidden role="alert" aria-live="polite">
                 <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -468,22 +476,34 @@ const readingTime = oferta
       } catch {}
     });
 
-    // Mini mapa (guard: no re-inicializar en navegación view-transitions)
-    const miniMapaEl = document.getElementById('mini-mapa') as HTMLElement | null;
-    if (miniMapaEl && ofertaLat && ofertaLng && !miniMapaEl.dataset.mapReady) {
-      miniMapaEl.dataset.mapReady = '1';
-      const miniMap = L.map('mini-mapa', { zoomControl: true, dragging: false }).setView([ofertaLat, ofertaLng], 14);
-      L.tileLayer(MAP_TILE_LIGHT, {
-        attribution: '&copy; OSM &copy; CARTO',
-        maxZoom: 18,
-      }).addTo(miniMap);
-      const pin = L.divIcon({
-        html: '<div style="width:10px;height:10px;background:' + BRAND_HEX + ';border-radius:1px;border:1.5px solid oklch(0.93 0.01 95 / 0.9)"></div>',
-        className: '',
-        iconSize: [10, 10],
-        iconAnchor: [5, 5],
-      });
-      L.marker([ofertaLat, ofertaLng], { icon: pin }).addTo(miniMap).bindPopup(ofertaTitulo);
+    // Mini mapa (aislado: un throw no debe impedir el submit del form)
+    try {
+      const miniMapaEl = document.getElementById('mini-mapa') as HTMLElement | null;
+      if (miniMapaEl && ofertaLat && ofertaLng && !miniMapaEl.dataset.mapReady) {
+        if (typeof L === 'undefined') {
+          const p = document.createElement('p');
+          p.className = 'text-sm text-muted-foreground';
+          p.textContent = 'Ubicación en el mapa no disponible.';
+          miniMapaEl.replaceWith(p);
+        } else {
+          miniMapaEl.dataset.mapReady = '1';
+          const miniMap = L.map('mini-mapa', { zoomControl: true, dragging: false }).setView([ofertaLat, ofertaLng], 14);
+          L.tileLayer(MAP_TILE_LIGHT, {
+            attribution: '&copy; OSM &copy; CARTO',
+            maxZoom: 18,
+          }).addTo(miniMap);
+          const pin = L.divIcon({
+            html: '<div style="width:10px;height:10px;background:' + BRAND_HEX + ';border-radius:1px;border:1.5px solid oklch(0.93 0.01 95 / 0.9)"></div>',
+            className: '',
+            iconSize: [10, 10],
+            iconAnchor: [5, 5],
+          });
+          L.marker([ofertaLat, ofertaLng], { icon: pin }).addTo(miniMap).bindPopup(ofertaTitulo);
+          setTimeout(() => miniMap.invalidateSize(), 100);
+        }
+      }
+    } catch {
+      /* el recuadro queda; el form sigue vivo */
     }
 
     // ── CV dropzone + validación cliente ──
@@ -509,10 +529,16 @@ const readingTime = oferta
     function showError(msg: string) {
       const span = errorMsg?.querySelector('span');
       if (span) span.textContent = msg;
-      if (errorMsg) errorMsg.classList.remove('hidden');
+      if (errorMsg) {
+        errorMsg.classList.remove('hidden');
+        errorMsg.removeAttribute('hidden');
+      }
     }
     function hideError() {
-      if (errorMsg) errorMsg.classList.add('hidden');
+      if (errorMsg) {
+        errorMsg.classList.add('hidden');
+        errorMsg.setAttribute('hidden', '');
+      }
     }
 
     function validateCvFile(file: File): string | null {
@@ -642,12 +668,25 @@ const readingTime = oferta
         try {
           const formData = new FormData(form);
           const res = await fetch('/api/postulaciones', { method: 'POST', body: formData });
-          const data = await res.json();
+          let data: { ok?: boolean; error?: string } = {};
+          const ct = res.headers.get('content-type') || '';
+          if (ct.includes('application/json')) {
+            try { data = await res.json(); } catch { data = {}; }
+          }
           if (res.ok && data.ok) {
             if (btn) {
               btn.innerHTML = '<span class="spinner" aria-hidden="true"></span> ¡Listo!';
             }
             window.location.href = window.location.pathname + '?exito=1';
+          } else if (res.status === 429) {
+            const retry = res.headers.get('Retry-After');
+            showError(
+              data.error ||
+                (retry
+                  ? `Demasiadas postulaciones. Espera ${retry}s e inténtalo de nuevo.`
+                  : 'Demasiadas postulaciones. Espera una hora antes de intentarlo de nuevo.'),
+            );
+            resetBtn();
           } else {
             showError(data.error || 'No pudimos enviar tu postulación. Intenta de nuevo.');
             resetBtn();

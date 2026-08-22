@@ -4,6 +4,7 @@ import {
   generateCspNonce,
   applySecurityHeaders,
   injectScriptNonces,
+  isInsideHtmlAttribute,
   SECURITY_HEADERS,
 } from './security-headers';
 
@@ -80,6 +81,29 @@ describe('injectScriptNonces', () => {
     expect(out).toContain('nonce="n1"');
     expect(out).toContain('type="module"');
     expect(out).toContain('defer');
+  });
+
+  it('no estampa nonce en un <script> dentro de un atributo (query q)', () => {
+    const html = '<input id="search-q" value="foo<script>bar">';
+    const out = injectScriptNonces(html, 'xyz');
+    expect(out).toBe(html);
+    expect(out).not.toContain('nonce=');
+  });
+
+  it('detecta coincidencias dentro de un atributo', () => {
+    const html = '<input value="foo<script>bar">';
+    const idx = html.indexOf('<script');
+    expect(isInsideHtmlAttribute(html, idx)).toBe(true);
+    expect(isInsideHtmlAttribute('<script src="/a.js">', 0)).toBe(false);
+  });
+
+  it('sí noncea un script real de la app junto a un value con <', () => {
+    const html =
+      '<input value="a<script>b"><script type="module" src="/app.js"></script>';
+    const out = injectScriptNonces(html, 'n1');
+    expect(out).toContain('<input value="a<script>b">');
+    expect(out).toContain('<script nonce="n1" type="module" src="/app.js">');
+    expect((out.match(/nonce="n1"/g) || []).length).toBe(1);
   });
 });
 
