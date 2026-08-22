@@ -1,0 +1,28 @@
+---
+import { escapeHtml } from '../../lib/html';
+
+interface Props {
+  id?: string;
+  name: string;
+  value?: string;
+  class?: string;
+  placeholder?: string;
+  type?: string;
+  autocomplete?: string;
+}
+
+const {
+  id,
+  name,
+  value = '',
+  placeholder = '',
+  type = 'text',
+  autocomplete,
+} = Astro.props;
+const cls = Astro.props.class ?? '';
+const idAttr = id ? ` id="${escapeHtml(id)}"` : '';
+const acAttr = autocomplete ? ` autocomplete="${escapeHtml(autocomplete)}"` : '';
+const classAttr = cls ? ` class="${escapeHtml(cls)}"` : '';
+const phAttr = placeholder ? ` placeholder="${escapeHtml(placeholder)}"` : '';
+---
+<Fragment set:html={`<input${idAttr} type="${escapeHtml(type)}" name="${escapeHtml(name)}" value="${escapeHtml(value)}"${phAttr}${classAttr}${acAttr} />`} />

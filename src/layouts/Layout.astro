@@ -1,6 +1,7 @@
 ---
 import { ViewTransitions } from 'astro:transitions';
 import { getSessionFromCookies } from '../lib/auth';
+import { resolvePublicOrigin } from '../lib/site-url';
 import '../styles/frictionless-clarity.css';
 
 interface Props {
@@ -19,8 +20,9 @@ const {
   ogType = 'website',
 } = Astro.props;
 const fullTitle = title.includes('Portal de Empleos') ? title : `${title} | Portal de Empleos Chile`;
-const canonicalUrl = new URL(Astro.url.pathname + Astro.url.search, Astro.site || Astro.url.origin).href;
-const defaultOgImage = new URL('/favicon.svg', Astro.site || Astro.url.origin).href;
+const publicOrigin = resolvePublicOrigin({ requestUrl: Astro.url, request: Astro.request });
+const canonicalUrl = new URL(Astro.url.pathname + Astro.url.search, publicOrigin).href;
+const defaultOgImage = new URL('/favicon.svg', publicOrigin).href;
 const resolvedOgImage = ogImage || defaultOgImage;
 const ogDescription = description.length > 200 ? description.slice(0, 197) + '…' : description;
 const year = new Date().getFullYear();
@@ -265,6 +267,14 @@ const cspNonce = Astro.locals.cspNonce ?? '';
   }
   .alert-success {
     @apply text-sm text-success bg-success/10 border border-success/25 rounded-control p-3 flex items-center gap-2;
+  }
+  /* .alert-error usa display:flex; sin esto gana a Tailwind .hidden → franja rosa vacía */
+  .alert-error.hidden,
+  .alert-success.hidden {
+    display: none !important;
+  }
+  [hidden] {
+    display: none !important;
   }
 
   .spinner {

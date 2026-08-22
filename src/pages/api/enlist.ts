@@ -1,12 +1,11 @@
 import type { APIRoute } from 'astro';
 import { insertPerfil, storeCvFile, updatePerfil } from '../../lib/persist';
 import {
-  parseCv,
   validateCvFile,
   storageExtension,
   MAX_CV_SIZE,
   type CvFormat,
-} from '../../lib/cv-parser';
+} from '../../lib/cv-parser/file-validation';
 import {
   checkRateLimit,
   getClientIp,
@@ -67,6 +66,7 @@ async function runParseInBackground(opts: {
   formEmail: string | null;
 }): Promise<void> {
   try {
+    const { parseCv } = await import('../../lib/cv-parser');
     const result = await parseCv({
       buffer: opts.buffer,
       mimeType: opts.mimeType,
@@ -118,6 +118,18 @@ async function runParseInBackground(opts: {
 }
 
 export const POST: APIRoute = async ({ request }) => {
+  try {
+    return await handleEnlist(request);
+  } catch (err) {
+    log.error('enlist.unhandled', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    void captureException(err, { tags: { component: 'enlist', phase: 'unhandled' } });
+    return json({ error: 'Error al guardar tu CV. Intenta de nuevo.' }, 500);
+  }
+};
+
+async function handleEnlist(request: Request): Promise<Response> {
   const ip = getClientIp(request);
   const rl = await checkRateLimit(ip, 'postulaciones');
   if (!rl.success) {
@@ -216,4 +228,4 @@ export const POST: APIRoute = async ({ request }) => {
   );
 
   return json({ ok: true, id: inserted.id, parsing: true }, 200);
-};
+}

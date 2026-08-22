@@ -1,8 +1,9 @@
 import type { APIRoute } from 'astro';
 import { loadSitemapOfertaIds } from '../lib/public-ofertas';
+import { resolvePublicOrigin } from '../lib/site-url';
 
-export const GET: APIRoute = async ({ url }) => {
-  const base = url.origin;
+export const GET: APIRoute = async ({ url, request }) => {
+  const base = resolvePublicOrigin({ requestUrl: url, request });
 
   const ofertas = await loadSitemapOfertaIds();
 

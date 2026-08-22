@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
+import { resolvePublicOrigin } from '../lib/site-url';
 
-export const GET: APIRoute = ({ url }) => {
-  const base = url.origin;
+export const GET: APIRoute = ({ url, request }) => {
+  const base = resolvePublicOrigin({ requestUrl: url, request });
 
   const content = `User-agent: *
 Allow: /

@@ -94,7 +94,7 @@ if (session) return Astro.redirect('/empleador/dashboard');
             </div>
           </div>
 
-          <div id="registro-error" class="hidden alert-error" role="alert" aria-live="polite">
+          <div id="registro-error" class="hidden alert-error" hidden role="alert" aria-live="polite">
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -142,12 +142,17 @@ if (session) return Astro.redirect('/empleador/dashboard');
       btn.disabled = true;
       btn.setAttribute('aria-busy', 'true');
       errEl.classList.add('hidden');
+      errEl.setAttribute('hidden', '');
       okEl.classList.add('hidden');
 
       try {
         const body = new FormData(form);
         const res = await fetch('/api/auth/registro', { method: 'POST', body });
-        const data = await res.json();
+        let data: { ok?: boolean; error?: string; requiresEmailConfirmation?: boolean } = {};
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          try { data = await res.json(); } catch { data = {}; }
+        }
 
         const okTxt = document.getElementById('registro-ok-txt');
         if (res.ok && data.ok) {
@@ -162,8 +167,18 @@ if (session) return Astro.redirect('/empleador/dashboard');
           }
         } else {
           const span = errEl.querySelector('span');
-          if (span) span.textContent = data.error || 'No pudimos crear la cuenta. Intenta de nuevo.';
+          let msg = data.error || 'No pudimos crear la cuenta. Intenta de nuevo.';
+          if (res.status === 429) {
+            const retry = res.headers.get('Retry-After');
+            msg = retry
+              ? `Demasiados intentos. Espera ${retry}s e inténtalo de nuevo.`
+              : 'Demasiados intentos de registro. Espera una hora e inténtalo de nuevo.';
+          } else if (res.status === 403) {
+            msg = 'Demasiados intentos';
+          }
+          if (span) span.textContent = msg;
           errEl.classList.remove('hidden');
+          errEl.removeAttribute('hidden');
           btnTxt.textContent = 'Crear cuenta gratis';
           btn.disabled = false;
           btn.removeAttribute('aria-busy');

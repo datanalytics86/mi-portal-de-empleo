@@ -3,15 +3,19 @@ import Layout from '../layouts/Layout.astro';
 import Pagination from '../components/ui/Pagination.astro';
 import JobCard from '../components/JobCard.astro';
 import CvEnlistModal from '../components/CvEnlistModal.astro';
+import EscapedInput from '../components/ui/EscapedInput.astro';
 import { TIPOS, CATEGORIAS, BRAND_HEX, MAP_TILE_LIGHT } from '../lib/constants';
 import { parsePage } from '../lib/pagination';
 import { loadPublicOfertas } from '../lib/public-ofertas';
+import { sanitizeSearchParam } from '../lib/html';
 
 const { searchParams, pathname } = Astro.url;
-const q = searchParams.get('q') || '';
-const tipo = searchParams.get('tipo') || '';
-const comuna = searchParams.get('comuna') || '';
-const categoria = searchParams.get('categoria') || '';
+const q = sanitizeSearchParam(searchParams.get('q'));
+const tipoRaw = sanitizeSearchParam(searchParams.get('tipo'), 40);
+const tipo = tipoRaw in TIPOS ? tipoRaw : '';
+const comuna = sanitizeSearchParam(searchParams.get('comuna'), 80);
+const categoriaRaw = sanitizeSearchParam(searchParams.get('categoria'), 40);
+const categoria = (CATEGORIAS as readonly string[]).includes(categoriaRaw) ? categoriaRaw : '';
 const page = parsePage(searchParams.get('page'));
 
 const { ofertas, total, mapaOfertas, pageInfo } = await loadPublicOfertas({
@@ -70,11 +74,11 @@ function buildCatUrl(cat: string | null) {
         class="mt-10 flex flex-col sm:flex-row gap-2 max-w-xl"
       >
         <p class="sr-only">O busca una oferta</p>
-        <input type="hidden" name="categoria" value={categoria} />
-        <input type="hidden" name="tipo" value={tipo} />
-        <input type="hidden" name="comuna" value={comuna} />
+        <EscapedInput type="hidden" name="categoria" value={categoria} />
+        <EscapedInput type="hidden" name="tipo" value={tipo} />
+        <EscapedInput type="hidden" name="comuna" value={comuna} />
         <label for="search-q" class="sr-only">Cargo o empresa</label>
-        <input
+        <EscapedInput
           id="search-q"
           type="text"
           name="q"
@@ -129,8 +133,8 @@ function buildCatUrl(cat: string | null) {
         </div>
 
         <form method="get" class="flex flex-wrap gap-2 mb-6">
-          {q && <input type="hidden" name="q" value={q} />}
-          {categoria && <input type="hidden" name="categoria" value={categoria} />}
+          {q && <EscapedInput type="hidden" name="q" value={q} />}
+          {categoria && <EscapedInput type="hidden" name="categoria" value={categoria} />}
           <label for="filter-tipo" class="sr-only">Tipo de empleo</label>
           <select id="filter-tipo" name="tipo" class="input-field !w-auto !py-2 text-sm">
             <option value="">Tipo</option>
@@ -139,7 +143,7 @@ function buildCatUrl(cat: string | null) {
             ))}
           </select>
           <label for="filter-comuna" class="sr-only">Comuna</label>
-          <input
+          <EscapedInput
             id="filter-comuna"
             type="text"
             name="comuna"

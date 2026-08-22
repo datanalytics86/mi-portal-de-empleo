@@ -154,6 +154,32 @@ async function main() {
     if ((i / BATCH) % 4 === 0) console.log('  ', i + slice.length, '/', rows.length);
   }
 
+  await sql`
+    INSERT INTO public.ofertas (
+      id, titulo, descripcion, empresa, tipo_empleo, categoria,
+      comuna, lat, lng, activa, expira_en, empleador_id, created_at, is_demo
+    ) VALUES (
+      'eeeeeeee-0000-4000-8000-00000000e410',
+      'Fixture QA 410 — oferta expirada',
+      'Oferta de demostración ya cerrada. Sirve para verificar HTTP 410 en /oferta/{id}. No postular.',
+      ${DEMO_EMPLEADOR_EMPRESA},
+      'full-time',
+      'Otro',
+      'Santiago',
+      -33.4569,
+      -70.6483,
+      TRUE,
+      NOW() - INTERVAL '7 days',
+      ${DEMO_EMPLEADOR_ID}::uuid,
+      NOW() - INTERVAL '30 days',
+      TRUE
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      activa = TRUE,
+      expira_en = NOW() - INTERVAL '7 days',
+      is_demo = TRUE
+  `;
+
   const [{ count }] = await sql`SELECT COUNT(*)::int AS count FROM public.ofertas`;
   const [{ demos }] = await sql`SELECT COUNT(*)::int AS demos FROM public.ofertas WHERE is_demo = true`;
   console.log('OK ofertas=', count, 'is_demo=', demos, 'batch_count=', inserted);

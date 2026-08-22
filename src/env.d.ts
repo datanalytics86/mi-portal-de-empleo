@@ -4,6 +4,11 @@ interface ImportMetaEnv {
   readonly PUBLIC_SUPABASE_URL: string;
   readonly PUBLIC_SUPABASE_ANON_KEY: string;
   readonly SUPABASE_SERVICE_ROLE_KEY: string;
+  /** Canonical public origin (no localhost). Used for SEO + CSRF allowlist. */
+  readonly PUBLIC_SITE_URL?: string;
+  readonly VERCEL_PROJECT_PRODUCTION_URL?: string;
+  readonly VERCEL_URL?: string;
+  readonly VERCEL_ENV?: string;
   readonly DATABASE_URL?: string;
   readonly POSTGRES_URL?: string;
   readonly BLOB_READ_WRITE_TOKEN?: string;

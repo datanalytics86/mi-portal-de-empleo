@@ -2,12 +2,11 @@ import type { APIRoute } from 'astro';
 import { insertPostulacion, storeCvFile, updatePostulacion } from '../../lib/persist';
 import { loadPublicOferta } from '../../lib/public-ofertas';
 import {
-  parseCv,
   validateCvFile,
   storageExtension,
   MAX_CV_SIZE,
   type CvFormat,
-} from '../../lib/cv-parser';
+} from '../../lib/cv-parser/file-validation';
 import {
   checkRateLimit,
   getClientIp,
@@ -63,6 +62,7 @@ async function runParseInBackground(opts: {
   ofertaTexto: string;
 }): Promise<void> {
   try {
+    const { parseCv } = await import('../../lib/cv-parser');
     const result = await parseCv({
       buffer: opts.buffer,
       mimeType: opts.mimeType,
@@ -145,6 +145,18 @@ async function runParseInBackground(opts: {
 }
 
 export const POST: APIRoute = async ({ request }) => {
+  try {
+    return await handlePostulacion(request);
+  } catch (err) {
+    log.error('postulaciones.unhandled', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    void captureException(err, { tags: { component: 'postulaciones', phase: 'unhandled' } });
+    return json({ error: 'Error al procesar la postulación. Intenta de nuevo.' }, 500);
+  }
+};
+
+async function handlePostulacion(request: Request): Promise<Response> {
   const ip = getClientIp(request);
   const rl = await checkRateLimit(ip, 'postulaciones');
   if (!rl.success) {
@@ -269,7 +281,7 @@ export const POST: APIRoute = async ({ request }) => {
   );
 
   return json({ ok: true, id: inserted.id, parsing: true }, 200);
-};
+}
 
 function json(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {

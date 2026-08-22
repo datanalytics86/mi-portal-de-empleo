@@ -176,7 +176,7 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
         </div>
 
         <!-- Error -->
-        <div id="form-error" class="hidden alert-error" role="alert" aria-live="polite">
+        <div id="form-error" class="hidden alert-error" hidden role="alert" aria-live="polite">
           <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -363,17 +363,23 @@ Ofrecemos:
       btn.disabled = true;
       btn.setAttribute('aria-busy', 'true');
       errEl.classList.add('hidden');
+      errEl.setAttribute('hidden', '');
 
       try {
         const body = new FormData(form);
         const res = await fetch('/api/ofertas/nueva', { method: 'POST', body });
-        const data = await res.json();
+        let data: { ok?: boolean; error?: string } = {};
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          try { data = await res.json(); } catch { data = {}; }
+        }
 
         if (res.ok && data.ok) {
           window.location.href = '/empleador/dashboard';
         } else {
           if (errTxt) errTxt.textContent = data.error || 'Error al publicar. Intenta de nuevo.';
           errEl.classList.remove('hidden');
+          errEl.removeAttribute('hidden');
           if (btnTxt) btnTxt.textContent = 'Publicar oferta';
           btn.disabled = false;
           btn.removeAttribute('aria-busy');
@@ -381,6 +387,7 @@ Ofrecemos:
       } catch {
         if (errTxt) errTxt.textContent = 'Error de conexión. Intenta de nuevo.';
         errEl.classList.remove('hidden');
+        errEl.removeAttribute('hidden');
         if (btnTxt) btnTxt.textContent = 'Publicar oferta';
         btn.disabled = false;
         btn.removeAttribute('aria-busy');

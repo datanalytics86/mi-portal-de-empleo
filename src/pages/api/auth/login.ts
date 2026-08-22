@@ -17,83 +17,104 @@ const LoginSchema = z.object({
 const AUTH_RL_MSG =
   'Demasiados intentos de inicio de sesión. Espera unos minutos e inténtalo de nuevo.';
 
+function json(body: unknown, status: number, extra: Record<string, string> = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...extra },
+  });
+}
+
+function fieldString(value: unknown): string {
+  if (typeof value === 'string') return value;
+  return '';
+}
+
+async function readLoginFields(
+  request: Request,
+): Promise<{ email: string; password: string } | null> {
+  const ct = request.headers.get('content-type') || '';
+  try {
+    if (ct.includes('application/json')) {
+      const body = (await request.json()) as Record<string, unknown>;
+      return {
+        email: fieldString(body.email).trim().toLowerCase(),
+        password: fieldString(body.password),
+      };
+    }
+    const form = await request.formData();
+    return {
+      email: fieldString(form.get('email')).trim().toLowerCase(),
+      password: fieldString(form.get('password')),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export const POST: APIRoute = async ({ request, cookies }) => {
   const ip = getClientIp(request);
 
-  let form: FormData;
   try {
-    form = await request.formData();
-  } catch {
-    // Aun sin body: limitar por IP (anti-abuso genérico)
-    const rl = await checkAuthRateLimits({ ip, preset: 'auth-login' });
-    if (!rl.success) return rateLimitResponse(rl, AUTH_RL_MSG);
-    return new Response(JSON.stringify({ error: 'Datos inválidos.' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const rawEmail = (form.get('email') as string)?.trim().toLowerCase() ?? '';
-  const parsed = LoginSchema.safeParse({
-    email: rawEmail,
-    password: form.get('password'),
-  });
-
-  // Rate limit IP + email (si hay email parseable). El más restrictivo gana.
-  // Se aplica antes del auth real para no gastar consultas en brute-force.
-  const rl = await checkAuthRateLimits({
-    ip,
-    email: rawEmail || null,
-    preset: 'auth-login',
-  });
-  if (!rl.success) {
-    return rateLimitResponse(rl, AUTH_RL_MSG);
-  }
-
-  if (!parsed.success) {
-    return new Response(
-      JSON.stringify({
-        error: parsed.error.errors[0]?.message || 'Email y contraseña requeridos.',
-      }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } },
-    );
-  }
-
-  const { email, password } = parsed.data;
-
-  let sessionToken: string | null = null;
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error || !data.session) {
-      // Mensaje genérico: no revelar si el email existe
-      log.info('auth.login_failed', { reason: 'invalid_credentials' });
-      return new Response(JSON.stringify({ error: 'Email o contraseña incorrectos.' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    const fields = await readLoginFields(request);
+    if (!fields) {
+      const rl = await checkAuthRateLimits({ ip, preset: 'auth-login' });
+      if (!rl.success) return rateLimitResponse(rl, AUTH_RL_MSG);
+      return json({ error: 'Datos inválidos.' }, 400);
     }
-    sessionToken = data.session.access_token;
+
+    const parsed = LoginSchema.safeParse({
+      email: fields.email,
+      password: fields.password,
+    });
+
+    const rl = await checkAuthRateLimits({
+      ip,
+      email: fields.email || null,
+      preset: 'auth-login',
+    });
+    if (!rl.success) {
+      return rateLimitResponse(rl, AUTH_RL_MSG);
+    }
+
+    if (!parsed.success) {
+      return json(
+        { error: parsed.error.errors[0]?.message || 'Email y contraseña requeridos.' },
+        400,
+      );
+    }
+
+    const { email, password } = parsed.data;
+
+    let sessionToken: string | null = null;
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error || !data.session) {
+        log.info('auth.login_failed', { reason: 'invalid_credentials' });
+        return json({ error: 'Email o contraseña incorrectos.' }, 401);
+      }
+      sessionToken = data.session.access_token;
+    } catch (err) {
+      log.error('auth.login_exception', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      void captureException(err, { tags: { component: 'auth', action: 'login' } });
+      return json({ error: 'Error al iniciar sesión. Intenta de nuevo.' }, 500);
+    }
+
+    cookies.set(SESSION_COOKIE, sessionToken, {
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: SESSION_MAX_AGE,
+    });
+
+    return json({ ok: true }, 200);
   } catch (err) {
-    log.error('auth.login_exception', {
+    log.error('auth.login_unhandled', {
       error: err instanceof Error ? err.message : String(err),
     });
     void captureException(err, { tags: { component: 'auth', action: 'login' } });
-    return new Response(JSON.stringify({ error: 'Error al iniciar sesión. Intenta de nuevo.' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return json({ error: 'Error al iniciar sesión. Intenta de nuevo.' }, 500);
   }
-
-  cookies.set(SESSION_COOKIE, sessionToken, {
-    path: '/',
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    maxAge: SESSION_MAX_AGE,
-  });
-
-  return new Response(JSON.stringify({ ok: true }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
 };

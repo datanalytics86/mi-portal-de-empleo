@@ -1,7 +1,23 @@
-import pdfParse from 'pdf-parse';
-import mammoth from 'mammoth';
 import type { CvFormat } from './file-validation';
 import { isOcrEnabled, ocrPdf } from './ocr';
+
+/**
+ * pdf-parse v2 exporta `PDFParse` (named), no un default callable.
+ * Import estático `import pdfParse from 'pdf-parse'` tira el módulo entero
+ * (POST /api/postulaciones → 500 cuerpo vacío). Carga perezosa + API v2.
+ */
+async function extractPdfNativeText(buf: Buffer): Promise<string> {
+  const { PDFParse } = await import('pdf-parse');
+  const parser = new PDFParse({ data: new Uint8Array(buf) });
+  try {
+    const result = await parser.getText();
+    return result?.text || '';
+  } finally {
+    await parser.destroy().catch(() => {
+      /* ignore */
+    });
+  }
+}
 
 export interface ExtractTextResult {
   text: string;
@@ -48,6 +64,7 @@ export async function extractCvText(
 
   if (format === 'docx') {
     try {
+      const mammoth = await import('mammoth');
       const result = await mammoth.extractRawText({ buffer: buf });
       const text = result.value || '';
       const cleaned = cleanCvText(text);
@@ -93,8 +110,7 @@ async function extractPdfWithOcrFallback(
   let nativeError: string | undefined;
 
   try {
-    const data = await pdfParse(buf);
-    nativeText = data.text || '';
+    nativeText = await extractPdfNativeText(buf);
   } catch (e) {
     console.error('[extract-text] PDF native error:', e);
     nativeError = 'No se pudo leer el PDF con extractor nativo.';

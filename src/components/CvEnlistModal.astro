@@ -74,7 +74,7 @@
           Acepto que mi CV se use para recomendarme ofertas y se elimine a los 90 días.
         </label>
 
-        <div id="enlist-error" class="hidden alert-error" role="alert" aria-live="polite"><span></span></div>
+        <div id="enlist-error" class="hidden alert-error" hidden role="alert" aria-live="polite"><span></span></div>
 
         <button type="submit" id="enlist-submit" class="btn-primary w-full py-3.5 min-h-12">
           <span id="enlist-submit-txt">Enlistarme ahora</span>
@@ -157,8 +157,12 @@
       const span = errEl?.querySelector('span');
       if (span) span.textContent = msg;
       errEl?.classList.remove('hidden');
+      errEl?.removeAttribute('hidden');
     };
-    const hideError = () => errEl?.classList.add('hidden');
+    const hideError = () => {
+      errEl?.classList.add('hidden');
+      errEl?.setAttribute('hidden', '');
+    };
 
     const open = () => {
       hideError();
@@ -262,7 +266,11 @@
       submitTxt.innerHTML = '<span class="spinner" aria-hidden="true"></span> Enlistando…';
       try {
         const res = await fetch('/api/enlist', { method: 'POST', body: new FormData(form) });
-        const data = await res.json();
+        let data: { ok?: boolean; error?: string } = {};
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          try { data = await res.json(); } catch { data = {}; }
+        }
         if (res.ok && data.ok) {
           formWrap?.classList.add('hidden');
           success?.classList.remove('hidden');

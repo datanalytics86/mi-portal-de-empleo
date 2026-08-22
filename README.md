@@ -62,6 +62,7 @@ npm run dev            # http://localhost:4321
 PUBLIC_SUPABASE_URL=
 PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+PUBLIC_SITE_URL=https://mi-portal-de-empleo.vercel.app
 ```
 
 **Opcionales (mejor calidad de parsing)**
@@ -96,18 +97,36 @@ Ver `.env.example` completo.
 
 ### Datos de prueba (seed)
 
+Hay **dos** semillas. No son intercambiables.
+
+| Script | Qué crea | Dónde |
+|--------|----------|--------|
+| `scripts/seed.sql` | 2 empleadores + **12** ofertas + postulaciones con `keywords` / `match_score` | Supabase SQL Editor (`auth.users` + tablas públicas) |
+| `scripts/seed-demo-1000.sql` | Empleador demo + **1100** ofertas `is_demo=true` | Supabase SQL Editor (también cubre `auth.users`) |
+| `scripts/bootstrap-neon.mjs` | DDL + las mismas **1100** ofertas demo | Neon (`DATABASE_URL`). Es lo que alimenta el listado público en prod |
+| `scripts/seed-expired-fixture.sql` | 1 oferta expirada (`…e410`) para QA **410** | Neon o Supabase. No reescribe los IDs de las 1100 |
+| `scripts/ensure-demo-empleadores.mjs` | Recrea las cuentas Auth (password incluido) | Service role. Hace falta si el login 401 después de sembrar solo Neon |
+
 ```text
-Supabase → SQL Editor
-  1. (opcional) scripts/seed-cleanup.sql   # limpia datos de prueba previos
-  2. scripts/seed.sql                      # 2 empleadores · 12 ofertas · ~28 postulaciones
+# Listado público 1100 (Neon)
+node scripts/bootstrap-neon.mjs .env.local
+
+# Cuentas para /empleador/login (Supabase Auth)
+node scripts/ensure-demo-empleadores.mjs .env.local
+
+# Fixture 410
+psql $DATABASE_URL -f scripts/seed-expired-fixture.sql
 ```
 
-| Cuenta | Password | Empresa |
-|--------|----------|---------|
-| `test-empresa1@test.cl` | `TestPass123!` | TechCorp Chile |
-| `test-empresa2@test.cl` | `TestPass123!` | Salud Conecta |
+| Cuenta | Password | Empresa | Notas |
+|--------|----------|---------|--------|
+| `test-empresa1@test.cl` | `TestPass123!` | TechCorp Chile | `seed.sql` + `ensure-demo-empleadores.mjs` |
+| `test-empresa2@test.cl` | `TestPass123!` | Salud Conecta | igual |
+| `demo-ofertas@portal.cl` | `DemoPass123!` | Portal Demo Chile | dueño de las 1100 `is_demo` |
 
-Las postulaciones incluyen `keywords`, `cv_parsed`, `parse_status` y `match_score` para probar el dashboard Tier 1.
+Las 1100 ofertas públicas **no** salen de `seed.sql` (solo 12). El listado en [mi-portal-de-empleo.vercel.app](https://mi-portal-de-empleo.vercel.app) se sirve desde Neon (`is_demo=true`). Sembrar solo `seed.sql` no llena el home.
+
+Si el login falla con cuentas de esta tabla, corre `ensure-demo-empleadores.mjs` contra el proyecto de `PUBLIC_SUPABASE_URL`. El SQL de Neon **no** crea usuarios de Supabase Auth.
 
 ---
 
@@ -177,6 +196,8 @@ Instrumentación principal: `src/lib/observability/`, `src/lib/cv-parser/index.t
 | `npm run preview` | Preview del build |
 | `npm test` | Tests unitarios (Vitest) |
 | `npm run test:watch` | Vitest en modo watch |
+| `node scripts/bootstrap-neon.mjs [env]` | DDL + 1100 ofertas demo en Neon |
+| `node scripts/ensure-demo-empleadores.mjs [env]` | Recrea `test-empresa*@test.cl` y `demo-ofertas@portal.cl` |
 
 ---
 
