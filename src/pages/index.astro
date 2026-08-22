@@ -85,24 +85,14 @@ function buildCatUrl(cat: string | null) {
   <section class="px-4 pt-16 sm:pt-24 pb-8">
     <div class="max-w-measure mx-auto">
       <h1 class="text-display text-foreground max-w-[16ch]">
-        Carga tu CV y listo.<br />
+        Carga tu CV en segundos.<br />
         <span class="text-accent">Sin registro.</span>
       </h1>
       <p class="mt-5 max-w-lg text-muted-foreground text-base sm:text-lg leading-relaxed">
-        En segundos quedas enlistado. Luego el sistema te puede proponer ofertas según tu perfil.
+        Enlistate con tu PDF o Word. Luego el sistema te puede proponer ofertas según tu perfil.
       </p>
 
-      <div class="mt-8">
-        <button
-          type="button"
-          id="open-enlist"
-          class="btn-primary px-6 py-3.5 min-h-12 text-base"
-          aria-haspopup="dialog"
-          aria-controls="enlist-modal"
-        >
-          Postula con tu CV · Sin registro
-        </button>
-      </div>
+      <CvEnlistModal />
 
       <form
         method="get"
@@ -245,7 +235,6 @@ function buildCatUrl(cat: string | null) {
       </div>
     </div>
   </div>
-  <CvEnlistModal />
 </Layout>
 
 <script define:vars={{ mapaOfertas, BRAND_HEX, MAP_TILE_LIGHT }}>
