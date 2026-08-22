@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import Pagination from '../components/ui/Pagination.astro';
 import JobCard from '../components/JobCard.astro';
+import CvEnlistModal from '../components/CvEnlistModal.astro';
 import { supabase } from '../lib/supabase';
 import { TIPOS, CATEGORIAS, BRAND_HEX, MAP_TILE_LIGHT } from '../lib/constants';
 import {
@@ -83,13 +84,25 @@ function buildCatUrl(cat: string | null) {
 <Layout title="Empleos en Chile" leaflet={true}>
   <section class="px-4 pt-16 sm:pt-24 pb-8">
     <div class="max-w-measure mx-auto">
-      <h1 class="text-display text-foreground max-w-[18ch]">
-        Postula con tu CV en segundos.<br />
+      <h1 class="text-display text-foreground max-w-[16ch]">
+        Carga tu CV y listo.<br />
         <span class="text-accent">Sin registro.</span>
       </h1>
-      <p class="mt-5 max-w-md text-muted-foreground">
-        Elige una oferta, sube tu archivo y listo. Sin cuenta ni formularios.
+      <p class="mt-5 max-w-lg text-muted-foreground text-base sm:text-lg leading-relaxed">
+        En segundos quedas enlistado. Luego el sistema te puede proponer ofertas según tu perfil.
       </p>
+
+      <div class="mt-8">
+        <button
+          type="button"
+          id="open-enlist"
+          class="btn-primary px-6 py-3.5 min-h-12 text-base"
+          aria-haspopup="dialog"
+          aria-controls="enlist-modal"
+        >
+          Postula con tu CV · Sin registro
+        </button>
+      </div>
 
       <form
         method="get"
@@ -97,6 +110,7 @@ function buildCatUrl(cat: string | null) {
         aria-label="Buscar ofertas"
         class="mt-10 flex flex-col sm:flex-row gap-2 max-w-xl"
       >
+        <p class="sr-only">O busca una oferta</p>
         <input type="hidden" name="categoria" value={categoria} />
         <input type="hidden" name="tipo" value={tipo} />
         <input type="hidden" name="comuna" value={comuna} />
@@ -106,10 +120,10 @@ function buildCatUrl(cat: string | null) {
           type="text"
           name="q"
           value={q}
-          placeholder="Cargo o empresa"
+          placeholder="O busca una oferta"
           class="input-field flex-1"
         />
-        <button type="submit" class="btn-primary shrink-0 px-6">
+        <button type="submit" class="btn-secondary shrink-0 px-5">
           Buscar
         </button>
       </form>
@@ -231,6 +245,7 @@ function buildCatUrl(cat: string | null) {
       </div>
     </div>
   </div>
+  <CvEnlistModal />
 </Layout>
 
 <script define:vars={{ mapaOfertas, BRAND_HEX, MAP_TILE_LIGHT }}>

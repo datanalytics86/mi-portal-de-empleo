@@ -22,27 +22,32 @@ export const GET: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 
-  if (!viejas || viejas.length === 0) {
-    return new Response(JSON.stringify({ eliminadas: 0, mensaje: 'Nada que limpiar' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  // 2. Borrar archivos del Storage
-  const archivos = viejas.map(p => p.cv_url).filter(Boolean);
+  const archivos = (viejas ?? []).map((p) => p.cv_url).filter(Boolean);
   if (archivos.length > 0) {
     await client.storage.from('cvs').remove(archivos);
+    await client.from('postulaciones').delete().lt('created_at', hace90dias);
   }
 
-  // 3. Borrar registros de la base de datos
-  await client.from('postulaciones').delete().lt('created_at', hace90dias);
+  const { data: perfilesViejos } = await client
+    .from('perfiles')
+    .select('id, cv_url')
+    .lt('created_at', hace90dias);
+
+  const archivosPerfil = (perfilesViejos ?? []).map((p) => p.cv_url).filter(Boolean);
+  if (archivosPerfil.length > 0) {
+    await client.storage.from('cvs').remove(archivosPerfil);
+    await client.from('perfiles').delete().lt('created_at', hace90dias);
+  }
 
   return new Response(
-    JSON.stringify({ eliminadas: viejas.length, archivos: archivos.length }),
+    JSON.stringify({
+      eliminadas: archivos.length,
+      archivos: archivos.length,
+      perfiles: archivosPerfil.length,
+    }),
     {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
-    }
+    },
   );
 };
