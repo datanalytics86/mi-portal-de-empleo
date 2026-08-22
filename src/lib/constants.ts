@@ -6,8 +6,21 @@ export const TIPOS: Record<string, string> = {
 };
 
 export const CATEGORIAS = [
-  'Tecnología', 'Ventas', 'Marketing', 'Finanzas', 'Administración',
-  'Salud', 'Educación', 'Operaciones', 'Diseño', 'Legal', 'Otro',
+  'Operarios',
+  'Construcción',
+  'Minería / Faena',
+  'Logística / Bodega',
+  'Choferes / Transporte',
+  'Aseo / Limpieza',
+  'Agro / Campo',
+  'Retail / Piso',
+  'Servicios / Auxiliares',
+  'Cocina / Gastronomía',
+  'Tecnología',
+  'Ventas',
+  'Administración',
+  'Salud',
+  'Otro',
 ] as const;
 
 export type Categoria = (typeof CATEGORIAS)[number];
