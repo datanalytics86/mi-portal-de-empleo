@@ -5,6 +5,7 @@ export const TIPOS: Record<string, string> = {
   practica: 'Práctica',
 };
 
+/** Categorías priorizadas para el nicho operarios / no-titulados (Free Stage) */
 export const CATEGORIAS = [
   'Operarios',
   'Construcción',
@@ -16,10 +17,11 @@ export const CATEGORIAS = [
   'Retail / Piso',
   'Servicios / Auxiliares',
   'Cocina / Gastronomía',
-  'Tecnología',
-  'Ventas',
-  'Administración',
+  'Operaciones',
   'Salud',
+  'Administración',
+  'Ventas',
+  'Tecnología',
   'Otro',
 ] as const;
 
