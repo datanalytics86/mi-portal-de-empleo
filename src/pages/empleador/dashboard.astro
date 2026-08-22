@@ -12,12 +12,13 @@ import {
 const { client, empleador } = Astro.locals.session!;
 const { searchParams, pathname } = Astro.url;
 const page = parsePage(searchParams.get('page'));
+const demoFilter = searchParams.get('demo'); // '1' | '0' | null
 
 // Métricas globales (todas las ofertas del empleador, sin paginar)
 const { data: allOfertas } = await client
   .from('ofertas')
   .select(`
-    id, activa, expira_en,
+    id, activa, expira_en, is_demo,
     postulaciones(count)
   `)
   .eq('empleador_id', empleador.id);
@@ -28,18 +29,26 @@ const ofertasActivas = allOfertas?.filter(o => o.activa && new Date(o.expira_en)
 const ofertasExpiradas = allOfertas?.filter(o => !o.activa || new Date(o.expira_en) < now).length ?? 0;
 const totalPostulaciones = allOfertas?.reduce((sum, o) => sum + ((o.postulaciones as { count: number }[])?.[0]?.count ?? 0), 0) ?? 0;
 const totalOfertas = allOfertas?.length ?? 0;
-const pageInfo = buildPageInfo(page, DASHBOARD_PAGE_SIZE, totalOfertas);
+const totalDemo = allOfertas?.filter((o) => o.is_demo).length ?? 0;
+const filteredTotal =
+  demoFilter === '1'
+    ? totalDemo
+    : demoFilter === '0'
+      ? totalOfertas - totalDemo
+      : totalOfertas;
+const pageInfo = buildPageInfo(page, DASHBOARD_PAGE_SIZE, filteredTotal);
 
-// Página de listado
-const { data: ofertas } = await client
+let dashQuery = client
   .from('ofertas')
   .select(`
-    id, titulo, tipo_empleo, comuna, activa, expira_en, created_at,
+    id, titulo, tipo_empleo, comuna, activa, expira_en, created_at, is_demo,
     postulaciones(count)
   `)
   .eq('empleador_id', empleador.id)
-  .order('created_at', { ascending: false })
-  .range(pageInfo.from, pageInfo.to);
+  .order('created_at', { ascending: false });
+if (demoFilter === '1') dashQuery = dashQuery.eq('is_demo', true);
+if (demoFilter === '0') dashQuery = dashQuery.eq('is_demo', false);
+const { data: ofertas } = await dashQuery.range(pageInfo.from, pageInfo.to);
 
 const ofertasDisplay = (ofertas ?? []).map((oferta) => {
   const expirada = new Date(oferta.expira_en) < now;
@@ -128,6 +137,13 @@ const email = Astro.locals.session?.user?.email ?? '';
         <div class="flex items-end justify-between gap-3 mb-5">
           <div>
             <h2 class="text-lg font-semibold text-foreground tracking-tight">Tus ofertas</h2>
+            {totalDemo > 0 && (
+              <p class="text-xs text-muted-foreground mt-2 flex flex-wrap gap-3">
+                <a href="/empleador/dashboard" class:list={[!demoFilter && 'text-foreground font-medium']}>Todas</a>
+                <a href="/empleador/dashboard?demo=0" class:list={[demoFilter === '0' && 'text-foreground font-medium']}>Reales</a>
+                <a href="/empleador/dashboard?demo=1" class:list={[demoFilter === '1' && 'text-foreground font-medium']}>Demo</a>
+              </p>
+            )}
             <p class="text-sm text-muted-foreground mt-0.5">
               {totalOfertas} publicaci{totalOfertas === 1 ? 'ón' : 'ones'}
               {totalPostulaciones > 0 && (
@@ -158,6 +174,11 @@ const email = Astro.locals.session?.user?.email ?? '';
                     <span class={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold border ${oferta.estadoColor}`}>
                       {oferta.estado}
                     </span>
+                    {oferta.is_demo && (
+                      <span class="text-[11px] px-2 py-0.5 rounded-full font-medium border border-border text-muted-foreground">
+                        Demo
+                      </span>
+                    )}
                     {oferta.urgencia && (
                       <span class="text-[11px] px-2 py-0.5 rounded-full font-medium bg-warning/10 text-warning border-warning/25 border">
                         Por vencer
