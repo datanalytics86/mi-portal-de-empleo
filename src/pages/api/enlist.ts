@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { createServiceClient } from '../../lib/supabase';
+import { insertPerfil, storeCvFile, updatePerfil } from '../../lib/persist';
 import {
   parseCv,
   validateCvFile,
@@ -57,11 +57,6 @@ function scheduleBackground(task: Promise<unknown>): void {
   }
 }
 
-function isMissingTable(err: { message?: string; code?: string } | null): boolean {
-  const msg = (err?.message || '').toLowerCase();
-  return err?.code === '42P01' || msg.includes('does not exist') || msg.includes('schema cache');
-}
-
 async function runParseInBackground(opts: {
   profileId: string;
   buffer: ArrayBuffer;
@@ -71,8 +66,6 @@ async function runParseInBackground(opts: {
   formNombre: string | null;
   formEmail: string | null;
 }): Promise<void> {
-  const serviceClient = createServiceClient();
-
   try {
     const result = await parseCv({
       buffer: opts.buffer,
@@ -98,21 +91,17 @@ async function runParseInBackground(opts: {
       updatePayload.email = result.cv_parsed.email;
     }
 
-    const { error: updErr } = await serviceClient
-      .from('perfiles')
-      .update(updatePayload)
-      .eq('id', opts.profileId);
-
-    if (updErr) {
-      log.error('enlist.parse_update_failed', {
-        profile_id: opts.profileId,
-        error: updErr.message,
-      });
-    } else {
+    try {
+      await updatePerfil(opts.profileId, updatePayload);
       log.info('enlist.parse_persisted', {
         profile_id: opts.profileId,
         status: result.status,
         keywords: result.keywords.length,
+      });
+    } catch (updErr) {
+      log.error('enlist.parse_update_failed', {
+        profile_id: opts.profileId,
+        error: updErr instanceof Error ? updErr.message : String(updErr),
       });
     }
   } catch (err) {
@@ -121,10 +110,10 @@ async function runParseInBackground(opts: {
       error: err instanceof Error ? err.message : String(err),
     });
     void captureException(err, { tags: { component: 'enlist', phase: 'parse_background' } });
-    await serviceClient
-      .from('perfiles')
-      .update({ parse_status: 'failed', parsed_at: new Date().toISOString() })
-      .eq('id', opts.profileId);
+    await updatePerfil(opts.profileId, {
+      parse_status: 'failed',
+      parsed_at: new Date().toISOString(),
+    });
   }
 }
 
@@ -170,20 +159,21 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: fileCheck.error || 'Archivo de CV inválido.' }, 400);
   }
 
-  const serviceClient = createServiceClient();
   const ext = storageExtension(fileCheck.format, cv.name);
   const fileName = `enlist/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-  const { data: uploadData, error: uploadError } = await serviceClient.storage
-    .from('cvs')
-    .upload(fileName, cvBuffer, {
+  let cvUrl: string;
+  try {
+    cvUrl = await storeCvFile({
+      path: fileName,
+      buffer: cvBuffer,
       contentType: fileCheck.mimeType,
-      upsert: false,
     });
-
-  if (uploadError || !uploadData) {
-    log.error('enlist.cv_upload_failed', { error: uploadError?.message ?? 'no data' });
-    void captureException(uploadError ?? new Error('enlist cv upload failed'), {
+  } catch (uploadError) {
+    log.error('enlist.cv_upload_failed', {
+      error: uploadError instanceof Error ? uploadError.message : String(uploadError),
+    });
+    void captureException(uploadError, {
       tags: { component: 'enlist', phase: 'upload' },
     });
     return json({ error: 'Error al subir el CV. Intenta de nuevo.' }, 500);
@@ -195,33 +185,19 @@ export const POST: APIRoute = async ({ request }) => {
       ? parsed.data.email
       : null;
 
-  const { data: inserted, error: dbError } = await serviceClient
-    .from('perfiles')
-    .insert({
+  let inserted: { id: string };
+  try {
+    inserted = await insertPerfil({
       nombre,
       email,
-      cv_url: uploadData.path,
+      cv_url: cvUrl,
       ip_address: ip,
-      parse_status: 'pending',
-      keywords: [],
-    })
-    .select('id')
-    .single();
-
-  if (dbError || !inserted) {
-    await serviceClient.storage.from('cvs').remove([fileName]);
-    if (isMissingTable(dbError)) {
-      log.error('enlist.table_missing', { error: dbError?.message });
-      return json(
-        {
-          error: 'El enlistado aún no está habilitado. Puedes postular a una oferta con tu CV.',
-          code: 'PERFILES_MISSING',
-        },
-        503,
-      );
-    }
-    log.error('enlist.insert_failed', { error: dbError?.message ?? 'no data' });
-    void captureException(dbError ?? new Error('enlist insert failed'), {
+    });
+  } catch (dbError) {
+    log.error('enlist.insert_failed', {
+      error: dbError instanceof Error ? dbError.message : String(dbError),
+    });
+    void captureException(dbError, {
       tags: { component: 'enlist', phase: 'insert' },
     });
     return json({ error: 'Error al guardar tu CV. Intenta de nuevo.' }, 500);

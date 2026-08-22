@@ -15,7 +15,7 @@ export default defineConfig({
       exclude: ['@napi-rs/canvas', 'tesseract.js', 'pdfjs-dist'],
     },
     ssr: {
-      external: ['@napi-rs/canvas', 'tesseract.js', 'pdfjs-dist', 'pdf-parse', 'mammoth'],
+      external: ['@napi-rs/canvas', 'tesseract.js', 'pdfjs-dist', 'pdf-parse', 'mammoth', 'postgres'],
     },
   },
 });

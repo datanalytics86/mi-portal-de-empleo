@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { createServiceClient } from '../../../lib/supabase';
+import { getSql } from '../../../lib/neon';
 
 export const GET: APIRoute = async ({ request }) => {
   const cronSecret = import.meta.env.CRON_SECRET;
@@ -9,34 +10,45 @@ export const GET: APIRoute = async ({ request }) => {
     return new Response('No autorizado', { status: 401 });
   }
 
-  const client = createServiceClient();
   const hace90dias = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+  let archivos: string[] = [];
+  let archivosPerfil: string[] = [];
 
-  // 1. Obtener postulaciones con CVs a eliminar
-  const { data: viejas, error } = await client
-    .from('postulaciones')
-    .select('id, cv_url')
-    .lt('created_at', hace90dias);
+  try {
+    const client = createServiceClient();
+    const { data: viejas } = await client
+      .from('postulaciones')
+      .select('id, cv_url')
+      .lt('created_at', hace90dias);
 
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    archivos = (viejas ?? []).map((p) => p.cv_url).filter(Boolean);
+    if (archivos.length > 0) {
+      await client.storage.from('cvs').remove(archivos);
+      await client.from('postulaciones').delete().lt('created_at', hace90dias);
+    }
+
+    const { data: perfilesViejos } = await client
+      .from('perfiles')
+      .select('id, cv_url')
+      .lt('created_at', hace90dias);
+
+    archivosPerfil = (perfilesViejos ?? []).map((p) => p.cv_url).filter(Boolean);
+    if (archivosPerfil.length > 0) {
+      await client.storage.from('cvs').remove(archivosPerfil);
+      await client.from('perfiles').delete().lt('created_at', hace90dias);
+    }
+  } catch {
+    /* supabase ausente: seguimos con Neon */
   }
 
-  const archivos = (viejas ?? []).map((p) => p.cv_url).filter(Boolean);
-  if (archivos.length > 0) {
-    await client.storage.from('cvs').remove(archivos);
-    await client.from('postulaciones').delete().lt('created_at', hace90dias);
-  }
-
-  const { data: perfilesViejos } = await client
-    .from('perfiles')
-    .select('id, cv_url')
-    .lt('created_at', hace90dias);
-
-  const archivosPerfil = (perfilesViejos ?? []).map((p) => p.cv_url).filter(Boolean);
-  if (archivosPerfil.length > 0) {
-    await client.storage.from('cvs').remove(archivosPerfil);
-    await client.from('perfiles').delete().lt('created_at', hace90dias);
+  let neonPostulaciones = 0;
+  let neonPerfiles = 0;
+  const neon = getSql();
+  if (neon) {
+    const delP = await neon`DELETE FROM public.postulaciones WHERE created_at < ${hace90dias}::timestamptz`;
+    const delF = await neon`DELETE FROM public.perfiles WHERE created_at < ${hace90dias}::timestamptz`;
+    neonPostulaciones = delP.count ?? 0;
+    neonPerfiles = delF.count ?? 0;
   }
 
   return new Response(
@@ -44,6 +56,8 @@ export const GET: APIRoute = async ({ request }) => {
       eliminadas: archivos.length,
       archivos: archivos.length,
       perfiles: archivosPerfil.length,
+      neon_postulaciones: neonPostulaciones,
+      neon_perfiles: neonPerfiles,
     }),
     {
       status: 200,

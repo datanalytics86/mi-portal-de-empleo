@@ -15,13 +15,23 @@ const page = parsePage(searchParams.get('page'));
 const demoFilter = searchParams.get('demo'); // '1' | '0' | null
 
 // Métricas globales (todas las ofertas del empleador, sin paginar)
-const { data: allOfertas } = await client
+let { data: allOfertas } = await client
   .from('ofertas')
   .select(`
     id, activa, expira_en, is_demo,
     postulaciones(count)
   `)
   .eq('empleador_id', empleador.id);
+if (!allOfertas) {
+  const retry = await client
+    .from('ofertas')
+    .select(`
+      id, activa, expira_en,
+      postulaciones(count)
+    `)
+    .eq('empleador_id', empleador.id);
+  allOfertas = (retry.data ?? []).map((o) => ({ ...o, is_demo: false }));
+}
 
 const now = new Date();
 
@@ -48,7 +58,19 @@ let dashQuery = client
   .order('created_at', { ascending: false });
 if (demoFilter === '1') dashQuery = dashQuery.eq('is_demo', true);
 if (demoFilter === '0') dashQuery = dashQuery.eq('is_demo', false);
-const { data: ofertas } = await dashQuery.range(pageInfo.from, pageInfo.to);
+let { data: ofertas } = await dashQuery.range(pageInfo.from, pageInfo.to);
+if (!ofertas) {
+  let retryQuery = client
+    .from('ofertas')
+    .select(`
+      id, titulo, tipo_empleo, comuna, activa, expira_en, created_at,
+      postulaciones(count)
+    `)
+    .eq('empleador_id', empleador.id)
+    .order('created_at', { ascending: false });
+  const retry = await retryQuery.range(pageInfo.from, pageInfo.to);
+  ofertas = (retry.data ?? []).map((o) => ({ ...o, is_demo: false }));
+}
 
 const ofertasDisplay = (ofertas ?? []).map((oferta) => {
   const expirada = new Date(oferta.expira_en) < now;

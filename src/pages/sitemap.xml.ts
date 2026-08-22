@@ -1,14 +1,10 @@
 import type { APIRoute } from 'astro';
-import { supabase } from '../lib/supabase';
+import { loadSitemapOfertaIds } from '../lib/public-ofertas';
 
 export const GET: APIRoute = async ({ url }) => {
   const base = url.origin;
 
-  const { data: ofertas } = await supabase
-    .from('ofertas')
-    .select('id, updated_at')
-    .eq('activa', true)
-    .gte('expira_en', new Date().toISOString());
+  const ofertas = await loadSitemapOfertaIds();
 
   const staticUrls = [
     `<url><loc>${base}/</loc><changefreq>hourly</changefreq><priority>1.0</priority></url>`,
@@ -16,8 +12,8 @@ export const GET: APIRoute = async ({ url }) => {
     `<url><loc>${base}/empleador/registro</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>`,
   ];
 
-  const ofertaUrls = (ofertas || []).map(o => {
-    const lastmod = o.updated_at ? o.updated_at.split('T')[0] : '';
+  const ofertaUrls = ofertas.map((o) => {
+    const lastmod = o.created_at ? o.created_at.split('T')[0] : '';
     return `<url><loc>${base}/oferta/${o.id}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}<changefreq>weekly</changefreq><priority>0.8</priority></url>`;
   });
 

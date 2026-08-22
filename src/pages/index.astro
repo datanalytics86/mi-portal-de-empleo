@@ -3,14 +3,9 @@ import Layout from '../layouts/Layout.astro';
 import Pagination from '../components/ui/Pagination.astro';
 import JobCard from '../components/JobCard.astro';
 import CvEnlistModal from '../components/CvEnlistModal.astro';
-import { supabase } from '../lib/supabase';
 import { TIPOS, CATEGORIAS, BRAND_HEX, MAP_TILE_LIGHT } from '../lib/constants';
-import {
-  DEFAULT_PAGE_SIZE,
-  MAP_MARKERS_CAP,
-  buildPageInfo,
-  parsePage,
-} from '../lib/pagination';
+import { parsePage } from '../lib/pagination';
+import { loadPublicOfertas } from '../lib/public-ofertas';
 
 const { searchParams, pathname } = Astro.url;
 const q = searchParams.get('q') || '';
@@ -19,53 +14,13 @@ const comuna = searchParams.get('comuna') || '';
 const categoria = searchParams.get('categoria') || '';
 const page = parsePage(searchParams.get('page'));
 
-let listQuery = supabase
-  .from('ofertas')
-  .select(
-    'id, titulo, empresa, tipo_empleo, categoria, comuna, created_at, expira_en, lat, lng',
-    { count: 'exact' },
-  )
-  .eq('activa', true)
-  .gte('expira_en', new Date().toISOString())
-  .order('created_at', { ascending: false });
-
-if (q) listQuery = listQuery.ilike('titulo', `%${q}%`);
-if (tipo) listQuery = listQuery.eq('tipo_empleo', tipo);
-if (comuna) listQuery = listQuery.ilike('comuna', `%${comuna}%`);
-if (categoria) listQuery = listQuery.eq('categoria', categoria);
-
-const provisionalFrom = (page - 1) * DEFAULT_PAGE_SIZE;
-const { data: ofertasRaw, count: totalCount } = await listQuery.range(
-  provisionalFrom,
-  provisionalFrom + DEFAULT_PAGE_SIZE - 1,
-);
-
-const total = totalCount ?? ofertasRaw?.length ?? 0;
-const pageInfo = buildPageInfo(page, DEFAULT_PAGE_SIZE, total);
-const ofertas = ofertasRaw ?? [];
-
-let mapQuery = supabase
-  .from('ofertas')
-  .select('id, titulo, empresa, lat, lng, comuna, categoria')
-  .eq('activa', true)
-  .gte('expira_en', new Date().toISOString())
-  .order('created_at', { ascending: false })
-  .limit(MAP_MARKERS_CAP);
-if (q) mapQuery = mapQuery.ilike('titulo', `%${q}%`);
-if (tipo) mapQuery = mapQuery.eq('tipo_empleo', tipo);
-if (comuna) mapQuery = mapQuery.ilike('comuna', `%${comuna}%`);
-if (categoria) mapQuery = mapQuery.eq('categoria', categoria);
-const { data: mapRows } = await mapQuery;
-
-const mapaOfertas = (mapRows || []).map((o) => ({
-  id: o.id,
-  titulo: o.titulo,
-  empresa: o.empresa,
-  lat: o.lat,
-  lng: o.lng,
-  comuna: o.comuna,
-  categoria: o.categoria ?? '',
-}));
+const { ofertas, total, mapaOfertas, pageInfo } = await loadPublicOfertas({
+  q,
+  tipo,
+  comuna,
+  categoria,
+  page,
+});
 
 const hayFiltros = q || tipo || comuna || categoria;
 const conCoords = mapaOfertas.filter((o) => o.lat && o.lng).length;

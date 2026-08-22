@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
-import { createServiceClient } from '../../lib/supabase';
+import { insertPostulacion, storeCvFile, updatePostulacion } from '../../lib/persist';
+import { loadPublicOferta } from '../../lib/public-ofertas';
 import {
   parseCv,
   validateCvFile,
@@ -61,8 +62,6 @@ async function runParseInBackground(opts: {
   formEmail: string | null;
   ofertaTexto: string;
 }): Promise<void> {
-  const serviceClient = createServiceClient();
-
   try {
     const result = await parseCv({
       buffer: opts.buffer,
@@ -90,27 +89,23 @@ async function runParseInBackground(opts: {
       updatePayload.email = result.cv_parsed.email;
     }
 
-    const { error: updErr } = await serviceClient
-      .from('postulaciones')
-      .update(updatePayload)
-      .eq('id', opts.postulationId);
-
-    if (updErr) {
-      log.error('postulaciones.parse_update_failed', {
-        postulation_id: opts.postulationId,
-        error: updErr.message,
-      });
-      void captureException(updErr, {
-        tags: { component: 'postulaciones', phase: 'parse_update' },
-        extra: { postulation_id: opts.postulationId },
-      });
-    } else {
+    try {
+      await updatePostulacion(opts.postulationId, updatePayload);
       log.info('postulaciones.parse_persisted', {
         postulation_id: opts.postulationId,
         status: result.status,
         method: result.cv_parsed?.parse_method ?? null,
         keywords: result.keywords.length,
         match_score: result.match_score,
+      });
+    } catch (updErr) {
+      log.error('postulaciones.parse_update_failed', {
+        postulation_id: opts.postulationId,
+        error: updErr instanceof Error ? updErr.message : String(updErr),
+      });
+      void captureException(updErr, {
+        tags: { component: 'postulaciones', phase: 'parse_update' },
+        extra: { postulation_id: opts.postulationId },
       });
     }
 
@@ -142,13 +137,10 @@ async function runParseInBackground(opts: {
       tags: { component: 'postulaciones', phase: 'parse_background' },
       extra: { postulation_id: opts.postulationId },
     });
-    await serviceClient
-      .from('postulaciones')
-      .update({
-        parse_status: 'failed',
-        parsed_at: new Date().toISOString(),
-      })
-      .eq('id', opts.postulationId);
+    await updatePostulacion(opts.postulationId, {
+      parse_status: 'failed',
+      parsed_at: new Date().toISOString(),
+    });
   }
 }
 
@@ -202,35 +194,26 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: fileCheck.error || 'Archivo de CV inválido.' }, 400);
   }
 
-  const serviceClient = createServiceClient();
-
-  const { data: oferta } = await serviceClient
-    .from('ofertas')
-    .select('id, titulo, descripcion, categoria, tipo_empleo, comuna')
-    .eq('id', parsed.data.oferta_id)
-    .eq('activa', true)
-    .gte('expira_en', new Date().toISOString())
-    .single();
-
-  if (!oferta) {
+  const oferta = await loadPublicOferta(parsed.data.oferta_id);
+  if (!oferta || !oferta.activa || oferta.expira_en < new Date().toISOString()) {
     return json({ error: 'La oferta no está disponible.' }, 404);
   }
 
   const ext = storageExtension(fileCheck.format, cv.name);
   const fileName = `${parsed.data.oferta_id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-  const { data: uploadData, error: uploadError } = await serviceClient.storage
-    .from('cvs')
-    .upload(fileName, cvBuffer, {
+  let cvUrl: string;
+  try {
+    cvUrl = await storeCvFile({
+      path: fileName,
+      buffer: cvBuffer,
       contentType: fileCheck.mimeType,
-      upsert: false,
     });
-
-  if (uploadError || !uploadData) {
+  } catch (uploadError) {
     log.error('postulaciones.cv_upload_failed', {
-      error: uploadError?.message ?? 'no data',
+      error: uploadError instanceof Error ? uploadError.message : String(uploadError),
     });
-    void captureException(uploadError ?? new Error('cv upload failed'), {
+    void captureException(uploadError, {
       tags: { component: 'postulaciones', phase: 'upload' },
     });
     return json({ error: 'Error al subir el CV. Intenta de nuevo.' }, 500);
@@ -242,28 +225,20 @@ export const POST: APIRoute = async ({ request }) => {
       ? parsed.data.email
       : null;
 
-  // Insertar postulación — parse_status pending; respuesta inmediata al candidato
-  const { data: inserted, error: dbError } = await serviceClient
-    .from('postulaciones')
-    .insert({
+  let inserted: { id: string };
+  try {
+    inserted = await insertPostulacion({
       oferta_id: parsed.data.oferta_id,
       nombre,
       email,
-      cv_url: uploadData.path,
+      cv_url: cvUrl,
       ip_address: ip,
-      parse_status: 'pending',
-      palabras_clave: [],
-      keywords: [],
-    })
-    .select('id')
-    .single();
-
-  if (dbError || !inserted) {
-    await serviceClient.storage.from('cvs').remove([fileName]);
-    log.error('postulaciones.insert_failed', {
-      error: dbError?.message ?? 'no data',
     });
-    void captureException(dbError ?? new Error('postulacion insert failed'), {
+  } catch (dbError) {
+    log.error('postulaciones.insert_failed', {
+      error: dbError instanceof Error ? dbError.message : String(dbError),
+    });
+    void captureException(dbError, {
       tags: { component: 'postulaciones', phase: 'insert' },
     });
     return json({ error: 'Error al guardar la postulación. Intenta de nuevo.' }, 500);
