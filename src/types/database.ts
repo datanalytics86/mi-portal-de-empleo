@@ -137,10 +137,45 @@ export interface Database {
           match_score?: number | null;
         };
       };
+      perfiles: {
+        Row: {
+          id: string;
+          nombre: string | null;
+          email: string | null;
+          cv_url: string;
+          ip_address: string | null;
+          keywords: string[] | null;
+          cv_parsed: CvParsedJson | null;
+          parse_status: ParseStatus | null;
+          parsed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          nombre?: string | null;
+          email?: string | null;
+          cv_url: string;
+          ip_address?: string | null;
+          keywords?: string[] | null;
+          cv_parsed?: CvParsedJson | null;
+          parse_status?: ParseStatus | null;
+          parsed_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          nombre?: string | null;
+          email?: string | null;
+          keywords?: string[] | null;
+          cv_parsed?: CvParsedJson | null;
+          parse_status?: ParseStatus | null;
+          parsed_at?: string | null;
+        };
+      };
     };
   };
 }
 
 export type Oferta = Database['public']['Tables']['ofertas']['Row'];
 export type Postulacion = Database['public']['Tables']['postulaciones']['Row'];
+export type Perfil = Database['public']['Tables']['perfiles']['Row'];
 export type Empleador = Database['public']['Tables']['empleadores']['Row'];

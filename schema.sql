@@ -115,6 +115,34 @@ CREATE POLICY "postulaciones_public_insert" ON public.postulaciones
   FOR INSERT WITH CHECK (TRUE);
 
 -- ============================================================
+-- TABLA: perfiles (enlistado sin oferta específica)
+-- Candidato carga CV → queda en el pool. No rompe postulaciones.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.perfiles (
+  id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  nombre         TEXT,
+  email          TEXT,
+  cv_url         TEXT NOT NULL,
+  ip_address     TEXT,
+  keywords       TEXT[] DEFAULT '{}',
+  cv_parsed      JSONB,
+  parse_status   TEXT DEFAULT 'pending'
+                   CHECK (parse_status IS NULL OR parse_status IN ('pending', 'success', 'failed', 'skipped')),
+  parsed_at      TIMESTAMPTZ,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_perfiles_created ON public.perfiles (created_at);
+CREATE INDEX IF NOT EXISTS idx_perfiles_parse_status ON public.perfiles (parse_status);
+CREATE INDEX IF NOT EXISTS idx_perfiles_email ON public.perfiles (email);
+
+ALTER TABLE public.perfiles ENABLE ROW LEVEL SECURITY;
+
+-- Inserción vía service_role en /api/enlist. Sin SELECT público.
+CREATE POLICY "perfiles_service_insert" ON public.perfiles
+  FOR INSERT WITH CHECK (TRUE);
+
+-- ============================================================
 -- STORAGE: bucket de CVs
 -- ============================================================
 INSERT INTO storage.buckets (id, name, public)

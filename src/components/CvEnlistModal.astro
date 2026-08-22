@@ -1,0 +1,241 @@
+---
+/**
+ * Panel de conversión en el hero — visible, no escondido en un dialog.
+ * Carga CV (PDF/Word) sin registro. El modal dialog queda como fallback extra.
+ */
+---
+
+<section id="enlist-panel" class="enlist-panel mt-8 max-w-xl" aria-labelledby="enlist-title">
+  <h2 id="enlist-title" class="text-lg sm:text-xl font-semibold tracking-tight text-foreground">
+    Carga tu CV en segundos
+  </h2>
+  <p id="enlist-sub" class="text-muted-foreground text-sm mt-1">
+    Sin crear cuenta. En segundos quedas enlistado. Luego te podemos proponer ofertas según tu perfil.
+  </p>
+
+  <div id="enlist-form-wrap" class="mt-5">
+    <form id="form-enlist" class="space-y-4" novalidate>
+      <div
+        id="enlist-dropzone"
+        class="border border-dashed border-border rounded-card p-6 sm:p-8 text-center bg-card"
+      >
+        <input
+          type="file"
+          name="cv"
+          id="enlist-cv"
+          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          class="sr-only"
+        />
+        <div id="enlist-placeholder">
+          <p class="text-sm font-semibold text-foreground">PDF o Word · máx. 5 MB</p>
+          <label
+            for="enlist-cv"
+            class="btn-primary inline-flex mt-4 px-5 py-3 min-h-12 cursor-pointer"
+          >
+            Subir PDF o Word
+          </label>
+          <p class="text-xs text-muted-foreground mt-3">O arrastra el archivo aquí</p>
+        </div>
+        <div id="enlist-preview" class="hidden">
+          <p id="enlist-cv-name" class="text-sm font-medium text-foreground truncate"></p>
+          <p id="enlist-cv-size" class="text-xs text-muted-foreground mt-0.5"></p>
+          <button type="button" id="enlist-cv-clear" class="mt-3 text-sm text-muted-foreground hover:text-destructive">
+            Quitar archivo
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label for="enlist-nombre" class="label-field font-normal text-muted-foreground">Nombre (opcional)</label>
+          <input id="enlist-nombre" type="text" name="nombre" autocomplete="name" placeholder="Tu nombre" class="input-field" />
+        </div>
+        <div>
+          <label for="enlist-email" class="label-field font-normal text-muted-foreground">Email (opcional)</label>
+          <input id="enlist-email" type="email" name="email" autocomplete="email" placeholder="tu@email.com" class="input-field" />
+        </div>
+      </div>
+
+      <label class="flex items-start gap-2.5 text-xs text-muted-foreground leading-relaxed">
+        <input type="checkbox" id="enlist-privacidad" name="privacidad" required class="mt-0.5 h-4 w-4 rounded border-border" />
+        Acepto que mi CV se use para proponerme ofertas y se elimine a los 90 días.
+      </label>
+
+      <div id="enlist-error" class="hidden alert-error" role="alert" aria-live="polite">
+        <span></span>
+      </div>
+
+      <button type="submit" id="enlist-submit" class="btn-primary w-full py-3.5 min-h-12">
+        <span id="enlist-submit-txt">Enlistarme ahora</span>
+      </button>
+    </form>
+  </div>
+
+  <div id="enlist-success" class="hidden py-4" role="status" aria-live="polite">
+    <p class="text-lg font-semibold text-foreground">Listo. Ya estás enlistado.</p>
+    <p class="text-sm text-muted-foreground mt-2 leading-relaxed">
+      Te podemos proponer ofertas que calzan con tu perfil.
+    </p>
+    <a href="#listado-ofertas" class="btn-primary mt-6 inline-flex">Ver ofertas</a>
+  </div>
+</section>
+
+<style>
+  .enlist-panel[data-dragging='true'] #enlist-dropzone {
+    border-color: oklch(var(--accent) / 0.55);
+    background: oklch(var(--accent) / 0.06);
+  }
+</style>
+
+<script>
+  const MAX_CV = 5 * 1024 * 1024;
+  const ALLOWED_EXT = ['.pdf', '.doc', '.docx'];
+
+  function formatSize(bytes: number): string {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function validateClientFile(file: File): string | null {
+    const name = file.name.toLowerCase();
+    if (!ALLOWED_EXT.some((ext) => name.endsWith(ext))) {
+      return 'Solo se aceptan archivos PDF o Word.';
+    }
+    if (file.size > MAX_CV) return 'El CV supera el tamaño máximo de 5MB.';
+    if (file.size === 0) return 'Debes adjuntar tu CV.';
+    return null;
+  }
+
+  function bindEnlist() {
+    const panel = document.getElementById('enlist-panel');
+    const form = document.getElementById('form-enlist') as HTMLFormElement | null;
+    const dropzone = document.getElementById('enlist-dropzone');
+    const cvInput = document.getElementById('enlist-cv') as HTMLInputElement | null;
+    const placeholder = document.getElementById('enlist-placeholder');
+    const preview = document.getElementById('enlist-preview');
+    const cvName = document.getElementById('enlist-cv-name');
+    const cvSize = document.getElementById('enlist-cv-size');
+    const cvClear = document.getElementById('enlist-cv-clear');
+    const errEl = document.getElementById('enlist-error');
+    const submitBtn = document.getElementById('enlist-submit') as HTMLButtonElement | null;
+    const submitTxt = document.getElementById('enlist-submit-txt');
+    const formWrap = document.getElementById('enlist-form-wrap');
+    const success = document.getElementById('enlist-success');
+
+    if (!panel || !form || panel.dataset.bound === '1') return;
+    panel.dataset.bound = '1';
+
+    const showError = (msg: string) => {
+      if (!errEl) return;
+      const span = errEl.querySelector('span');
+      if (span) span.textContent = msg;
+      errEl.classList.remove('hidden');
+    };
+    const hideError = () => errEl?.classList.add('hidden');
+
+    const setCvFile = (file: File | null) => {
+      if (!cvInput) return;
+      if (!file) {
+        cvInput.value = '';
+        placeholder?.classList.remove('hidden');
+        preview?.classList.add('hidden');
+        return;
+      }
+      const err = validateClientFile(file);
+      if (err) {
+        showError(err);
+        setCvFile(null);
+        return;
+      }
+      hideError();
+      try {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        cvInput.files = dt.files;
+      } catch {
+        /* native change covers pick */
+      }
+      if (cvName) cvName.textContent = file.name;
+      if (cvSize) cvSize.textContent = formatSize(file.size);
+      placeholder?.classList.add('hidden');
+      preview?.classList.remove('hidden');
+    };
+
+    dropzone?.addEventListener('click', (e) => {
+      const t = e.target as HTMLElement;
+      if (t.closest('label') || t.closest('#enlist-cv-clear') || t.closest('input')) return;
+      cvInput?.click();
+    });
+
+    cvInput?.addEventListener('change', () => {
+      const f = cvInput.files?.[0] || null;
+      if (f) setCvFile(f);
+    });
+    cvClear?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setCvFile(null);
+    });
+
+    ['dragenter', 'dragover'].forEach((ev) => {
+      dropzone?.addEventListener(ev, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        panel.setAttribute('data-dragging', 'true');
+      });
+    });
+    ['dragleave', 'drop'].forEach((ev) => {
+      dropzone?.addEventListener(ev, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        panel.removeAttribute('data-dragging');
+      });
+    });
+    dropzone?.addEventListener('drop', (e) => {
+      const f = (e as DragEvent).dataTransfer?.files?.[0];
+      if (f) setCvFile(f);
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideError();
+      if (!submitBtn || !submitTxt) return;
+      if (!cvInput?.files?.[0]) {
+        showError('Debes adjuntar tu CV.');
+        return;
+      }
+      const privacy = document.getElementById('enlist-privacidad') as HTMLInputElement | null;
+      if (privacy && !privacy.checked) {
+        showError('Debes aceptar el tratamiento de tu CV.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.setAttribute('aria-busy', 'true');
+      submitTxt.innerHTML = '<span class="spinner" aria-hidden="true"></span> Enlistando…';
+
+      try {
+        const body = new FormData(form);
+        const res = await fetch('/api/enlist', { method: 'POST', body });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          formWrap?.classList.add('hidden');
+          success?.classList.remove('hidden');
+        } else {
+          showError(data.error || 'No pudimos guardar tu CV. Intenta de nuevo.');
+          submitTxt.textContent = 'Enlistarme ahora';
+          submitBtn.disabled = false;
+          submitBtn.removeAttribute('aria-busy');
+        }
+      } catch {
+        showError('Sin conexión. Revisa tu internet e intenta otra vez.');
+        submitTxt.textContent = 'Enlistarme ahora';
+        submitBtn.disabled = false;
+        submitBtn.removeAttribute('aria-busy');
+      }
+    });
+  }
+
+  document.addEventListener('astro:page-load', bindEnlist);
+  if (document.readyState !== 'loading') bindEnlist();
+</script>
