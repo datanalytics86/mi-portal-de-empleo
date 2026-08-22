@@ -78,7 +78,7 @@ export function buildCsp(nonce?: string, mode: CspMode = 'strict'): string {
     scriptSrcAttr,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
     "font-src 'self' https://fonts.gstatic.com data:",
-    "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://*.supabase.co",
+    "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://*.basemaps.cartocdn.com https://basemaps.cartocdn.com https://*.supabase.co",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.x.ai https://api.ocr.space https://*.upstash.io https://*.ingest.sentry.io https://*.sentry.io",
     "worker-src 'self' blob:",
     "media-src 'self'",

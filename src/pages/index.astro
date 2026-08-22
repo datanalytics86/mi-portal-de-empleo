@@ -1,8 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Pagination from '../components/ui/Pagination.astro';
+import JobCard from '../components/JobCard.astro';
 import { supabase } from '../lib/supabase';
-import { TIPOS, CATEGORIAS, CATEGORIA_COLORS, CATEGORIA_HEX, BRAND_HEX } from '../lib/constants';
+import { TIPOS, CATEGORIAS, BRAND_HEX, MAP_TILE_DARK, MAP_TILE_LIGHT } from '../lib/constants';
 import {
   DEFAULT_PAGE_SIZE,
   MAP_MARKERS_CAP,
@@ -10,7 +11,6 @@ import {
   parsePage,
 } from '../lib/pagination';
 
-// Filtros desde URL
 const { searchParams, pathname } = Astro.url;
 const q = searchParams.get('q') || '';
 const tipo = searchParams.get('tipo') || '';
@@ -18,7 +18,6 @@ const comuna = searchParams.get('comuna') || '';
 const categoria = searchParams.get('categoria') || '';
 const page = parsePage(searchParams.get('page'));
 
-// Listado paginado (server-side)
 let listQuery = supabase
   .from('ofertas')
   .select(
@@ -34,7 +33,6 @@ if (tipo) listQuery = listQuery.eq('tipo_empleo', tipo);
 if (comuna) listQuery = listQuery.ilike('comuna', `%${comuna}%`);
 if (categoria) listQuery = listQuery.eq('categoria', categoria);
 
-// Rango provisional; se recalcula pageInfo con el count real
 const provisionalFrom = (page - 1) * DEFAULT_PAGE_SIZE;
 const { data: ofertasRaw, count: totalCount } = await listQuery.range(
   provisionalFrom,
@@ -45,7 +43,6 @@ const total = totalCount ?? ofertasRaw?.length ?? 0;
 const pageInfo = buildPageInfo(page, DEFAULT_PAGE_SIZE, total);
 const ofertas = ofertasRaw ?? [];
 
-// Mapa: query ligera independiente (hasta MAP_MARKERS_CAP) para no perder pins al paginar
 let mapQuery = supabase
   .from('ofertas')
   .select('id, titulo, empresa, lat, lng, comuna, categoria')
@@ -72,7 +69,6 @@ const mapaOfertas = (mapRows || []).map((o) => ({
 const hayFiltros = q || tipo || comuna || categoria;
 const conCoords = mapaOfertas.filter((o) => o.lat && o.lng).length;
 
-// Construye URL de categoría preservando otros filtros (reset page)
 function buildCatUrl(cat: string | null) {
   const p = new URLSearchParams();
   if (cat) p.set('categoria', cat);
@@ -85,41 +81,44 @@ function buildCatUrl(cat: string | null) {
 ---
 
 <Layout title="Empleos en Chile" leaflet={true}>
-  <!-- Hero -->
-  <section class="relative overflow-hidden bg-gradient-to-br from-brand-800 via-brand-600 to-indigo-600 py-16 sm:py-20 px-4">
-    <div class="pointer-events-none absolute inset-0 bg-hero-mesh opacity-90" aria-hidden="true"></div>
-    <div class="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-white/10 blur-3xl" aria-hidden="true"></div>
-    <div class="pointer-events-none absolute -bottom-32 -left-16 w-80 h-80 rounded-full bg-brand-400/20 blur-3xl" aria-hidden="true"></div>
+  <section class="relative px-4 pt-14 sm:pt-20 pb-10">
+    <div
+      class="pointer-events-none absolute inset-0"
+      aria-hidden="true"
+      style="background: radial-gradient(ellipse 55% 70% at 8% 0%, oklch(var(--accent) / 0.10), transparent 62%);"
+    ></div>
 
-    <div class="relative max-w-6xl mx-auto text-center">
-      <div class="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/90 text-xs font-medium px-3 py-1.5 rounded-full mb-5 backdrop-blur-sm">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" aria-hidden="true"></span>
+    <div class="relative max-w-measure mx-auto">
+      <p class="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-5">
+        <span class="brand-mark" aria-hidden="true"></span>
         Postula sin registro · CV en segundos
-      </div>
-
-      <h1 class="text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold text-white mb-4 tracking-tight leading-[1.1]">
-        Encuentra tu próximo<br class="hidden sm:block" />
-        <span class="bg-gradient-to-r from-white via-brand-100 to-indigo-200 bg-clip-text text-transparent">
-          empleo en Chile
-        </span>
-      </h1>
-      <p class="text-brand-100/95 text-base sm:text-lg mb-8 max-w-xl mx-auto leading-relaxed">
-        <span id="hero-count" class="font-bold text-white tabular-nums" data-target={total}>0</span>
-        {' '}oportunidad{total !== 1 ? 'es' : ''} activa{total !== 1 ? 's' : ''}
-        · mapa interactivo · keywords automáticas del CV
       </p>
 
-      <!-- Barra de búsqueda -->
+      <h1 class="text-display text-foreground max-w-[14ch] sm:max-w-none">
+        Encuentra tu próximo
+        <span class="font-display italic font-normal text-foreground/95">empleo</span>
+        en Chile
+      </h1>
+
+      <p class="mt-5 max-w-xl text-muted-foreground text-base sm:text-[1.05rem] leading-relaxed">
+        <span id="hero-count" class="font-semibold text-foreground tabular-nums" data-target={total}>0</span>
+        {' '}oportunidad{total !== 1 ? 'es' : ''} activa{total !== 1 ? 's' : ''}
+        <span class="text-muted-foreground/40 mx-1.5" aria-hidden="true">·</span>
+        mapa por comuna
+        <span class="text-muted-foreground/40 mx-1.5" aria-hidden="true">·</span>
+        keywords del CV
+      </p>
+
       <form
         method="get"
         role="search"
         aria-label="Buscar ofertas"
-        class="bg-white/95 backdrop-blur rounded-2xl shadow-glow p-2 sm:p-2.5 flex flex-col sm:flex-row gap-1.5 sm:gap-0 max-w-3xl mx-auto ring-1 ring-white/40"
+        class="mt-8 bg-card border border-border rounded-card p-1.5 sm:p-2 flex flex-col sm:flex-row sm:items-stretch gap-1.5 sm:gap-0 max-w-3xl"
       >
         <input type="hidden" name="categoria" value={categoria} />
         <div class="flex-1 flex items-center gap-2 px-3 min-w-0">
-          <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <svg class="w-4 h-4 text-muted-foreground/70 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <label for="search-q" class="sr-only">Cargo o empresa</label>
           <input
@@ -127,144 +126,112 @@ function buildCatUrl(cat: string | null) {
             type="text"
             name="q"
             value={q}
-            placeholder="Cargo, empresa… (tecla /)"
-            class="flex-1 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none text-sm bg-transparent min-w-0"
+            placeholder="Cargo o empresa"
+            class="flex-1 py-2.5 text-foreground placeholder:text-muted-foreground/70 focus:outline-none text-sm bg-transparent min-w-0"
           />
+          <kbd class="quiet-kbd hidden sm:inline" title="Atajo de teclado">/</kbd>
         </div>
-        <div class="hidden sm:block w-px bg-slate-200 my-2" aria-hidden="true"></div>
+        <div class="hidden sm:block w-px bg-border my-2" aria-hidden="true"></div>
         <label for="search-tipo" class="sr-only">Tipo de empleo</label>
         <select
           id="search-tipo"
           name="tipo"
-          class="px-3 py-2.5 text-slate-600 focus:outline-none bg-transparent text-sm rounded-lg cursor-pointer min-h-11"
+          class="px-3 py-2.5 text-muted-foreground focus:outline-none bg-transparent text-sm rounded-input cursor-pointer min-h-11"
         >
-          <option value="">Tipo de empleo</option>
+          <option value="">Tipo</option>
           {Object.entries(TIPOS).map(([val, label]) => (
             <option value={val} selected={tipo === val}>{label}</option>
           ))}
         </select>
-        <div class="hidden sm:block w-px bg-slate-200 my-2" aria-hidden="true"></div>
+        <div class="hidden sm:block w-px bg-border my-2" aria-hidden="true"></div>
         <div class="flex items-center gap-2 px-3 sm:w-36">
-          <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
           <label for="search-comuna" class="sr-only">Comuna</label>
           <input
             id="search-comuna"
             type="text"
             name="comuna"
             value={comuna}
-            placeholder="Comuna…"
-            class="flex-1 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none text-sm bg-transparent min-w-0"
+            placeholder="Comuna"
+            class="flex-1 py-2.5 text-foreground placeholder:text-muted-foreground/70 focus:outline-none text-sm bg-transparent min-w-0"
           />
         </div>
-        <button type="submit" class="btn-gradient shrink-0 !px-6">
+        <button type="submit" class="btn-primary shrink-0 !px-5">
           Buscar
         </button>
       </form>
 
-      <!-- Trust row -->
-      <div class="flex flex-wrap justify-center gap-x-5 gap-y-2 mt-5 text-[11px] sm:text-xs text-white/80 font-medium">
-        <span class="inline-flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-          Sin cuenta
-        </span>
-        <span class="inline-flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-          CV privado 90 días
-        </span>
-        <span class="inline-flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-          Mapa por comuna
-        </span>
-      </div>
+      <p class="mt-4 text-[12px] text-muted-foreground tracking-wide">
+        Sin cuenta
+        <span class="text-muted-foreground/40 mx-2" aria-hidden="true">·</span>
+        CV privado 90 días
+        <span class="text-muted-foreground/40 mx-2" aria-hidden="true">·</span>
+        Mapa por comuna
+      </p>
 
-      <!-- Pills de categoría -->
-      <div class="flex flex-wrap justify-center gap-2 mt-6" role="navigation" aria-label="Categorías">
+      <nav class="flex flex-wrap gap-x-4 gap-y-2 mt-7" aria-label="Categorías">
         <a
           href={buildCatUrl(null)}
-          class={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all border ${!categoria ? 'bg-white text-brand-700 border-white shadow-soft' : 'bg-white/10 text-white border-white/20 hover:bg-white/20'}`}
+          class:list={[
+            'text-[13px] font-medium transition-colors duration-micro ease-quiet pb-0.5 border-b',
+            !categoria
+              ? 'text-foreground border-accent'
+              : 'text-muted-foreground border-transparent hover:text-foreground',
+          ]}
           aria-current={!categoria ? 'page' : undefined}
         >
           Todas
         </a>
-        {CATEGORIAS.map(cat => (
+        {CATEGORIAS.map((cat) => (
           <a
             href={buildCatUrl(cat)}
-            class={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all border ${categoria === cat ? 'bg-white text-brand-700 border-white shadow-soft' : 'bg-white/10 text-white/95 border-white/20 hover:bg-white/20'}`}
+            class:list={[
+              'text-[13px] font-medium transition-colors duration-micro ease-quiet pb-0.5 border-b',
+              categoria === cat
+                ? 'text-foreground border-accent'
+                : 'text-muted-foreground border-transparent hover:text-foreground',
+            ]}
             aria-current={categoria === cat ? 'page' : undefined}
           >
             {cat}
           </a>
         ))}
-      </div>
+      </nav>
 
       {hayFiltros && (
-        <a href="/" class="mt-4 inline-flex items-center gap-1 text-brand-100 hover:text-white text-sm font-medium transition-colors">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        <a href="/" class="mt-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-micro">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/></svg>
           Limpiar filtros
         </a>
       )}
     </div>
   </section>
 
-  <!-- Dual CTA -->
   {!hayFiltros && (
-    <section class="bg-white/70 border-b border-slate-100 py-7 px-4" aria-label="Accesos rápidos">
-      <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <a
-          href="#listado-ofertas"
-          class="group flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-br from-brand-50 to-white border border-brand-100/80 shadow-soft hover:shadow-card hover:border-brand-200 transition-all"
-        >
-          <div class="p-3 bg-white rounded-xl text-brand-600 shrink-0 shadow-soft border border-brand-100 group-hover:scale-105 transition-transform">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </div>
-          <div>
-            <h3 class="font-bold text-slate-900 tracking-tight">¿Buscas trabajo?</h3>
-            <p class="text-sm text-slate-600 mt-1 leading-relaxed">Explora el mapa, filtra por comuna y postula solo con tu CV.</p>
-            <span class="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 group-hover:gap-2 transition-all">
-              Ver ofertas
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-            </span>
-          </div>
+    <section class="px-4" aria-label="Accesos rápidos">
+      <div class="max-w-measure mx-auto flex flex-col sm:flex-row sm:items-baseline gap-4 sm:gap-10 text-sm">
+        <a href="#listado-ofertas" class="group text-muted-foreground hover:text-foreground transition-colors duration-micro ease-quiet">
+          <span class="text-[10px] font-medium uppercase tracking-[0.16em] block mb-1">Candidatos</span>
+          Ver ofertas <span class="text-accent">→</span>
         </a>
-        <a
-          href="/empleador/login"
-          class="group flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-br from-indigo-50 to-white border border-indigo-100/80 shadow-soft hover:shadow-card hover:border-indigo-200 transition-all"
-        >
-          <div class="p-3 bg-white rounded-xl text-indigo-600 shrink-0 shadow-soft border border-indigo-100 group-hover:scale-105 transition-transform">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </div>
-          <div>
-            <h3 class="font-bold text-slate-900 tracking-tight">¿Contratar?</h3>
-            <p class="text-sm text-slate-600 mt-1 leading-relaxed">Publica gratis, recibe CVs y ve keywords automáticas.</p>
-            <span class="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 group-hover:gap-2 transition-all">
-              Publicar empleo
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-            </span>
-          </div>
+        <a href="/empleador/login" class="group text-muted-foreground hover:text-foreground transition-colors duration-micro ease-quiet">
+          <span class="text-[10px] font-medium uppercase tracking-[0.16em] block mb-1">Empleadores</span>
+          Publicar empleo <span class="text-muted-foreground/50 group-hover:text-accent">→</span>
         </a>
       </div>
     </section>
   )}
 
-  <div class="max-w-6xl mx-auto px-4 py-8">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-      <!-- Mapa -->
-      <div class="lg:sticky lg:top-24 h-[280px] sm:h-[360px] lg:h-[420px] rounded-2xl overflow-hidden border border-slate-200/80 shadow-card ring-1 ring-slate-900/5 relative">
+  <div class="max-w-measure mx-auto px-4 py-10">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
+      <div class="lg:sticky lg:top-24 h-[280px] sm:h-[360px] lg:h-[440px] map-material relative">
         <div id="mapa" class="w-full h-full" role="application" aria-label="Mapa de ofertas de empleo"></div>
         {total === 0 || conCoords === 0 ? (
-          <div class="absolute inset-0 flex items-center justify-center bg-slate-50/90 backdrop-blur-[2px] pointer-events-none z-[400]">
+          <div class="absolute inset-0 flex items-center justify-center bg-background/80 pointer-events-none z-[400]">
             <div class="text-center px-6">
-              <p class="text-sm font-semibold text-slate-700">
+              <p class="text-sm font-medium text-foreground">
                 {total === 0 ? 'Sin ofertas en el mapa' : 'Sin ubicación en el mapa'}
               </p>
-              <p class="text-xs text-slate-500 mt-1">
+              <p class="text-xs text-muted-foreground mt-1">
                 {total === 0
                   ? (hayFiltros ? 'Prueba otros filtros o limpia la búsqueda' : 'Vuelve pronto: hay nuevas oportunidades a menudo')
                   : 'Las ofertas sin coordenadas no aparecen en el mapa'}
@@ -274,119 +241,50 @@ function buildCatUrl(cat: string | null) {
         ) : null}
       </div>
 
-      <!-- Listado -->
       <div id="listado-ofertas">
-        <div class="flex items-center justify-between mb-4">
-          <p class="text-sm text-slate-500 font-medium">
-            <span class="text-slate-900 font-bold tabular-nums">{total}</span>
-            {' '}oferta{total !== 1 ? 's' : ''}
-            {hayFiltros && <span class="ml-1.5 text-brand-600 font-semibold">· filtrado</span>}
-            {pageInfo.totalPages > 1 && (
-              <span class="ml-1.5 text-slate-400">· pág. {pageInfo.page}/{pageInfo.totalPages}</span>
-            )}
-          </p>
-        </div>
+        <p class="text-sm text-muted-foreground font-medium mb-4">
+          <span class="text-foreground font-semibold tabular-nums">{total}</span>
+          {' '}oferta{total !== 1 ? 's' : ''}
+          {hayFiltros && <span class="ml-1.5 text-accent font-medium">· filtrado</span>}
+          {pageInfo.totalPages > 1 && (
+            <span class="ml-1.5 text-muted-foreground/70">· pág. {pageInfo.page}/{pageInfo.totalPages}</span>
+          )}
+        </p>
 
         {!ofertas || ofertas.length === 0 ? (
-          <div class="text-center py-14 sm:py-16 card px-6">
-            <div class="w-16 h-16 bg-gradient-to-br from-slate-50 to-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100 shadow-soft">
-              <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <p class="text-slate-900 font-extrabold tracking-tight">
+          <div class="py-16 px-4 border border-border rounded-card text-center">
+            <p class="text-foreground font-semibold tracking-tight">
               {hayFiltros ? 'Sin resultados con esos filtros' : 'Aún no hay ofertas publicadas'}
             </p>
-            <p class="text-sm text-slate-500 mt-1.5 max-w-xs mx-auto leading-relaxed">
+            <p class="text-sm text-muted-foreground mt-2 max-w-xs mx-auto leading-relaxed">
               {hayFiltros
                 ? 'Prueba otra comuna, tipo de empleo o limpia la búsqueda.'
                 : 'Vuelve pronto: las empresas publican oportunidades a diario.'}
             </p>
             {hayFiltros ? (
-              <a href="/" class="btn-primary mt-6">
-                Ver todas las ofertas
-              </a>
+              <a href="/" class="btn-primary mt-7">Ver todas las ofertas</a>
             ) : (
-              <a href="/empleador/login" class="btn-secondary mt-6">
-                ¿Eres empresa? Publica gratis
-              </a>
+              <a href="/empleador/login" class="btn-secondary mt-7">¿Eres empresa? Publica gratis</a>
             )}
           </div>
         ) : (
-          <div class="space-y-3">
-            {ofertas.map((oferta, i) => {
-              // delay de animación acotado a la página actual
-              const esNueva = (Date.now() - new Date(oferta.created_at).getTime()) < 48 * 3600 * 1000;
-              const diasRestantes = Math.ceil((new Date(oferta.expira_en).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-              const iniciales = oferta.empresa
-                .split(' ')
-                .slice(0, 2)
-                .map((w: string) => w[0] || '')
-                .join('')
-                .toUpperCase()
-                .slice(0, 2);
-              const catColor = oferta.categoria
-                ? (CATEGORIA_COLORS[oferta.categoria] || 'bg-slate-100 text-slate-600 border-slate-200')
-                : '';
-              const animDelay = 'animation-delay: ' + (i * 50) + 'ms';
-              const urgenciaLabel = diasRestantes <= 1 ? 'Último día' : ('Cierra en ' + diasRestantes + 'd');
-              const urgenciaBadge =
-                diasRestantes <= 1 ? 'badge-danger' : diasRestantes <= 3 ? 'badge-warning' : 'badge-warning';
-              return (
-                <a
-                  href={`/oferta/${oferta.id}`}
-                  class="card-anim job-card group"
-                  style={animDelay}
-                >
-                  <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-50 to-brand-100 border border-brand-100/80 flex items-center justify-center shrink-0 text-brand-700 font-bold text-sm group-hover:from-brand-100 group-hover:to-brand-200 transition-colors shadow-soft">
-                    {iniciales}
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-start justify-between gap-2">
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 flex-wrap">
-                          <h2 class="font-semibold text-slate-900 truncate group-hover:text-brand-700 transition-colors tracking-tight text-[15px] sm:text-base">
-                            {oferta.titulo}
-                          </h2>
-                          {esNueva && (
-                            <span class="badge-success shrink-0">Nueva</span>
-                          )}
-                          {diasRestantes <= 5 && (
-                            <span class={`${urgenciaBadge} shrink-0`}>{urgenciaLabel}</span>
-                          )}
-                        </div>
-                        <p class="text-sm text-slate-500 mt-0.5 font-medium">{oferta.empresa}</p>
-                      </div>
-                      <span class="text-[11px] text-slate-400 whitespace-nowrap shrink-0 mt-0.5 font-medium tabular-nums">
-                        {new Date(oferta.created_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}
-                      </span>
-                    </div>
-                    <div class="flex flex-wrap gap-1.5 mt-2.5">
-                      <span class="badge-muted">
-                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        </svg>
-                        {oferta.comuna}
-                      </span>
-                      <span class="badge-brand">
-                        {TIPOS[oferta.tipo_empleo] || oferta.tipo_empleo}
-                      </span>
-                      {oferta.categoria && (
-                        <span class={`text-[11px] border px-2 py-0.5 rounded-full font-medium ${catColor}`}>
-                          {oferta.categoria}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div class="hidden sm:flex items-center text-slate-300 group-hover:text-brand-500 group-hover:translate-x-0.5 transition-all self-center">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </a>
-              );
-            })}
+          <div class="space-y-2.5">
+            {ofertas.map((oferta, i) => (
+              <JobCard
+                id={oferta.id}
+                titulo={oferta.titulo}
+                empresa={oferta.empresa}
+                tipo_empleo={oferta.tipo_empleo}
+                categoria={oferta.categoria}
+                comuna={oferta.comuna}
+                created_at={oferta.created_at}
+                expira_en={oferta.expira_en}
+                index={i}
+              />
+            ))}
           </div>
+        )}
+        {ofertas && ofertas.length > 0 && (
           <Pagination
             pageInfo={pageInfo}
             pathname={pathname}
@@ -399,17 +297,19 @@ function buildCatUrl(cat: string | null) {
   </div>
 </Layout>
 
-<script define:vars={{ mapaOfertas, CATEGORIA_HEX, BRAND_HEX }}>
+<script define:vars={{ mapaOfertas, BRAND_HEX, MAP_TILE_DARK, MAP_TILE_LIGHT }}>
   document.addEventListener('astro:page-load', () => {
     const mapEl = document.getElementById('mapa');
     if (!mapEl || mapEl.dataset.mapReady === '1') return;
     if (typeof L === 'undefined') return;
     mapEl.dataset.mapReady = '1';
 
-    const map = L.map('mapa').setView([-33.4569, -70.6483], 11);
+    const map = L.map('mapa', { zoomControl: false }).setView([-33.4569, -70.6483], 11);
+    L.control.zoom({ position: 'topright' }).addTo(map);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    L.tileLayer(dark ? MAP_TILE_DARK : MAP_TILE_LIGHT, {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 18,
     }).addTo(map);
 
@@ -421,26 +321,24 @@ function buildCatUrl(cat: string | null) {
 
     mapaOfertas.forEach((oferta) => {
       if (!oferta.lat || !oferta.lng) return;
-      const color = CATEGORIA_HEX[oferta.categoria] || BRAND_HEX;
       const icon = L.divIcon({
-        html: `<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`,
+        html: `<div style="width:10px;height:10px;background:${BRAND_HEX};border-radius:1px;border:1.5px solid oklch(0.93 0.01 95 / 0.9);box-shadow:0 1px 4px oklch(0.1 0.02 240 / 0.45)"></div>`,
         className: '',
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
+        iconSize: [10, 10],
+        iconAnchor: [5, 5],
       });
       const marker = L.marker([oferta.lat, oferta.lng], { icon });
       marker.bindPopup(`
-        <div style="min-width:160px">
+        <div style="min-width:160px;font-family:inherit">
           <strong>${esc(oferta.titulo)}</strong><br>
-          <span style="color:#64748b">${esc(oferta.empresa)}</span><br>
-          <span style="color:#94a3b8;font-size:12px">${esc(oferta.comuna)}</span><br>
+          <span style="opacity:.7">${esc(oferta.empresa)}</span><br>
+          <span style="opacity:.5;font-size:12px">${esc(oferta.comuna)}</span><br>
           <a href="/oferta/${encodeURIComponent(oferta.id)}" style="color:${BRAND_HEX};font-size:13px;font-weight:600">Ver oferta →</a>
         </div>
       `);
       marker.addTo(map);
     });
 
-    // Invalidate size after layout (sticky / transitions)
     setTimeout(() => map.invalidateSize(), 100);
   });
 </script>
@@ -451,7 +349,7 @@ function buildCatUrl(cat: string | null) {
     if (target === 0) { el.textContent = '0'; return; }
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) { el.textContent = String(target); return; }
-    const duration = 700;
+    const duration = 900;
     const start = performance.now();
     const step = (now: number) => {
       const elapsed = Math.min((now - start) / duration, 1);
@@ -467,16 +365,3 @@ function buildCatUrl(cat: string | null) {
     if (el) animateCounter(el);
   });
 </script>
-
-<style>
-  @keyframes fadeSlideUp {
-    from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .card-anim {
-    animation: fadeSlideUp 0.38s ease both;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .card-anim { animation: none; }
-  }
-</style>

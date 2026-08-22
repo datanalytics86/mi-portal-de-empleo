@@ -33,24 +33,24 @@ const toItem = Math.min(page * pageSize, total);
 ---
 
 <nav class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3" aria-label={label}>
-  <p class="text-xs text-slate-500 font-medium tabular-nums order-2 sm:order-1">
+  <p class="text-xs text-muted-foreground font-medium tabular-nums order-2 sm:order-1">
     {fromItem}–{toItem} de {total}
   </p>
   <div class="flex items-center gap-1.5 order-1 sm:order-2">
     {hasPrev ? (
       <a
         href={prevHref}
-        class="inline-flex items-center gap-1 min-h-10 px-3 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors"
+        class="inline-flex items-center gap-1 min-h-10 px-3 text-sm font-medium text-foreground border border-border rounded-control bg-card hover:border-accent/40 transition-colors duration-micro"
         rel="prev"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 19l-7-7 7-7" />
         </svg>
         Anterior
       </a>
     ) : (
       <span
-        class="inline-flex items-center gap-1 min-h-10 px-3 text-sm font-semibold text-slate-300 border border-slate-100 rounded-xl bg-slate-50 cursor-not-allowed"
+        class="inline-flex items-center gap-1 min-h-10 px-3 text-sm font-medium text-muted-foreground/40 border border-border/50 rounded-control cursor-not-allowed"
         aria-disabled="true"
       >
         Anterior
@@ -61,7 +61,7 @@ const toItem = Math.min(page * pageSize, total);
       {pages.map((p) =>
         p === page ? (
           <span
-            class="min-w-10 min-h-10 inline-flex items-center justify-center text-sm font-bold rounded-xl bg-brand-600 text-white shadow-soft"
+            class="min-w-10 min-h-10 inline-flex items-center justify-center text-sm font-semibold rounded-control bg-primary text-primary-foreground"
             aria-current="page"
           >
             {p}
@@ -69,7 +69,7 @@ const toItem = Math.min(page * pageSize, total);
         ) : (
           <a
             href={pageHref(pathname, searchParams, p)}
-            class="min-w-10 min-h-10 inline-flex items-center justify-center text-sm font-semibold rounded-xl text-slate-600 border border-slate-200 bg-white hover:bg-brand-50 hover:border-brand-200 hover:text-brand-700 transition-colors"
+            class="min-w-10 min-h-10 inline-flex items-center justify-center text-sm font-medium rounded-control text-muted-foreground border border-border bg-card hover:text-foreground hover:border-accent/40 transition-colors duration-micro"
           >
             {p}
           </a>
@@ -77,24 +77,24 @@ const toItem = Math.min(page * pageSize, total);
       )}
     </div>
 
-    <span class="sm:hidden text-xs font-semibold text-slate-500 tabular-nums px-2">
+    <span class="sm:hidden text-xs font-medium text-muted-foreground tabular-nums px-2">
       {page} / {totalPages}
     </span>
 
     {hasNext ? (
       <a
         href={nextHref}
-        class="inline-flex items-center gap-1 min-h-10 px-3 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors"
+        class="inline-flex items-center gap-1 min-h-10 px-3 text-sm font-medium text-foreground border border-border rounded-control bg-card hover:border-accent/40 transition-colors duration-micro"
         rel="next"
       >
         Siguiente
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5l7 7-7 7" />
         </svg>
       </a>
     ) : (
       <span
-        class="inline-flex items-center gap-1 min-h-10 px-3 text-sm font-semibold text-slate-300 border border-slate-100 rounded-xl bg-slate-50 cursor-not-allowed"
+        class="inline-flex items-center gap-1 min-h-10 px-3 text-sm font-medium text-muted-foreground/40 border border-border/50 rounded-control cursor-not-allowed"
         aria-disabled="true"
       >
         Siguiente

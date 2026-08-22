@@ -1,16 +1,18 @@
 ---
 /**
- * Spinner de carga — usar en botones y estados "pending".
- * En scripts del cliente (innerHTML) preferir la clase global `.spinner` / `.spinner-dark`
- * definida en Layout.astro (mismo look).
- */
+  * Spinner de carga — usar en botones y estados "pending".
+  * En scripts del cliente (innerHTML) preferir la clase global `.spinner` / `.spinner-dark`
+  * definida en Layout.astro (mismo look).
+  */
 interface Props {
   class?: string;
   light?: boolean;
   label?: string;
 }
 const { class: className = 'w-4 h-4', light = true, label } = Astro.props;
-const ring = light ? 'border-white/40 border-t-white' : 'border-brand-200 border-t-brand-600';
+const ring = light
+  ? 'border-primary-foreground/40 border-t-primary-foreground'
+  : 'border-accent/25 border-t-accent';
 ---
 <span
   class:list={['inline-block rounded-full border-2 animate-spin shrink-0', ring, className]}

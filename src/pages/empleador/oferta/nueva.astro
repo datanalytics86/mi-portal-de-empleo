@@ -12,26 +12,17 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
 ---
 
 <Layout title="Nueva oferta">
-  <!-- Mini hero -->
-  <div class="relative overflow-hidden bg-gradient-to-br from-brand-800 via-brand-600 to-indigo-600 py-9 px-4">
-    <div class="pointer-events-none absolute inset-0 bg-hero-mesh opacity-80" aria-hidden="true"></div>
+  <div class="page-hero">
     <div class="relative max-w-2xl mx-auto">
-      <a href="/empleador/dashboard" class="inline-flex items-center gap-1.5 text-brand-100 hover:text-white text-sm font-medium transition-colors mb-4">
+      <a href="/empleador/dashboard" class="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm font-medium transition-colors duration-micro mb-4">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
         Dashboard
       </a>
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center backdrop-blur shrink-0 shadow-glow">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-xl font-extrabold text-white tracking-tight">Publicar nueva oferta</h1>
-          <p class="text-brand-100 text-sm font-medium">Usa una plantilla o escribe desde cero</p>
-        </div>
+      <div>
+        <h1 class="text-xl font-semibold text-foreground tracking-tight">Publicar nueva oferta</h1>
+        <p class="text-muted-foreground text-sm mt-1">Usa una plantilla o escribe desde cero</p>
       </div>
     </div>
   </div>
@@ -43,11 +34,11 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
         <!-- Título -->
         <div>
           <label for="titulo" class="label-field">
-            Título del cargo <span class="text-red-500">*</span>
+            Título del cargo <span class="text-destructive">*</span>
           </label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
@@ -67,7 +58,7 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label for="tipo_empleo" class="label-field">
-              Tipo de empleo <span class="text-red-500">*</span>
+              Tipo de empleo <span class="text-destructive">*</span>
             </label>
             <select
               id="tipo_empleo"
@@ -84,7 +75,7 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
           </div>
           <div>
             <label for="categoria" class="label-field">
-              Categoría <span class="text-red-500">*</span>
+              Categoría <span class="text-destructive">*</span>
             </label>
             <select
               id="categoria"
@@ -101,11 +92,11 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
         <!-- Comuna -->
         <div>
           <label for="comuna" class="label-field">
-            Comuna <span class="text-red-500">*</span>
+            Comuna <span class="text-destructive">*</span>
           </label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
@@ -125,24 +116,24 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
         <!-- Descripción -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <label for="descripcion" class="block text-sm font-semibold text-slate-700">
-              Descripción del cargo <span class="text-red-500">*</span>
+            <label for="descripcion" class="block text-sm font-semibold text-foreground/80">
+              Descripción del cargo <span class="text-destructive">*</span>
             </label>
-            <span id="char-count" class="text-xs text-slate-400 tabular-nums">0 / 2000</span>
+            <span id="char-count" class="text-xs text-muted-foreground tabular-nums">0 / 2000</span>
           </div>
           <!-- Plantillas rápidas (rellenan descripción + categoría/tipo) -->
           <div class="flex flex-wrap gap-1.5 mb-2">
-            <span class="text-xs text-slate-400 flex items-center pr-1">Plantilla:</span>
-            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 min-h-9 py-1.5 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="tech">
+            <span class="text-xs text-muted-foreground flex items-center pr-1">Plantilla:</span>
+            <button type="button" class="tpl-btn text-xs text-muted-foreground border border-border px-2.5 min-h-9 py-1.5 rounded-control hover:border-accent/40 hover:text-foreground transition-colors duration-micro font-medium" data-tpl="tech">
               Tecnología
             </button>
-            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 min-h-9 py-1.5 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="ventas">
+            <button type="button" class="tpl-btn text-xs text-muted-foreground border border-border px-2.5 min-h-9 py-1.5 rounded-control hover:border-accent/40 hover:text-foreground transition-colors duration-micro font-medium" data-tpl="ventas">
               Ventas
             </button>
-            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 min-h-9 py-1.5 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="admin">
+            <button type="button" class="tpl-btn text-xs text-muted-foreground border border-border px-2.5 min-h-9 py-1.5 rounded-control hover:border-accent/40 hover:text-foreground transition-colors duration-micro font-medium" data-tpl="admin">
               Admin
             </button>
-            <button type="button" class="tpl-btn text-xs text-brand-600 border border-brand-200 bg-brand-50 px-2.5 min-h-9 py-1.5 rounded-lg hover:bg-brand-100 transition-colors font-medium" data-tpl="practica">
+            <button type="button" class="tpl-btn text-xs text-muted-foreground border border-border px-2.5 min-h-9 py-1.5 rounded-control hover:border-accent/40 hover:text-foreground transition-colors duration-micro font-medium" data-tpl="practica">
               Práctica
             </button>
           </div>
@@ -156,19 +147,19 @@ const maxFechaStr = maxFecha.toISOString().split('T')[0];
             class="input-field resize-y"
           ></textarea>
           <!-- Barra de progreso de caracteres -->
-          <div class="mt-1.5 bg-slate-100 rounded-full h-0.5 overflow-hidden">
-            <div id="char-bar" class="h-full rounded-full bg-brand-400 transition-all duration-150" style="width: 0%"></div>
+          <div class="mt-1.5 bg-muted rounded-full h-0.5 overflow-hidden">
+            <div id="char-bar" class="h-full rounded-full bg-accent transition-all duration-150" style="width: 0%"></div>
           </div>
         </div>
 
         <!-- Fecha de cierre -->
         <div>
           <label for="expira_en" class="label-field">
-            Fecha de cierre <span class="text-red-500">*</span>
+            Fecha de cierre <span class="text-destructive">*</span>
           </label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
@@ -330,7 +321,7 @@ Ofrecemos:
         const pct = Math.min(100, (len / max) * 100);
         charBar.style.width = pct + '%';
         charBar.className = 'h-full rounded-full transition-all duration-150 ' +
-          (pct >= 90 ? 'bg-red-400' : pct >= 70 ? 'bg-orange-400' : 'bg-brand-400');
+          (pct >= 90 ? 'bg-destructive' : pct >= 70 ? 'bg-warning' : 'bg-accent');
       }
     }
 

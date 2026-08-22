@@ -46,14 +46,14 @@ const ofertasDisplay = (ofertas ?? []).map((oferta) => {
   const nPost = (oferta.postulaciones as { count: number }[])?.[0]?.count ?? 0;
   const estado = !oferta.activa ? 'Inactiva' : expirada ? 'Expirada' : 'Activa';
   const estadoColor = estado === 'Activa'
-    ? 'text-emerald-700 bg-emerald-50 border-emerald-100'
+    ? 'text-success bg-success/10 border-success/25'
     : estado === 'Expirada'
-    ? 'text-amber-700 bg-amber-50 border-amber-100'
-    : 'text-slate-500 bg-slate-100 border-slate-200';
+    ? 'text-warning bg-warning/10 border-warning/25'
+    : 'text-muted-foreground bg-muted border-border';
   const diasRestantes = Math.max(0, Math.ceil((new Date(oferta.expira_en).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
   const totalDias = Math.max(1, Math.ceil((new Date(oferta.expira_en).getTime() - new Date(oferta.created_at).getTime()) / (1000 * 60 * 60 * 24)));
   const pctTranscurrido = Math.min(100, Math.round(((totalDias - diasRestantes) / totalDias) * 100));
-  const barColor = diasRestantes <= 3 ? 'bg-red-400' : diasRestantes <= 7 ? 'bg-orange-300' : 'bg-brand-400';
+  const barColor = diasRestantes <= 3 ? 'bg-destructive' : diasRestantes <= 7 ? 'bg-warning' : 'bg-accent';
   const barWidth = 'width: ' + pctTranscurrido + '%';
   const diasLabel = diasRestantes === 0
     ? 'Último día'
@@ -66,107 +66,81 @@ const email = Astro.locals.session?.user?.email ?? '';
 ---
 
 <Layout title="Panel de empleador">
-  <!-- Hero editorial -->
-  <div class="relative overflow-hidden bg-gradient-to-br from-brand-800 via-brand-600 to-indigo-600 py-10 px-4">
-    <div class="pointer-events-none absolute inset-0 bg-hero-mesh opacity-80" aria-hidden="true"></div>
-    <div class="pointer-events-none absolute -right-20 top-0 w-64 h-64 rounded-full bg-white/10 blur-3xl" aria-hidden="true"></div>
-
+  <div class="page-hero">
     <div class="relative max-w-5xl mx-auto">
       <div class="flex items-center justify-between gap-4 flex-wrap">
         <div class="flex items-center gap-4">
-          <div class="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center text-white font-bold text-lg backdrop-blur shrink-0 shadow-glow">
+          <div class="w-12 h-12 rounded-input bg-muted border border-border flex items-center justify-center text-muted-foreground font-semibold text-sm shrink-0">
             {empleador.empresa.slice(0, 2).toUpperCase()}
           </div>
           <div>
-            <p class="text-brand-200/90 text-[11px] font-semibold tracking-widest uppercase">Panel empleador</p>
-            <h1 class="text-2xl font-extrabold text-white tracking-tight">{empleador.empresa}</h1>
-            {email && <p class="text-brand-100/80 text-xs mt-0.5">{email}</p>}
+            <p class="text-muted-foreground text-[11px] font-medium tracking-[0.16em] uppercase">Panel empleador</p>
+            <h1 class="text-2xl font-semibold text-foreground tracking-tight">{empleador.empresa}</h1>
+            {email && <p class="text-muted-foreground text-xs mt-0.5">{email}</p>}
           </div>
         </div>
         <div class="flex gap-2">
-          <a
-            href="/empleador/oferta/nueva"
-            class="inline-flex items-center gap-1.5 bg-white text-brand-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-brand-50 transition-all shadow-soft"
-          >
+          <a href="/empleador/oferta/nueva" class="btn-primary !py-2.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
             Nueva oferta
           </a>
           <form action="/api/auth/logout" method="post">
-            <button
-              type="submit"
-              class="text-sm text-white/85 border border-white/25 px-3.5 py-2.5 rounded-xl hover:bg-white/10 transition-colors font-medium"
-            >
+            <button type="submit" class="btn-secondary !py-2.5">
               Salir
             </button>
           </form>
         </div>
       </div>
 
-      <!-- Métricas -->
-      <div class="grid grid-cols-3 gap-3 mt-8">
-        <div class="bg-white/10 border border-white/20 rounded-2xl p-4 sm:p-5 backdrop-blur text-center">
-          <p id="metric-activas" data-target={ofertasActivas} class="text-3xl sm:text-4xl font-extrabold text-white tabular-nums">0</p>
-          <p class="text-[11px] sm:text-xs text-brand-100/90 mt-1.5 font-semibold tracking-wide uppercase">Activas</p>
+      <dl class="grid grid-cols-3 gap-6 mt-8 max-w-lg">
+        <div>
+          <dt class="text-[10px] font-medium tracking-[0.16em] uppercase text-muted-foreground">Activas</dt>
+          <dd id="metric-activas" data-target={ofertasActivas} class="mt-1 text-3xl font-semibold text-foreground tabular-nums">0</dd>
         </div>
-        <div class="bg-white/10 border border-white/20 rounded-2xl p-4 sm:p-5 backdrop-blur text-center">
-          <p id="metric-postulaciones" data-target={totalPostulaciones} class="text-3xl sm:text-4xl font-extrabold text-white tabular-nums">0</p>
-          <p class="text-[11px] sm:text-xs text-brand-100/90 mt-1.5 font-semibold tracking-wide uppercase">Postulaciones</p>
+        <div>
+          <dt class="text-[10px] font-medium tracking-[0.16em] uppercase text-muted-foreground">Postulaciones</dt>
+          <dd id="metric-postulaciones" data-target={totalPostulaciones} class="mt-1 text-3xl font-semibold text-foreground tabular-nums">0</dd>
         </div>
-        <div class="bg-white/10 border border-white/20 rounded-2xl p-4 sm:p-5 backdrop-blur text-center">
-          <p id="metric-expiradas" data-target={ofertasExpiradas} class="text-3xl sm:text-4xl font-extrabold text-white/55 tabular-nums">0</p>
-          <p class="text-[11px] sm:text-xs text-brand-100/70 mt-1.5 font-semibold tracking-wide uppercase">Expiradas</p>
+        <div>
+          <dt class="text-[10px] font-medium tracking-[0.16em] uppercase text-muted-foreground">Expiradas</dt>
+          <dd id="metric-expiradas" data-target={ofertasExpiradas} class="mt-1 text-3xl font-semibold text-muted-foreground tabular-nums">0</dd>
         </div>
-      </div>
+      </dl>
     </div>
   </div>
 
   <div class="max-w-5xl mx-auto px-4 py-8">
     {ofertasDisplay.length === 0 ? (
       <EmptyState
-        title="Tu tablero está listo"
-        description="Publica tu primera oferta en menos de 2 minutos. Los candidatos postulan solo con su CV y aquí verás keywords y match automático."
+        title="Sin ofertas todavía"
+        description="Publica en un par de minutos. Los candidatos postulan solo con su CV."
         secondaryHref="/"
         secondaryLabel="Ver cómo se ven las ofertas →"
       >
-        <a slot="actions" href="/empleador/oferta/nueva" class="btn-gradient !px-6 !py-3">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-          </svg>
+        <a slot="actions" href="/empleador/oferta/nueva" class="btn-primary !px-6 !py-3">
           Publicar primera oferta
         </a>
-        <div slot="footer" class="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-3 text-left max-w-lg mx-auto">
-          {[
-            { t: 'Plantillas listas', d: 'Tech, ventas, admin…' },
-            { t: 'Keywords del CV', d: 'En segundos, sin excel' },
-            { t: '100% gratis', d: 'Sin tarjeta ni plan' },
-          ].map((tip) => (
-            <div class="rounded-xl bg-slate-50 border border-slate-100 px-3 py-2.5">
-              <p class="text-xs font-bold text-slate-800">{tip.t}</p>
-              <p class="text-[11px] text-slate-500 mt-0.5">{tip.d}</p>
-            </div>
-          ))}
-        </div>
       </EmptyState>
     ) : (
       <div>
         <div class="flex items-end justify-between gap-3 mb-5">
           <div>
-            <h2 class="text-lg font-extrabold text-slate-900 tracking-tight">Tus ofertas</h2>
-            <p class="text-sm text-slate-500 mt-0.5">
+            <h2 class="text-lg font-semibold text-foreground tracking-tight">Tus ofertas</h2>
+            <p class="text-sm text-muted-foreground mt-0.5">
               {totalOfertas} publicaci{totalOfertas === 1 ? 'ón' : 'ones'}
               {totalPostulaciones > 0 && (
-                <span> · <span class="font-semibold text-brand-600">{totalPostulaciones}</span> CV{totalPostulaciones !== 1 ? 's' : ''} en total</span>
+                <span> · <span class="font-semibold text-accent">{totalPostulaciones}</span> CV{totalPostulaciones !== 1 ? 's' : ''} en total</span>
               )}
               {pageInfo.totalPages > 1 && (
-                <span class="text-slate-400"> · pág. {pageInfo.page}/{pageInfo.totalPages}</span>
+                <span class="text-muted-foreground"> · pág. {pageInfo.page}/{pageInfo.totalPages}</span>
               )}
             </p>
           </div>
           <a
             href="/empleador/oferta/nueva"
-            class="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-800 transition-colors"
+            class="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-accent transition-colors"
           >
             + Nueva
           </a>
@@ -174,50 +148,50 @@ const email = Astro.locals.session?.user?.email ?? '';
 
         <div class="space-y-3">
           {ofertasDisplay.map((oferta) => (
-            <div class={`card p-4 sm:p-5 hover:shadow-card-hover hover:-translate-y-0.5 transition-all group ${oferta.urgencia ? 'border-amber-200/80' : ''}`}>
+            <div class={`card p-4 sm:p-5 transition-all group ${oferta.urgencia ? 'border-warning/40' : ''}`}>
               <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <h3 class="font-bold text-slate-900 group-hover:text-brand-700 transition-colors tracking-tight text-base">
+                    <h3 class="font-bold text-foreground group-hover:text-accent transition-colors tracking-tight text-base">
                       {oferta.titulo}
                     </h3>
                     <span class={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold border ${oferta.estadoColor}`}>
                       {oferta.estado}
                     </span>
                     {oferta.urgencia && (
-                      <span class="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-amber-800 border border-amber-100">
+                      <span class="text-[11px] px-2 py-0.5 rounded-full font-medium bg-warning/10 text-warning border-warning/25 border">
                         Por vencer
                       </span>
                     )}
                   </div>
-                  <p class="text-sm text-slate-500 mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <p class="text-sm text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                     <span class="inline-flex items-center gap-1 font-medium">
-                      <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       </svg>
                       {oferta.comuna}
                     </span>
-                    <span class="text-slate-300">·</span>
+                    <span class="text-muted-foreground/50">·</span>
                     <span>{TIPOS[oferta.tipo_empleo] || oferta.tipo_empleo}</span>
-                    <span class="text-slate-300">·</span>
+                    <span class="text-muted-foreground/50">·</span>
                     <span>Vence {new Date(oferta.expira_en).toLocaleDateString('es-CL')}</span>
                   </p>
                   {!oferta.expirada && oferta.activa && (
                     <div class="mt-3 max-w-xs">
-                      <div class="bg-slate-100 rounded-full h-1 overflow-hidden">
+                      <div class="bg-muted rounded-full h-1 overflow-hidden">
                         <div class={`h-full rounded-full transition-all ${oferta.barColor}`} style={oferta.barWidth}></div>
                       </div>
-                      <p class="text-[11px] text-slate-400 mt-1 font-medium">{oferta.diasLabel}</p>
+                      <p class="text-[11px] text-muted-foreground mt-1 font-medium">{oferta.diasLabel}</p>
                     </div>
                   )}
                 </div>
 
                 <div class="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
-                  <div class={`text-center min-w-[3.25rem] px-3 py-2 rounded-xl border ${oferta.nPost > 0 ? 'bg-brand-50 border-brand-100' : 'bg-slate-50 border-slate-100'}`}>
-                    <p class={`text-lg font-extrabold leading-none tabular-nums ${oferta.nPost > 0 ? 'text-brand-700' : 'text-slate-700'}`}>
+                  <div class={`text-center min-w-[3.25rem] px-3 py-2 rounded-xl border ${oferta.nPost > 0 ? 'bg-accent/10 border-accent/20' : 'bg-muted border-border'}`}>
+                    <p class={`text-lg font-semibold leading-none tabular-nums ${oferta.nPost > 0 ? 'text-accent' : 'text-foreground/80'}`}>
                       {oferta.nPost}
                     </p>
-                    <p class="text-[10px] text-slate-400 mt-1 font-semibold uppercase tracking-wide">
+                    <p class="text-[10px] text-muted-foreground mt-1 font-semibold uppercase tracking-wide">
                       {oferta.nPost === 1 ? 'CV' : 'CVs'}
                     </p>
                   </div>
@@ -235,7 +209,7 @@ const email = Astro.locals.session?.user?.email ?? '';
                   </a>
                   <a
                     href={`/empleador/oferta/${oferta.id}/postulaciones`}
-                    class="btn-gradient"
+                    class="btn-primary"
                   >
                     Ver CVs
                   </a>

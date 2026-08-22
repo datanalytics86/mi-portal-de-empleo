@@ -56,6 +56,7 @@ describe('buildCsp (Fase 2.1)', () => {
     expect(csp).toContain('fonts.googleapis.com');
     expect(csp).toContain('*.supabase.co');
     expect(csp).toContain('tile.openstreetmap.org');
+    expect(csp).toContain('basemaps.cartocdn.com');
     expect(csp).toContain('sentry.io');
   });
 });

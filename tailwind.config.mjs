@@ -5,50 +5,98 @@ export default {
     extend: {
       fontFamily: {
         sans: [
+          'var(--font-sans)',
           '"Plus Jakarta Sans"',
           'Inter',
           'ui-sans-serif',
           'system-ui',
           'sans-serif',
         ],
+        display: [
+          'var(--font-display)',
+          'Newsreader',
+          'Georgia',
+          'serif',
+        ],
       },
       colors: {
-        brand: {
-          50:  '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
+        background: 'oklch(var(--background) / <alpha-value>)',
+        foreground: 'oklch(var(--foreground) / <alpha-value>)',
+        border: 'oklch(var(--border) / <alpha-value>)',
+        input: 'oklch(var(--input) / <alpha-value>)',
+        ring: 'oklch(var(--ring) / <alpha-value>)',
+        muted: {
+          DEFAULT: 'oklch(var(--muted) / <alpha-value>)',
+          foreground: 'oklch(var(--muted-foreground) / <alpha-value>)',
         },
-      },
-      boxShadow: {
-        soft: '0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 16px rgba(15, 23, 42, 0.04)',
-        card: '0 1px 3px rgba(15, 23, 42, 0.05), 0 8px 24px -8px rgba(15, 23, 42, 0.08)',
-        'card-hover':
-          '0 4px 12px rgba(79, 70, 229, 0.08), 0 16px 40px -12px rgba(15, 23, 42, 0.12)',
-        glow: '0 0 0 1px rgba(99, 102, 241, 0.12), 0 8px 32px -8px rgba(79, 70, 229, 0.35)',
+        card: {
+          DEFAULT: 'oklch(var(--card) / <alpha-value>)',
+          foreground: 'oklch(var(--card-foreground) / <alpha-value>)',
+        },
+        popover: {
+          DEFAULT: 'oklch(var(--popover) / <alpha-value>)',
+          foreground: 'oklch(var(--popover-foreground) / <alpha-value>)',
+        },
+        accent: {
+          DEFAULT: 'oklch(var(--accent) / <alpha-value>)',
+          foreground: 'oklch(var(--accent-foreground) / <alpha-value>)',
+        },
+        primary: {
+          DEFAULT: 'oklch(var(--primary) / <alpha-value>)',
+          foreground: 'oklch(var(--primary-foreground) / <alpha-value>)',
+        },
+        destructive: {
+          DEFAULT: 'oklch(var(--destructive) / <alpha-value>)',
+          foreground: 'oklch(var(--destructive-foreground) / <alpha-value>)',
+        },
+        success: {
+          DEFAULT: 'oklch(var(--success) / <alpha-value>)',
+          foreground: 'oklch(var(--success-foreground) / <alpha-value>)',
+        },
+        warning: {
+          DEFAULT: 'oklch(var(--warning) / <alpha-value>)',
+          foreground: 'oklch(var(--warning-foreground) / <alpha-value>)',
+        },
+        /* Compatibility: leftover brand-* maps to the teal accent, never indigo */
+        brand: {
+          50: 'oklch(var(--accent) / 0.10)',
+          100: 'oklch(var(--accent) / 0.16)',
+          200: 'oklch(var(--accent) / 0.28)',
+          300: 'oklch(var(--accent) / 0.42)',
+          400: 'oklch(var(--accent) / 0.62)',
+          500: 'oklch(var(--accent) / 0.82)',
+          600: 'oklch(var(--accent) / 1)',
+          700: 'oklch(var(--accent) / 1)',
+          800: 'oklch(var(--accent) / 1)',
+          900: 'oklch(var(--accent) / 1)',
+        },
       },
       borderRadius: {
-        '2xl': '1rem',
-        '3xl': '1.25rem',
+        input: 'var(--radius-input)',
+        control: 'var(--radius-control)',
+        card: 'var(--radius-card)',
+        map: 'var(--radius-map)',
+        mark: 'var(--radius-mark)',
       },
-      backgroundImage: {
-        'hero-mesh':
-          'radial-gradient(ellipse 80% 60% at 20% -10%, rgba(165, 180, 252, 0.35), transparent), radial-gradient(ellipse 60% 50% at 90% 10%, rgba(129, 140, 248, 0.25), transparent), radial-gradient(ellipse 50% 40% at 50% 100%, rgba(99, 102, 241, 0.15), transparent)',
+      boxShadow: {
+        quiet: 'var(--shadow-quiet)',
+        map: 'var(--shadow-map)',
+        soft: 'var(--shadow-quiet)',
+        card: 'var(--shadow-quiet)',
+        'card-hover': 'var(--shadow-quiet)',
+        glow: 'none',
       },
-      animation: {
-        'fade-up': 'fadeUp 0.45s ease both',
+      maxWidth: {
+        measure: 'var(--measure)',
       },
-      keyframes: {
-        fadeUp: {
-          '0%': { opacity: '0', transform: 'translateY(12px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
+      transitionTimingFunction: {
+        quiet: 'var(--ease-quiet)',
+        enter: 'var(--ease-enter)',
+      },
+      transitionDuration: {
+        micro: 'var(--duration-micro)',
+        move: 'var(--duration-move)',
+        enter: 'var(--duration-enter)',
       },
     },
   },

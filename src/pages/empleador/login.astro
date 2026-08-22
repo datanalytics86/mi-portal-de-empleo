@@ -9,27 +9,21 @@ const error = Astro.url.searchParams.get('error');
 ---
 
 <Layout title="Acceso empleadores">
-  <div class="relative min-h-[calc(100vh-140px)] flex items-center justify-center px-4 py-12 overflow-hidden">
-    <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand-50/80 via-slate-50 to-slate-50" aria-hidden="true"></div>
-    <div class="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[480px] h-[280px] bg-brand-200/30 blur-3xl rounded-full" aria-hidden="true"></div>
+  <div class="relative min-h-[calc(100vh-140px)] flex items-center justify-center px-4 py-12">
     <div class="relative w-full max-w-md">
-      <div class="text-center mb-8 form-enter" style="animation-delay:0ms">
-        <div class="w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-glow">
-          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-        </div>
-        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Bienvenido de vuelta</h1>
-        <p class="text-slate-500 mt-1.5 text-sm">
+      <div class="mb-8 quiet-enter">
+        <span class="brand-mark mb-5 block" aria-hidden="true"></span>
+        <h1 class="text-2xl font-semibold text-foreground tracking-tight">Acceso empleadores</h1>
+        <p class="text-muted-foreground mt-1.5 text-sm">
           ¿No tienes cuenta?{' '}
-          <a href="/empleador/registro" class="text-brand-600 hover:text-brand-800 font-semibold">Regístrate gratis</a>
+          <a href="/empleador/registro" class="text-accent hover:text-foreground font-medium">Regístrate gratis</a>
         </p>
       </div>
 
-      <div class="card p-8 form-enter" style="animation-delay:80ms">
+      <div class="card p-8 quiet-enter" style="animation-delay:80ms">
         {error && (
           <div class="mb-5 alert-error" role="alert">
-            <svg class="w-4 h-4 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-4 h-4 shrink-0 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             {error === 'credenciales' ? 'Email o contraseña incorrectos.' : 'Error al iniciar sesión. Intenta de nuevo.'}
@@ -41,7 +35,7 @@ const error = Astro.url.searchParams.get('error');
             <label for="login-email" class="label-field">Email</label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none" aria-hidden="true">
-                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
@@ -60,7 +54,7 @@ const error = Astro.url.searchParams.get('error');
             <label for="login-password" class="label-field">Contraseña</label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none" aria-hidden="true">
-                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
@@ -76,7 +70,7 @@ const error = Astro.url.searchParams.get('error');
               <button
                 type="button"
                 id="toggle-password"
-                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 min-w-11 justify-center"
+                class="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground min-w-11 justify-center"
                 aria-label="Mostrar contraseña"
                 aria-controls="login-password"
               >
@@ -106,17 +100,6 @@ const error = Astro.url.searchParams.get('error');
     </div>
   </div>
 </Layout>
-
-<style>
-  @keyframes formEnter {
-    from { opacity: 0; transform: translateY(18px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .form-enter { animation: formEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
-  @media (prefers-reduced-motion: reduce) {
-    .form-enter { animation: none; }
-  }
-</style>
 
 <script>
   document.addEventListener('astro:page-load', () => {

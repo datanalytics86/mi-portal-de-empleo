@@ -1,6 +1,7 @@
 ---
 import { ViewTransitions } from 'astro:transitions';
 import { getSessionFromCookies } from '../lib/auth';
+import '../styles/quiet-opportunity.css';
 
 interface Props {
   title: string;
@@ -35,7 +36,8 @@ const cspNonce = Astro.locals.cspNonce ?? '';
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={ogDescription} />
-    <meta name="theme-color" content="#4f46e5" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#16191f" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3f1ec" />
     <link rel="canonical" href={canonicalUrl} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={ogDescription} />
@@ -53,7 +55,7 @@ const cspNonce = Astro.locals.cspNonce ?? '';
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
       rel="stylesheet"
     />
 
@@ -67,50 +69,44 @@ const cspNonce = Astro.locals.cspNonce ?? '';
     <slot name="head" />
     <ViewTransitions />
   </head>
-  <body class="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
+  <body class="min-h-dvh bg-background text-foreground font-sans antialiased">
+    <div class="quiet-grain" aria-hidden="true"></div>
+
     <a
       href="#main-content"
-      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:px-4 focus:py-2.5 focus:bg-white focus:text-brand-700 focus:rounded-xl focus:shadow-card focus:font-semibold focus:text-sm focus:ring-2 focus:ring-brand-500"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:px-4 focus:py-2.5 focus:bg-card focus:text-foreground focus:rounded-control focus:font-semibold focus:text-sm"
     >
       Ir al contenido
     </a>
 
-    <!-- Header glass -->
-    <header class="sticky top-0 z-40 border-b border-white/60 bg-white/80 backdrop-blur-xl shadow-soft">
-      <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <header class="site-header sticky top-0 z-40 border-b">
+      <div class="max-w-measure mx-auto px-4 h-[var(--header-h)] flex items-center justify-between">
         <a href="/" class="flex items-center gap-2.5 group">
-          <div class="w-9 h-9 bg-gradient-to-br from-brand-500 to-brand-700 rounded-xl flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
-            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <div class="leading-tight">
-            <span class="block text-base font-bold text-slate-900 group-hover:text-brand-700 transition-colors tracking-tight">
-              Empleos Chile
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span class="leading-none">
+            <span class="block text-[0.95rem] font-semibold tracking-tight text-foreground">
+              Empleos <span class="font-normal text-muted-foreground">Chile</span>
             </span>
-            <span class="hidden sm:block text-[10px] font-medium text-slate-400 tracking-wide uppercase">
-              Sin registro · Mapa · CV
+            <span class="hidden sm:block mt-0.5 text-[10px] font-medium tracking-[0.14em] uppercase text-muted-foreground/70">
+              Mapa · CV · sin cuenta
             </span>
-          </div>
+          </span>
         </a>
-        <nav class="flex items-center gap-2 sm:gap-3 text-sm" aria-label="Principal">
+        <nav class="flex items-center gap-1 sm:gap-2 text-sm" aria-label="Principal">
           <a
             href="/"
-            class="text-slate-500 hover:text-slate-900 font-medium transition-colors px-3 py-2 min-h-11 inline-flex items-center rounded-lg hover:bg-slate-100"
+            class="text-muted-foreground hover:text-foreground font-medium transition-colors duration-micro ease-quiet px-3 py-2 min-h-11 inline-flex items-center rounded-control"
           >
             Ofertas
           </a>
           {isEmpleador ? (
             <>
-              <a
-                href="/empleador/dashboard"
-                class="btn-primary !py-2 !px-4"
-              >
+              <a href="/empleador/dashboard" class="btn-primary !py-2 !px-3.5">
                 Mi panel
               </a>
               {isEmpleadorArea && (
                 <form action="/api/auth/logout" method="post" class="inline">
-                  <button type="submit" class="btn-secondary !py-2 !px-3.5">
+                  <button type="submit" class="btn-ghost !py-2 !px-3">
                     Salir
                   </button>
                 </form>
@@ -119,9 +115,9 @@ const cspNonce = Astro.locals.cspNonce ?? '';
           ) : (
             <a
               href="/empleador/login"
-              class="btn-gradient !py-2 !px-4"
+              class="text-muted-foreground hover:text-foreground font-medium transition-colors duration-micro ease-quiet px-3 py-2 min-h-11 inline-flex items-center rounded-control"
             >
-              Para empleadores
+              Empleadores
             </a>
           )}
         </nav>
@@ -132,52 +128,49 @@ const cspNonce = Astro.locals.cspNonce ?? '';
       <slot />
     </main>
 
-    <!-- Footer -->
-    <footer class="mt-20 border-t border-slate-200/80 bg-white">
-      <div class="max-w-6xl mx-auto px-4 py-10">
-        <div class="flex flex-col md:flex-row md:items-start justify-between gap-8">
+    <footer class="mt-24 border-t border-border">
+      <div class="max-w-measure mx-auto px-4 py-12">
+        <div class="flex flex-col md:flex-row md:items-start justify-between gap-10">
           <div class="max-w-sm">
             <div class="flex items-center gap-2 mb-3">
-              <div class="w-7 h-7 bg-gradient-to-br from-brand-500 to-brand-700 rounded-lg flex items-center justify-center">
-                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <span class="text-sm font-bold text-slate-800">Empleos Chile</span>
+              <span class="brand-mark" aria-hidden="true"></span>
+              <span class="text-sm font-semibold tracking-tight text-foreground">
+                Empleos <span class="font-normal text-muted-foreground">Chile</span>
+              </span>
             </div>
-            <p class="text-sm text-slate-500 leading-relaxed">
-              Portal minimalista de empleos. Postula con tu CV en segundos, sin crear cuenta.
+            <p class="text-sm text-muted-foreground leading-relaxed">
+              Oportunidad silenciosa. Postula con tu CV en segundos, sin crear cuenta.
               Los datos se eliminan a los 90 días.
             </p>
           </div>
-          <div class="flex flex-wrap gap-x-10 gap-y-4 text-sm">
+          <div class="flex flex-wrap gap-x-12 gap-y-6 text-sm">
             <div>
-              <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Candidatos</p>
-              <a href="/" class="block text-slate-600 hover:text-brand-700 transition-colors mb-1.5">Ver ofertas</a>
-              <p class="text-slate-400 text-xs">PDF o Word · máx. 5 MB</p>
+              <p class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.16em] mb-2.5">Candidatos</p>
+              <a href="/" class="block text-foreground/80 hover:text-foreground transition-colors duration-micro mb-1.5">Ver ofertas</a>
+              <p class="text-muted-foreground text-xs">PDF o Word · máx. 5 MB</p>
             </div>
             <div>
-              <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Empleadores</p>
+              <p class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.16em] mb-2.5">Empleadores</p>
               {isEmpleador ? (
-                <a href="/empleador/dashboard" class="block text-slate-600 hover:text-brand-700 transition-colors mb-1.5">Mi panel</a>
+                <a href="/empleador/dashboard" class="block text-foreground/80 hover:text-foreground transition-colors duration-micro mb-1.5">Mi panel</a>
               ) : (
                 <>
-                  <a href="/empleador/login" class="block text-slate-600 hover:text-brand-700 transition-colors mb-1.5">Ingresar</a>
-                  <a href="/empleador/registro" class="block text-slate-600 hover:text-brand-700 transition-colors">Crear cuenta</a>
+                  <a href="/empleador/login" class="block text-foreground/80 hover:text-foreground transition-colors duration-micro mb-1.5">Ingresar</a>
+                  <a href="/empleador/registro" class="block text-foreground/80 hover:text-foreground transition-colors duration-micro">Crear cuenta</a>
                 </>
               )}
             </div>
           </div>
         </div>
-        <div class="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p class="text-xs text-slate-400">
+        <div class="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p class="text-xs text-muted-foreground">
             &copy; {year} Portal de Empleos Chile
           </p>
           <a
             href={isEmpleador ? '/empleador/oferta/nueva' : '/empleador/login'}
-            class="text-xs font-semibold text-brand-600 hover:text-brand-800 transition-colors"
+            class="text-xs font-medium text-muted-foreground hover:text-accent transition-colors duration-micro"
           >
-            Publicar empleo gratis →
+            Publicar empleo gratis
           </a>
         </div>
       </div>
@@ -187,10 +180,10 @@ const cspNonce = Astro.locals.cspNonce ?? '';
       id="scroll-top"
       type="button"
       aria-label="Volver arriba"
-      class="fixed bottom-20 md:bottom-6 right-5 z-40 w-11 h-11 min-h-11 min-w-11 bg-white text-brand-700 border border-brand-100 rounded-full shadow-card flex items-center justify-center opacity-0 pointer-events-none translate-y-2 transition-all duration-300 hover:bg-brand-600 hover:text-white hover:border-brand-600 hover:scale-105"
+      class="fixed bottom-20 md:bottom-6 right-5 z-40 w-10 h-10 min-h-11 min-w-11 bg-card text-muted-foreground border border-border rounded-control flex items-center justify-center opacity-0 pointer-events-none translate-y-1 transition-all duration-move ease-quiet hover:text-foreground hover:border-accent/40"
     >
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7" />
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M5 15l7-7 7 7" />
       </svg>
     </button>
   </body>
@@ -209,143 +202,171 @@ const cspNonce = Astro.locals.cspNonce ?? '';
   });
 
   document.addEventListener('astro:page-load', () => {
+    const header = document.querySelector<HTMLElement>('.site-header');
     const btn = document.getElementById('scroll-top');
-    if (!btn) return;
-    const toggle = () => {
-      const show = window.scrollY > 400;
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      header?.classList.toggle('is-scrolled', y > 8);
+      if (!btn) return;
+      const show = y > 400;
       btn.classList.toggle('opacity-0', !show);
       btn.classList.toggle('pointer-events-none', !show);
-      btn.classList.toggle('translate-y-2', !show);
+      btn.classList.toggle('translate-y-1', !show);
     };
-    window.addEventListener('scroll', toggle, { passive: true });
-    toggle();
-    btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    btn?.addEventListener('click', () => {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    });
   });
 </script>
 
 <style is:global>
-  ::selection {
-    background: #c7d2fe;
-    color: #1e1b4b;
-  }
-
-  html {
-    scroll-behavior: smooth;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    html {
-      scroll-behavior: auto;
-    }
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
-
-  /* Focus agradable y accesible */
   :focus-visible {
-    outline: 2px solid #6366f1;
+    outline: 2px solid oklch(var(--ring));
     outline-offset: 2px;
   }
 
-  /* ── Design system utilities ── */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 bg-brand-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-soft hover:bg-brand-700 disabled:opacity-60 disabled:pointer-events-none transition-colors;
+    @apply inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-control text-sm font-semibold hover:opacity-90 disabled:opacity-60 disabled:pointer-events-none;
+    transition: opacity var(--duration-micro) var(--ease-quiet), transform var(--duration-micro) var(--ease-quiet);
   }
+  /* Alias legado — no usar en markup nuevo */
   .btn-gradient {
-    @apply inline-flex items-center justify-center gap-2 bg-gradient-to-r from-brand-600 to-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-soft hover:from-brand-700 hover:to-brand-800 hover:shadow-glow disabled:opacity-60 disabled:pointer-events-none transition-all;
+    @apply inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-control text-sm font-semibold hover:opacity-90 disabled:opacity-60 disabled:pointer-events-none;
+    transition: opacity var(--duration-micro) var(--ease-quiet), transform var(--duration-micro) var(--ease-quiet);
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 border border-slate-200 text-slate-600 bg-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 hover:text-slate-800 disabled:opacity-60 transition-colors;
+    @apply inline-flex items-center justify-center gap-2 border border-border text-foreground bg-card px-4 py-2.5 rounded-control text-sm font-medium hover:border-accent/40 disabled:opacity-60;
+    transition: border-color var(--duration-micro) var(--ease-quiet), background-color var(--duration-micro) var(--ease-quiet);
   }
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 text-slate-500 px-3 py-2 rounded-xl text-sm font-medium hover:bg-slate-100 hover:text-slate-800 transition-colors;
+    @apply inline-flex items-center justify-center gap-2 text-muted-foreground px-3 py-2 rounded-control text-sm font-medium hover:text-foreground hover:bg-muted;
+    transition: color var(--duration-micro) var(--ease-quiet), background-color var(--duration-micro) var(--ease-quiet);
   }
   .btn-icon {
-    @apply inline-flex items-center justify-center min-h-11 min-w-11 p-2.5 rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors;
+    @apply inline-flex items-center justify-center min-h-11 min-w-11 p-2.5 rounded-control border border-border text-muted-foreground hover:text-foreground hover:border-accent/40;
+    transition: color var(--duration-micro) var(--ease-quiet), border-color var(--duration-micro) var(--ease-quiet);
   }
   .input-field {
-    @apply w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white;
+    @apply w-full border border-border rounded-input px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 bg-input/40;
   }
   .input-field-icon {
-    @apply w-full border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white;
+    @apply w-full border border-border rounded-input pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 bg-input/40;
   }
   .label-field {
-    @apply block text-sm font-semibold text-slate-700 mb-1.5;
+    @apply block text-sm font-medium text-foreground/80 mb-1.5;
   }
   .card {
-    @apply bg-white border border-slate-200/90 rounded-2xl shadow-soft ring-1 ring-slate-900/5;
+    @apply bg-card border border-border rounded-card;
+    box-shadow: var(--shadow-quiet);
   }
   .alert-error {
-    @apply text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2;
+    @apply text-sm text-destructive bg-destructive/10 border border-destructive/25 rounded-control p-3 flex items-center gap-2;
   }
   .alert-success {
-    @apply text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center gap-2;
+    @apply text-sm text-success bg-success/10 border border-success/25 rounded-control p-3 flex items-center gap-2;
   }
 
-  /* Spinner reutilizable (mismo look que Spinner.astro) */
   .spinner {
-    @apply inline-block w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0;
+    @apply inline-block w-4 h-4 rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground animate-spin shrink-0;
   }
   .spinner-dark {
-    @apply inline-block w-4 h-4 rounded-full border-2 border-brand-200 border-t-brand-600 animate-spin shrink-0;
+    @apply inline-block w-4 h-4 rounded-full border-2 border-accent/25 border-t-accent animate-spin shrink-0;
   }
 
-  /* Badges / chips */
   .badge {
-    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold border;
+    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium border border-border bg-muted text-muted-foreground;
   }
-  .badge-brand {
-    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold border bg-brand-50 text-brand-700 border-brand-100;
+  .badge-brand,
+  .badge-muted {
+    @apply badge;
   }
   .badge-success {
-    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold border bg-emerald-50 text-emerald-700 border-emerald-100;
+    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium border border-success/25 bg-success/10 text-success;
   }
   .badge-warning {
-    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold border bg-amber-50 text-amber-800 border-amber-100;
+    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium border border-warning/25 bg-warning/10 text-warning;
   }
   .badge-danger {
-    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold border bg-red-50 text-red-700 border-red-100;
-  }
-  .badge-muted {
-    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold border bg-slate-50 text-slate-600 border-slate-100;
+    @apply inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium border border-destructive/25 bg-destructive/10 text-destructive;
   }
   .chip-skill {
-    @apply text-xs bg-indigo-50 text-indigo-800 border border-indigo-100 px-2.5 py-0.5 rounded-full font-medium;
+    @apply text-xs bg-muted text-foreground/80 border border-border px-2.5 py-0.5 rounded-full font-medium;
   }
   .chip-soft {
-    @apply text-xs bg-emerald-50 text-emerald-800 border border-emerald-100 px-2.5 py-0.5 rounded-full;
+    @apply text-xs bg-muted text-muted-foreground border border-border px-2.5 py-0.5 rounded-full;
   }
 
-  /* Card de oferta (listado público) — añade también class "group" en el markup */
   .job-card {
-    @apply flex gap-3.5 bg-white border border-slate-200/90 rounded-2xl p-4 shadow-soft hover:border-brand-300 hover:shadow-card-hover hover:-translate-y-0.5 transition-all;
+    position: relative;
+    display: flex;
+    gap: 0.9rem;
+    padding: 1rem 1.05rem;
+    background: oklch(var(--card));
+    border: 1px solid oklch(var(--border));
+    border-radius: var(--radius-card);
+    text-decoration: none;
+    color: inherit;
+    transition:
+      border-color var(--duration-micro) var(--ease-quiet),
+      background-color var(--duration-micro) var(--ease-quiet),
+      transform var(--duration-move) var(--ease-quiet),
+      opacity var(--duration-enter) var(--ease-enter);
+    animation: quiet-enter var(--duration-enter) var(--ease-enter) both;
+    animation-delay: var(--enter-delay, 0ms);
   }
-  .job-card:focus-visible {
-    outline: 2px solid #6366f1;
-    outline-offset: 2px;
+  .job-card:hover {
+    border-color: oklch(var(--accent) / 0.38);
+    background: oklch(var(--muted) / 0.45);
+  }
+  @media (hover: hover) {
+    .job-card:hover {
+      transform: translateX(2px);
+    }
+  }
+  .job-card--nueva::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.7rem;
+    bottom: 0.7rem;
+    width: 2px;
+    border-radius: 1px;
+    background: oklch(var(--accent));
+  }
+  .job-card__mono {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-input);
+    background: oklch(var(--muted));
+    border: 1px solid oklch(var(--border) / 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: oklch(var(--muted-foreground));
   }
 
-  /* Success panel premium (postulación, registro) */
   .success-panel {
-    @apply rounded-2xl border border-emerald-200 bg-gradient-to-b from-emerald-50 to-white p-6 text-center shadow-soft;
+    @apply rounded-card border border-success/25 bg-success/5 p-6 text-center;
   }
 
   button:not(:disabled),
-  [type='submit']:not(:disabled),
-  a.btn-primary,
-  a.btn-gradient {
-    transition-property: transform, box-shadow, background-color, color, border-color, opacity;
-    transition-duration: 160ms;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  [type='submit']:not(:disabled) {
+    transition-property: transform, opacity, box-shadow, background-color, color, border-color;
+    transition-duration: var(--duration-micro);
+    transition-timing-function: var(--ease-quiet);
   }
   button:active:not(:disabled),
   [type='submit']:active:not(:disabled) {
-    transform: scale(0.97);
+    transform: scale(0.985);
   }
 
   input[type='text'],
@@ -356,30 +377,49 @@ const cspNonce = Astro.locals.cspNonce ?? '';
   input[type='file'],
   select,
   textarea {
-    transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+    transition: border-color var(--duration-micro) var(--ease-quiet), box-shadow var(--duration-micro) var(--ease-quiet);
   }
 
-  /* Contraste: placeholders y focus en inputs del design system */
   .input-field:focus-visible,
   .input-field-icon:focus-visible,
   input:focus-visible,
   select:focus-visible,
   textarea:focus-visible {
-    outline: 2px solid #6366f1;
+    outline: 2px solid oklch(var(--ring));
     outline-offset: 1px;
   }
 
-  /* Safe area para sticky CTA iOS */
   .sticky-cta-safe {
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 
   .leaflet-popup-content-wrapper {
-    border-radius: 12px !important;
-    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.12) !important;
-    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-control) !important;
+    background: oklch(var(--popover)) !important;
+    color: oklch(var(--popover-foreground)) !important;
+    box-shadow: var(--shadow-quiet) !important;
+    border: 1px solid oklch(var(--border));
   }
   .leaflet-popup-tip {
+    background: oklch(var(--popover)) !important;
     box-shadow: none !important;
+  }
+  .leaflet-container {
+    background: oklch(var(--muted)) !important;
+    font-family: var(--font-sans) !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .job-card:hover {
+      transform: none;
+    }
   }
 </style>
