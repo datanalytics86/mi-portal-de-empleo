@@ -72,20 +72,17 @@ describe('recommendOfertas', () => {
       ofertas: sample,
       limit: 3,
     });
-    expect(recs.length).toBeGreaterThanOrEqual(3);
+    expect(recs.length).toBeGreaterThanOrEqual(1);
     expect(recs.length).toBeLessThanOrEqual(6);
     expect(recs[0]!.id).toBe('eeeeeeee-0000-4000-8000-000000000001');
-    expect(recs[0]!.match_score).toBeGreaterThan(recs[1]!.match_score);
     expect(recs[0]!.match_score).toBeGreaterThanOrEqual(40);
     expect(recs[0]!.match_score).toBeLessThanOrEqual(100);
+    if (recs[1]) expect(recs[0]!.match_score).toBeGreaterThanOrEqual(recs[1].match_score);
   });
 
-  it('sin keywords devuelve recorte diverso, no vacío', () => {
-    const recs = recommendOfertas({ keywords: [], ofertas: sample, limit: 3 });
-    expect(recs).toHaveLength(3);
-    const cats = new Set(recs.map((r) => r.categoria));
-    expect(cats.size).toBeGreaterThanOrEqual(3);
-    expect(recs.every((r) => r.match_score === 0)).toBe(true);
+  it('sin keywords suficientes devuelve [] (fail-open, no filler)', () => {
+    expect(recommendOfertas({ keywords: [], ofertas: sample, limit: 6 })).toEqual([]);
+    expect(recommendOfertas({ keywords: null, ofertas: sample })).toEqual([]);
   });
 
   it('respeta el límite y aplica bonus de categoría', () => {
@@ -96,7 +93,9 @@ describe('recommendOfertas', () => {
       limit: 3,
     });
     expect(recs[0]!.categoria).toBe('Salud');
-    expect(recs).toHaveLength(3);
+    expect(recs.length).toBeGreaterThanOrEqual(1);
+    expect(recs.length).toBeLessThanOrEqual(3);
+    expect(recs.every((r) => r.match_score > 0)).toBe(true);
   });
 
   it('funciona contra el catálogo demo completo', () => {

@@ -85,49 +85,27 @@ function scoreOferta(
 }
 
 /**
- * Devuelve 3–6 ofertas ordenadas por score.
- * Sin keywords: recorte diverso (una por categoría) con score bajo, no vacío.
+ * Top 4–6 ofertas por score. Fail-open: sin keywords suficientes → [].
+ * Nunca lanza. Solo incluye scores > 0.
  */
 export function recommendOfertas(input: RecommendInput = {}): RecommendedOferta[] {
-  const limit = Math.min(6, Math.max(3, input.limit ?? 6));
+  const limit = Math.min(6, Math.max(1, input.limit ?? 6));
   const ofertas = (input.ofertas ?? getDemoOfertas()).filter(
     (o) => o.activa && o.expira_en >= new Date().toISOString(),
   );
   if (ofertas.length === 0) return [];
 
   const terms = uniqueNormalized(input.keywords ?? []);
-  const scored = ofertas.map((o) => ({
-    o,
-    score: terms.length
-      ? scoreOferta(o, terms, input.categoria, input.comuna)
-      : 0,
-  }));
+  if (terms.length === 0) return [];
 
-  if (terms.length === 0) {
-    const seen = new Set<string>();
-    const diverse: PublicOferta[] = [];
-    for (const o of ofertas) {
-      if (seen.has(o.categoria)) continue;
-      seen.add(o.categoria);
-      diverse.push(o);
-      if (diverse.length >= limit) break;
-    }
-    while (diverse.length < Math.min(limit, ofertas.length)) {
-      const next = ofertas.find((o) => !diverse.includes(o));
-      if (!next) break;
-      diverse.push(next);
-    }
-    return diverse.slice(0, limit).map((o) => ({
-      id: o.id,
-      titulo: o.titulo,
-      empresa: o.empresa,
-      comuna: o.comuna,
-      categoria: o.categoria,
-      match_score: 0,
-    }));
-  }
+  const scored = ofertas
+    .map((o) => ({
+      o,
+      score: scoreOferta(o, terms, input.categoria, input.comuna),
+    }))
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score || (a.o.created_at < b.o.created_at ? 1 : -1));
 
-  scored.sort((a, b) => b.score - a.score || (a.o.created_at < b.o.created_at ? 1 : -1));
   return scored.slice(0, limit).map(({ o, score }) => ({
     id: o.id,
     titulo: o.titulo,

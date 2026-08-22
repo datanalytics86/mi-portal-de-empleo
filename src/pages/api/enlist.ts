@@ -6,6 +6,7 @@ import {
   ensureDemoCatalogSeeded,
 } from '../../lib/persist';
 import { recommendOfertas } from '../../lib/recommend';
+import { loadOfertasForRecommend } from '../../lib/public-ofertas';
 import {
   validateCvFile,
   storageExtension,
@@ -246,7 +247,7 @@ async function handleEnlist(request: Request): Promise<Response> {
       keywords = extractKeywords(extracted.cleaned, 20);
     }
   } catch {
-    /* fail-open: matching con catálogo destacado */
+    /* fail-open: matches [] si no hay texto extraíble */
   }
 
   if (keywords.length > 0) {
@@ -255,7 +256,13 @@ async function handleEnlist(request: Request): Promise<Response> {
     });
   }
 
-  const matches = recommendOfertas({ keywords, limit: 6 });
+  let matches: ReturnType<typeof recommendOfertas> = [];
+  try {
+    const corpus = await loadOfertasForRecommend();
+    matches = recommendOfertas({ keywords, ofertas: corpus, limit: 6 });
+  } catch {
+    matches = recommendOfertas({ keywords, limit: 6 });
+  }
 
   return json(
     { ok: true, id: inserted.id, parsing: true, keywords, matches },

@@ -163,6 +163,27 @@ export async function loadPublicOferta(id: string): Promise<PublicOferta | null>
   return getDemoOferta(id) ?? null;
 }
 
+/** Corpus para ranking (Neon si hay filas; si no, catálogo). Fail-open. */
+export async function loadOfertasForRecommend(limit = 800): Promise<PublicOferta[]> {
+  const sql = getSql();
+  if (sql) {
+    const rows = await withSqlTimeout(
+      sql`
+        SELECT id, titulo, descripcion, empresa, tipo_empleo, categoria, comuna,
+               lat, lng, activa, expira_en, empleador_id, created_at
+        FROM public.ofertas
+        WHERE activa = TRUE AND expira_en >= NOW()
+        ORDER BY created_at DESC
+        LIMIT ${limit}
+      `,
+    );
+    if (rows && rows.length > 0) {
+      return rows.map((r) => mapRow(r as Record<string, unknown>));
+    }
+  }
+  return filterDemoOfertas({});
+}
+
 export async function loadSitemapOfertaIds(): Promise<Array<{ id: string; created_at: string }>> {
   const sql = getSql();
   if (sql) {

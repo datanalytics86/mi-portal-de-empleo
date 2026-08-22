@@ -56,8 +56,14 @@ describe('contrato de escritura /api/enlist y /api/postulaciones', () => {
 
   it('tras keywords, el matching devuelve ofertas con id demo estable', () => {
     const recs = recommendOfertas({ keywords: ['React', 'TypeScript'], limit: 6 });
-    expect(recs.length).toBe(6);
+    expect(recs.length).toBeGreaterThanOrEqual(1);
+    expect(recs.length).toBeLessThanOrEqual(6);
     expect(recs[0]!.id).toMatch(/^eeeeeeee-0000-4000-8000-/);
     expect(recs[0]!.titulo.length).toBeGreaterThan(3);
+    expect(recs[0]!.match_score).toBeGreaterThan(0);
+  });
+
+  it('sin keywords, /api/enlist puede devolver matches vacíos sin fallar', () => {
+    expect(recommendOfertas({ keywords: [] })).toEqual([]);
   });
 });
