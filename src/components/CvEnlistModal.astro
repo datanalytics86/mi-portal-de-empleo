@@ -15,7 +15,7 @@
   <div class="p-6 sm:p-8">
     <div class="flex items-start justify-between gap-4">
       <h2 id="enlist-title" class="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
-        Sube tu CV una sola vez
+        Carga tu CV y listo
       </h2>
       <button type="button" id="enlist-close" class="btn-ghost !p-2 !min-h-11 !min-w-11" aria-label="Cerrar">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -24,10 +24,10 @@
       </button>
     </div>
     <p id="enlist-sub" class="text-muted-foreground mt-2 text-sm sm:text-base">
-      Sin cuenta. Sin campos interminables. En segundos quedas enlistado.
+      Sin crear cuenta. En segundos quedas enlistado.
     </p>
     <p class="text-sm text-foreground mt-2 mb-6">
-      Nosotros te recomendamos los trabajos que calzan contigo.
+      Luego el sistema te puede proponer ofertas que calzan con tu perfil.
     </p>
 
     <div id="enlist-form-wrap">
@@ -86,7 +86,7 @@
     <div id="enlist-success" class="hidden py-4" hidden role="status" aria-live="polite">
       <p class="text-lg font-semibold text-foreground">Listo. Ya estás enlistado.</p>
       <p id="enlist-success-sub" class="text-sm text-muted-foreground mt-2 leading-relaxed">
-        Estas ofertas calzan con tu CV.
+        Te recomendaremos ofertas que calcen contigo.
       </p>
       <ul id="enlist-matches" class="mt-5 space-y-2"></ul>
       <button type="button" id="enlist-see-jobs" class="btn-primary mt-6">Ver todas las ofertas</button>
@@ -198,12 +198,14 @@
     const open = () => {
       hideError();
       lastFocus = (document.activeElement as HTMLElement) || null;
+      document.documentElement.classList.add('enlist-open');
       if (typeof dialog.showModal === 'function') dialog.showModal();
       else dialog.setAttribute('open', '');
       closeBtn?.focus();
     };
 
     const close = () => {
+      document.documentElement.classList.remove('enlist-open');
       if (typeof dialog.close === 'function' && dialog.open) dialog.close();
       else {
         dialog.removeAttribute('open');
@@ -211,7 +213,10 @@
       }
     };
 
-    dialog.addEventListener('close', restoreFocus);
+    dialog.addEventListener('close', () => {
+      document.documentElement.classList.remove('enlist-open');
+      restoreFocus();
+    });
     dialog.addEventListener('cancel', (e) => {
       e.preventDefault();
       close();
@@ -239,7 +244,7 @@
 
     document.addEventListener('click', (e) => {
       const t = e.target as HTMLElement;
-      if (t.closest('#open-enlist')) {
+      if (t.closest('[data-open-enlist]')) {
         e.preventDefault();
         open();
       }
@@ -267,7 +272,7 @@
         return;
       }
       if (successSub) {
-        successSub.textContent = 'Estas ofertas calzan con tu CV.';
+        successSub.textContent = 'Te recomendaremos ofertas que calcen contigo.';
       }
       for (const m of scored) {
         const li = document.createElement('li');

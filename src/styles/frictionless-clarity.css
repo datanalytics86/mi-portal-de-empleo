@@ -110,6 +110,39 @@ body {
   border-bottom: 1px solid oklch(var(--border));
 }
 
+/**
+ * Encapsulation: the promise (title + copy + CTA) is an island.
+ * Whitespace does the work. No fill, no shadow, no gradient.
+ */
+.hero-field {
+  padding: clamp(3.5rem, 9vw, 6.5rem) 1rem clamp(2rem, 4vw, 3.25rem);
+}
+.hero-capsule {
+  max-width: 36rem;
+  padding: clamp(1.75rem, 3.5vw, 2.75rem) 0;
+}
+.hero-trust {
+  margin-top: 1.125rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: oklch(var(--muted-foreground));
+  letter-spacing: 0.01em;
+}
+.hero-subordinate {
+  opacity: 0.92;
+}
+
+#home-sticky-cta {
+  transform: translateY(0);
+  transition: transform var(--duration-move) var(--ease-quiet);
+}
+html.enlist-open #home-sticky-cta {
+  transform: translateY(100%) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #home-sticky-cta { transition: none; }
+}
+
 .site-header {
   border-bottom-color: oklch(var(--border));
   background: oklch(var(--background) / 0.92);
